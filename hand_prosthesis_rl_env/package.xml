@@ -3,8 +3,11 @@
   <name>hand_prosthesis_rl_env</name>
   <version>1.0.0</version>
   <description>The hand_prosthesis_rl_env package</description>
-  <maintainer email="rdaneel@todo.todo">rdaneel</maintainer>
-  <license>TODO</license>
+  <maintainer email="vrisag20@student.aau.dk">Victor Risager</maintainer>
+  <maintainer email="ddoros20@student.aau.dk">Daniel Doroshenko</maintainer>
+  <maintainer email="jbla20@student.aau.dk">Jacob Bøgh Larsen</maintainer>
+  <maintainer email="cwitha23@student.aau.dk">Withanage Chathushka Jayashan</maintainer>
+  <license>APACHE 2.0</license>
 
   <buildtool_depend>catkin</buildtool_depend>
   
