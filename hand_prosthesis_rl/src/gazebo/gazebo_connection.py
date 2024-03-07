@@ -17,7 +17,7 @@ class GazeboConnection():
         self.reset_simulation_proxy = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
         self.reset_world_proxy = rospy.ServiceProxy('/gazebo/reset_world', Empty)
 
-        # Setup the Gravity Controle system
+        # Setup the Gravity Controller system
         service_name = '/gazebo/set_physics_properties'
         rospy.logdebug("Waiting for service " + str(service_name))
         rospy.wait_for_service(service_name)
@@ -36,6 +36,7 @@ class GazeboConnection():
         rospy.logdebug("PAUSING service found...")
         paused_done = False
         counter = 0
+        # Try to pause the simulation for max_retry (default=20) times
         while not paused_done and not rospy.is_shutdown():
             if counter < self._max_retry:
                 try:
@@ -49,7 +50,7 @@ class GazeboConnection():
             else:
                 error_message = "Maximum retries done"+str(self._max_retry)+", please check Gazebo pause service"
                 rospy.logerr(error_message)
-                assert False, error_message
+                assert False, error_message # Raise AssertionError with the error message
 
         rospy.logdebug("PAUSING FINISH")
 
