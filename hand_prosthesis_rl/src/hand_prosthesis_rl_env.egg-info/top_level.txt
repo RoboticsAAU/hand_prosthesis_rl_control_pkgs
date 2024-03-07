@@ -1,1 +1,0 @@
-hand_prosthesis_rl_env

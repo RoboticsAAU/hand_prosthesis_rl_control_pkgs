@@ -31,8 +31,8 @@
         <arg name="transmission_config_filename" value="$(arg transmission_config_filename)" />
     </include>
 
+    
     <!-- Launch Mia RL environment -->
-    <node name="mia_hand_rl_env" pkg="hand_prosthesis_rl_env" type="mia_hand_env.py" /> 
-
+    <node name="mia_hand_rl_env" pkg="hand_prosthesis_rl" type="train.py" />
 
 </launch>

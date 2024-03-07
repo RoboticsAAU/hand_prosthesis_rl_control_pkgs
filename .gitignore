@@ -49,3 +49,18 @@ qtcreator-*
 
 # Catkin custom files
 CATKIN_IGNORE
+
+# Distribution / packaging
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
