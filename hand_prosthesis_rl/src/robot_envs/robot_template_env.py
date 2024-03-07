@@ -1,4 +1,4 @@
-from hand_prosthesis_rl_env import robot_gazebo_env
+from hand_prosthesis_rl import robot_gazebo_env
 
 class MyRobotEnv(robot_gazebo_env.RobotGazeboEnv):
     """Superclass for all Robot environments.

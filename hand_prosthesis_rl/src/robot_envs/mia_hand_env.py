@@ -1,4 +1,3 @@
-#from hand_prosthesis_rl_env import robot_gazebo_env
 import numpy
 import rospy
 from std_msgs.msg import Float64
@@ -7,7 +6,10 @@ from sensor_msgs.msg import PointCloud2
 #from mia_hand_msgs.msg import FingersData
 #from mia_hand_msgs.msg import FingersStrainGauges
 
-class MiaHandEnv():
+
+from gazebo.robot_gazebo_env import RobotGazeboEnv
+
+class MiaHandEnv(RobotGazeboEnv):
     """Superclass for all Robot environments.
     """
 
@@ -22,7 +24,7 @@ class MiaHandEnv():
 
         self.robot_name_space = ""
         
-        # We launch the init function of the Parent Class robot_gazebo_env.RobotGazeboEnv
+        # We launch the init function of the Parent Class RobotGazeboEnv
         
         super(MiaHandEnv, self).__init__(controllers_list=self.controllers_list,
                                                 robot_name_space=self.robot_name_space,
@@ -38,9 +40,9 @@ class MiaHandEnv():
         rospy.Subscriber("/mia_hand_sim/joint_states", JointState, self._joints_callback)
         rospy.Subscriber("/camera/depth/points", PointCloud2, self._camera_depth_points_callback)
         
-        self._thumb_vel_pub = rospy.Publisher('/mia_hand_sim/j_index_fle_velocity_controller/command', Float64, queue_size=1)
+        self._thumb_vel_pub = rospy.Publisher('/mia_hand_sim/j_thumb_fle_velocity_controller/command', Float64, queue_size=1)
+        self._index_vel_pub = rospy.Publisher('/mia_hand_sim/j_index_fle_velocity_controller/command', Float64, queue_size=1)
         self._mrl_vel_pub = rospy.Publisher('/mia_hand_sim/j_mrl_fle_velocity_controller/command', Float64, queue_size=1)
-        self._index_vel_pub = rospy.Publisher('/mia_hand_sim/j_thumb_fle_velocity_controller/command', Float64, queue_size=1)
         
         self._check_publishers_connection()
 
@@ -66,20 +68,20 @@ class MiaHandEnv():
         self.hand_joints_data = None
         while self.hand_joints_data is None and not rospy.is_shutdown():
             try:
-                self.disk_joints_data = rospy.wait_for_message("/mia_hand_sim/joint_states", JointState, timeout=1.0)
+                self.hand_joints_data = rospy.wait_for_message("/mia_hand_sim/joint_states", JointState, timeout=1.0)
                 rospy.loginfo("Current mia_hand_sim/joint_states READY=>" + str(self.hand_joints_data))
 
             except:
                 rospy.logerr("Current mia_hand_sim/joint_states not ready yet, retrying for getting joint_states")
         
-        self.camera_pc_data = None
-        while self.camera_pc_data is None and not rospy.is_shutdown():
-            try:
-                self.camera_pc_data = rospy.wait_for_message("/camera/depth/points", PointCloud2, timeout=1.0)
-                rospy.loginfo("Current camera/depth/points READY=>" + str(self.camera_pc_data))
+        # self.camera_pc_data = None
+        # while self.camera_pc_data is None and not rospy.is_shutdown():
+        #     try:
+        #         self.camera_pc_data = rospy.wait_for_message("/camera/depth/points", PointCloud2, timeout=1.0)
+        #         rospy.loginfo("Current camera/depth/points READY=>" + str(self.camera_pc_data))
 
-            except:
-                rospy.logerr("Current camera/depth/points not ready yet, retrying for getting joint_states")
+        #     except:
+        #         rospy.logerr("Current camera/depth/points not ready yet, retrying for getting joint_states")
 
         rospy.loginfo("ALL SENSORS READY")
     
@@ -159,4 +161,42 @@ class MiaHandEnv():
     # Methods that the TrainingEnvironment will need.
     # ----------------------------
     
-    
+    def move_finger(self, speed : float, finger_id : str):
+        """
+        It will move the finger based on the speed given.
+        :param speed: Speed in the positive axis of the finger
+        :return:
+        """
+        vel_value = Float64()
+        vel_value.data = speed
+        rospy.logdebug("MiaHand Float64 Cmd>>" + str(vel_value))
+        self._check_publishers_connection()
+        if finger_id == "thumb":
+            self._thumb_vel_pub.publish(vel_value)
+        elif finger_id == "index":
+            self._index_vel_pub.publish(vel_value)
+        elif finger_id == "mrl":
+            self._mrl_vel_pub.publish(vel_value)
+        else:
+            raise ValueError("The finger_id specified is not valid")
+        
+    def move_fingers(self, speeds : numpy.float64):
+        """
+        It will move the fingers based on the speeds given.
+        :param speed: Speeds in the positive axis of the fingers
+        :return:
+        """
+        vel_value = Float64()
+        
+        self._check_publishers_connection()
+        rospy.logdebug("MiaHand Float64 Cmd>>" + str(vel_value))
+        
+        vel_value.data = speeds[0]
+        self._thumb_vel_pub.publish(vel_value)
+        
+        vel_value.data = speeds[1]
+        self._index_vel_pub.publish(vel_value)
+        
+        vel_value.data = speeds[2]
+        self._mrl_vel_pub.publish(vel_value)
+        
