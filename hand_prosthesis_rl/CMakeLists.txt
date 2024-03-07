@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(hand_prosthesis_rl_env)
+project(hand_prosthesis_rl)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -157,7 +157,7 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 # install(PROGRAMS
-#   scripts/my_python_script
+#   src/training/train.py
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 

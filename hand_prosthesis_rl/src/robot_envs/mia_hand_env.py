@@ -1,13 +1,13 @@
-from hand_prosthesis_rl_env import robot_gazebo_env
+#from hand_prosthesis_rl_env import robot_gazebo_env
 import numpy
 import rospy
 from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
 from sensor_msgs.msg import PointCloud2
-from mia_hand_msgs.msg import FingersData
-from mia_hand_msgs.msg import FingersStrainGauges
+#from mia_hand_msgs.msg import FingersData
+#from mia_hand_msgs.msg import FingersStrainGauges
 
-class MiaHandEnv(robot_gazebo_env.RobotGazeboEnv):
+class MiaHandEnv():
     """Superclass for all Robot environments.
     """
 
