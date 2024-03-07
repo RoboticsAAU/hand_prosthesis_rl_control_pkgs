@@ -37,6 +37,6 @@
 
     
     <!-- Launch Mia RL environment -->
-    <node name="mia_hand_rl_env" pkg="hand_prosthesis_rl" type="train.py" />
+    <node name="mia_hand_rl_env" pkg="hand_prosthesis_rl" type="train.py" output="screen" args="--log_level=debug" />
 
 </launch>
