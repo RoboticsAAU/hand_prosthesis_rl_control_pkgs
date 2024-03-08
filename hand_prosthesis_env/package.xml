@@ -16,9 +16,13 @@
 
   <build_depend>python-catkin-pkg</build_depend>
   <build_depend>urdf</build_depend>
+  <build_depend>xacro</build_depend>
+  <build_depend>mia_hand_description</build_depend>
+  <build_depend>realsense2_description</build_depend>
 
   <build_export_depend>rospy</build_export_depend>
   <build_export_depend>urdf</build_export_depend>
+  <build_export_depend>xacro</build_export_depend>
   
   <exec_depend>rospy</exec_depend>
 
@@ -26,5 +30,8 @@
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>rviz</exec_depend>
+  <exec_depend>joint_state_publisher</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+
 
 </package>
