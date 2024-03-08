@@ -29,20 +29,16 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
         self.thumb_vel_ub = rospy.get_param('/mia_hand/thumb_vel_ub') 
         self.mrl_vel_lb = rospy.get_param('/mia_hand/mrl_vel_lb')
         self.mrl_vel_ub = rospy.get_param('/mia_hand/mrl_vel_ub')        
+                
+        as_low = numpy.array([self.index_vel_lb,
+                            self.thumb_vel_lb,
+                            self.mrl_vel_lb])
         
-        # Define the upper and lower bounds for positions
-        self.index_pos_lb = rospy.get_param('/mia_hand/index_pos_lb')
-        self.index_pos_ub = rospy.get_param('/mia_hand/index_pos_ub')
-        self.thumb_pos_lb = rospy.get_param('/mia_hand/thumb_pos_lb')
-        self.thumb_pos_ub = rospy.get_param('/mia_hand/thumb_pos_ub')
-        self.mrl_pos_lb = rospy.get_param('/mia_hand/mrl_pos_lb')
-        self.mrl_pos_ub = rospy.get_param('/mia_hand/mrl_pos_ub')
+        as_high = numpy.array([self.index_vel_ub, 
+                            self.thumb_vel_ub,
+                            self.mrl_vel_ub])
         
-        high = numpy.array([self.index_pos_ub, 
-                            self.thumb_pos_ub,
-                            self.mrl_pos_ub])
-        
-        self.action_space = spaces.Box(low, high, dtype = numpy.float32)
+        self.action_space = spaces.Box(as_low, as_high, dtype = numpy.float32)
         
         # We set the reward range, which is not compulsory but here we do it.
         self.reward_range = (-numpy.inf, numpy.inf)
@@ -61,98 +57,104 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
         ]
         """
         
-        # Actions and Observations
-        self.linear_forward_speed = rospy.get_param('/turtlebot3/linear_forward_speed')
-        self.linear_turn_speed = rospy.get_param('/turtlebot3/linear_turn_speed')
-        self.angular_speed = rospy.get_param('/turtlebot3/angular_speed')
-        self.init_linear_forward_speed = rospy.get_param('/turtlebot3/init_linear_forward_speed')
-        self.init_linear_turn_speed = rospy.get_param('/turtlebot3/init_linear_turn_speed')
+        # Initial velocities
+        self.init_index_vel = 0
+        self.init_thumb_vel = 0
+        self.init_mrl_vel = 0
         
-        self.new_ranges = rospy.get_param('/turtlebot3/new_ranges')
-        self.min_range = rospy.get_param('/turtlebot3/min_range')
-        self.max_laser_value = rospy.get_param('/turtlebot3/max_laser_value')
-        self.min_laser_value = rospy.get_param('/turtlebot3/min_laser_value')
-        self.max_linear_aceleration = rospy.get_param('/turtlebot3/max_linear_aceleration')
         
         
         # We create two arrays based on the binary values that will be assigned
         # In the discretization method.
-        laser_scan = self._check_laser_scan_ready()
-        num_laser_readings = len(laser_scan.ranges)/self.new_ranges
-        high = numpy.full((num_laser_readings), self.max_laser_value)
-        low = numpy.full((num_laser_readings), self.min_laser_value)
+        # laser_scan = self._check_laser_scan_ready()
+        # num_laser_readings = len(laser_scan.ranges)/self.new_ranges
+        # high = numpy.full((num_laser_readings), self.max_laser_value)
+        # low = numpy.full((num_laser_readings), self.min_laser_value)
+        
+        # Define the upper and lower bounds for positions
+        self.index_pos_lb = rospy.get_param('/mia_hand/index_pos_lb')
+        self.index_pos_ub = rospy.get_param('/mia_hand/index_pos_ub')
+        self.thumb_pos_lb = rospy.get_param('/mia_hand/thumb_pos_lb')
+        self.thumb_pos_ub = rospy.get_param('/mia_hand/thumb_pos_ub')
+        self.mrl_pos_lb = rospy.get_param('/mia_hand/mrl_pos_lb')
+        self.mrl_pos_ub = rospy.get_param('/mia_hand/mrl_pos_ub')
+        
+        os_low = numpy.array([self.index_pos_lb,
+                            self.thumb_pos_lb,
+                            self.mrl_pos_lb])
+        
+        os_high = numpy.array([self.index_pos_ub, 
+                            self.thumb_pos_ub,
+                            self.mrl_pos_ub])
         
         # We only use two integers
-        self.observation_space = spaces.Box(low, high)
+        self.observation_space = spaces.Box(os_low, os_high, dtype = numpy.float32)
         
         rospy.logdebug("ACTION SPACES TYPE===>"+str(self.action_space))
         rospy.logdebug("OBSERVATION SPACES TYPE===>"+str(self.observation_space))
         
         # Rewards
-        self.forwards_reward = rospy.get_param("/turtlebot3/forwards_reward")
-        self.turn_reward = rospy.get_param("/turtlebot3/turn_reward")
-        self.end_episode_points = rospy.get_param("/turtlebot3/end_episode_points")
+        self.end_episode_points = rospy.get_param("/mia_hand/end_episode_points")
 
         self.cumulated_steps = 0.0
 
         # Here we will add any init functions prior to starting the MyRobotEnv
-        super(TurtleBot3WorldEnv, self).__init__()
+        super(MiaHandWorldEnv, self).__init__()
 
     def _set_init_pose(self):
         """Sets the Robot in its init pose
         """
-        self.move_base( self.init_linear_forward_speed,
-                        self.init_linear_turn_speed,
-                        epsilon=0.05,
-                        update_rate=10)
+        
+        velocities = numpy.array([self.init_index_vel,
+                                self.init_thumb_vel,
+                                self.init_mrl_vel])
+        
+        self.move_fingers(velocities)
 
         return True
 
 
     def _init_env_variables(self):
         """
-        Inits variables needed to be initialised each time we reset at the start
+        Inits variables needs to be initialised each time we reset at the start
         of an episode.
         :return:
         """
         # For Info Purposes
         self.cumulated_reward = 0.0
-        # Set to false Done, because its calculated asyncronously
+        # Set episode_done to false, because it's calculated asyncronously
         self._episode_done = False
 
 
     def _set_action(self, action):
         """
-        This set action will Set the linear and angular speed of the turtlebot2
-        based on the action number given.
+        This method will set the velocity of the hand based on the action number given.
         :param action: The action integer that set s what movement to do next.
         """
         
         rospy.logdebug("Start Set Action ==>"+str(action))
-        # We convert the actions to speed movements to send to the parent class CubeSingleDiskEnv
-        if action == 0: #FORWARD
-            linear_speed = self.linear_forward_speed
-            angular_speed = 0.0
-            self.last_action = "FORWARDS"
-        elif action == 1: #LEFT
-            linear_speed = self.linear_turn_speed
-            angular_speed = self.angular_speed
-            self.last_action = "TURN_LEFT"
-        elif action == 2: #RIGHT
-            linear_speed = self.linear_turn_speed
-            angular_speed = -1*self.angular_speed
-            self.last_action = "TURN_RIGHT"
         
-        # We tell TurtleBot2 the linear and angular speed to set to execute
-        self.move_base(linear_speed, angular_speed, epsilon=0.05, update_rate=10)
+        # Current and previous actions are stored before sending it to the parent class MiaHandEnv
+        index_vel = action[0]       
+        self.last_index_vel = index_vel
+        
+        thumb_vel = action[1]
+        self.last_thumb_vel = thumb_vel
+        
+        mrl_vel = action[2]
+        self.last_mrl_vel = mrl_vel
+        
+        # Mia hand is set to execute the speeds
+        velocities = numpy.array([index_vel, thumb_vel, mrl_vel]) 
+        
+        self.move_fingers(velocities)
         
         rospy.logdebug("END Set Action ==>"+str(action))
 
+
     def _get_obs(self):
         """
-        Here we define what sensor data defines our robots observations
-        To know which Variables we have acces to, we need to read the
-        TurtleBot2Env API DOCS
+        Fetch observations from the Mia Hand
         :return:
         """
         rospy.logdebug("Start Get Observation ==>")
@@ -171,18 +173,18 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
     def _is_done(self, observations):
         
         if self._episode_done:
-            rospy.logerr("TurtleBot2 is Too Close to wall==>")
+            rospy.logerr("Mia hand is Too Close to wall==>")
         else:
-            rospy.logwarn("TurtleBot2 is NOT close to a wall ==>")
+            rospy.logwarn("Mia hand is NOT close to a wall ==>")
             
         # Now we check if it has crashed based on the imu
         imu_data = self.get_imu()
         linear_acceleration_magnitude = self.get_vector_magnitude(imu_data.linear_acceleration)
         if linear_acceleration_magnitude > self.max_linear_aceleration:
-            rospy.logerr("TurtleBot2 Crashed==>"+str(linear_acceleration_magnitude)+">"+str(self.max_linear_aceleration))
+            rospy.logerr("Mia hand Crashed==>"+str(linear_acceleration_magnitude)+">"+str(self.max_linear_aceleration))
             self._episode_done = True
         else:
-            rospy.logerr("DIDNT crash TurtleBot2 ==>"+str(linear_acceleration_magnitude)+">"+str(self.max_linear_aceleration))
+            rospy.logerr("DIDNT crash Mia hand ==>"+str(linear_acceleration_magnitude)+">"+str(self.max_linear_aceleration))
         
 
         return self._episode_done

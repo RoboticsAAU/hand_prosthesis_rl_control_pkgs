@@ -1,5 +1,5 @@
 
-##### Action space #####
+##### Continuous action space #####
 n_actions: 3 # thumb, index, and mrl
 
 index_vel_ub: 1.0 # Upper bound
@@ -24,4 +24,7 @@ thumb_pos_lb: 0.029
 mrl_pos_ub: 1.303
 mrl_pos_lb: -0.120
 
+
+##### Rewards #####
+end_episode_points: 50.0 # Points to add at the end of the episode
 
