@@ -1,0 +1,6 @@
+# Environment parameters
+step_size: 0.1 # seconds
+camera_setup: "static" # static or hand
+
+# Learning parameters
+learning_rate: 0.005

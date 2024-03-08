@@ -18,6 +18,7 @@
   <build_depend>urdf</build_depend>
   <build_depend>xacro</build_depend>
   <build_depend>mia_hand_description</build_depend>
+  <build_depend>realsense2_description</build_depend>
 
   <build_export_depend>rospy</build_export_depend>
   <build_export_depend>urdf</build_export_depend>
