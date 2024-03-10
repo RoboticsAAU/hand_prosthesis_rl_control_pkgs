@@ -3,12 +3,12 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
 
-    
-def animate_path(path: np.ndarray, sample_rate : float, save_file : str = None):
+
+def animate_path(path: np.ndarray, final_time : float, save_file : str = None):
     '''
     Animate a 3D path
     :param path: Path as a sequence of points with shape (3, num_points)
-    :param sample_rate: Sample rate in Hz
+    :param final_time: Duration of trajectory in seconds (DOES NOT WORK FOR SMALL TRAJECTORY TIMES)
     :param save_file: File to save the animation to if it should be saved
     :return:
     '''
@@ -37,6 +37,7 @@ def animate_path(path: np.ndarray, sample_rate : float, save_file : str = None):
     ax.set_zlabel('Z')
 
     # Creating the Animation object
+    sample_rate = len(path) / final_time
     ani = FuncAnimation(
         fig, update_line, len(path), fargs=(path, line), interval=int(1000*(1/sample_rate)), blit=False)
 
