@@ -8,13 +8,13 @@ from tqdm import tqdm
 # TODO: Check if goal/tart collide with obstacle. If so, raise error
 class NavFuncPlanner():
     
-    def __init__(self):
+    def __init__(self, world_dim = int):
         
         sp.init_printing() 
         
-        self.world = self.NavFuncWorld(world_dim=3, world_sphere_rad=10, num_rand_obs=4, obs_rad=0.5)        
-        self.tmp_curr_pos = np.zeros((self.world.dimension,1), dtype=np.float32)
-        self.path = np.empty((self.world.dimension,0), dtype=np.float32)
+        self.world = self.NavFuncWorld(world_dim=world_dim, world_sphere_rad=10, num_rand_obs=4, obs_rad=0.5)        
+        self.tmp_curr_pos = np.zeros((self.world.dimension,1), dtype=np.float64)
+        self.path = np.empty((self.world.dimension,0), dtype=np.float64)
         
         # Sympy definitions
         self.nav_func = sp.Function('f')
@@ -40,10 +40,10 @@ class NavFuncPlanner():
             raise ValueError(f"Both start and goal positions must be {self.world.dimension}D vectors")
         
         #while not np.isclose(self.tmp_curr_pos, goal_pos, atol=1).all():
-        for _ in tqdm(range(350), desc="Computing path"):                
+        for _ in tqdm(range(200), desc="Computing path"):                
             # Computing navigation gradient vector
             grad_nav = self._compute_nav_grad(self.tmp_curr_pos, goal_pos, kappa)
-            print(grad_nav,)
+            print(grad_nav)
             print(self.tmp_curr_pos)
             print(goal_pos, flush=True)
             
@@ -83,18 +83,17 @@ class NavFuncPlanner():
         
         d_qw = self.q - qw
         # Distance between agent and world (sphere) boundary
-        beta_0 = -d_qw.dot(d_qw) + sp.Pow(self.world.radius, 2)
+        beta_0 = -d_qw.dot(d_qw) + self.world.radius**2
         # Initial expression for repulsive function beta
         beta = beta_0
 
         # Completing expression for repulsive function, beta
-        if self.world.obstacle_num > 0:
-            for idx in range(self.world.obstacle_num):
-                obs = sp.Matrix(self.world.obstacles[idx,:].T)
-                d_qo = self.q - obs             
-                # Dist between obstacles and agent
-                beta_i = d_qo.dot(d_qo) - sp.Pow(self.world.obstacle_rad, 2)
-                beta *= beta_i
+        for idx in range(self.world.obstacle_num):
+            obs = sp.Matrix(self.world.obstacles[idx,:].T)
+            d_qo = self.q - obs             
+            # Dist between obstacles and agent
+            beta_i = d_qo.dot(d_qo) - self.world.obstacle_rad**2
+            beta *= beta_i.copy()
         
         
         d_qg = self.qg - self.q
@@ -126,9 +125,12 @@ class NavFuncPlanner():
         elif lambda_ != 1:
             raise NotImplementedError()
         
-        nabla = self.nabla_nav_func.subs({self.q[0]: curr_pos[0], self.q[1]: curr_pos[1], self.q[2]: curr_pos[2], self.qg[0]: goal_pos[0], self.qg[1]: goal_pos[1], self.qg[2]: goal_pos[2], self.k: kappa})
-
-        return np.array(nabla).astype(np.float32)
+        if self.world.dimension == 3:
+            nabla = self.nabla_nav_func.subs({self.q[0]: curr_pos[0], self.q[1]: curr_pos[1], self.q[2]: curr_pos[2], self.qg[0]: goal_pos[0], self.qg[1]: goal_pos[1], self.qg[2]: goal_pos[2], self.k: kappa})
+        else:
+            nabla = self.nabla_nav_func.subs({self.q[0]: curr_pos[0], self.q[1]: curr_pos[1], self.qg[0]: goal_pos[0], self.qg[1]: goal_pos[1], self.k: kappa})
+        
+        return np.array(nabla).astype(np.float64)
     
     
     def plot_2d(self, start_pos : np.array, goal_pos : np.array) -> None:
@@ -191,7 +193,7 @@ class NavFuncPlanner():
             self.obstacle_rad = obs_rad# Radius of obstacles
             
             # Other variables
-            self.obstacles = np.empty((0, 3), dtype=np.float32)
+            self.obstacles = np.empty((0, self.dimension), dtype=np.float64)
             
             # Generate random obstacles if specified
             if num_rand_obs > 0:
@@ -211,15 +213,19 @@ class NavFuncPlanner():
                 
                 x = r * np.sin(theta) * np.cos(phi)
                 y = r * np.sin(theta) * np.sin(phi)
-                z = r * np.cos(theta)
                 
-                self.obstacles = np.append(self.obstacles, np.array([[x,y,z]]), axis=0)    
+                if self.dimension == 3:
+                    z = r * np.cos(theta)  
+                    self.obstacles = np.append(self.obstacles, np.array([[x,y,z]]), axis=0)
+                else: # 2D
+                    self.obstacles = np.append(self.obstacles, np.array([[x,y]]), axis=0)    
                 
                 
 if __name__ == "__main__":
     # For testing
-    planner = NavFuncPlanner()
-    planner.compute_path(start_pos=np.array([-1,-3,0.0]), goal_pos=np.array([5.0,5.0,5.0]), kappa=5.0, step_size=20.0, plot = True)
+    planner = NavFuncPlanner(world_dim=2)
+    # planner.compute_path(start_pos=np.array([-1.0,-3.0, -3.0]), goal_pos=np.array([5.0,5.0,5.0]), kappa=5.0, step_size=5.0, plot = True)
+    planner.compute_path(start_pos=np.array([-5.0,-1.0]), goal_pos=np.array([5.0,5.0]), kappa=5.0, step_size=15.0, plot = True)
     exit(0)
             
 
