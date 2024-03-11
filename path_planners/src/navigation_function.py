@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 from tqdm import tqdm
+from path_visualiser import animate_path
 
 
 # TODO: Check if goal/tart collide with obstacle. If so, raise error
@@ -10,7 +11,7 @@ class NavFuncPlanner():
     
     def __init__(self, world_dim : int, world_sphere_rad : float, num_rand_obs : int, obs_rad : float, goal_pos : np.array, kappa : float) -> None:
         
-        sp.init_printing() 
+        sp.init_printing()
         
         self.world = self.NavFuncWorld(world_dim, world_sphere_rad, num_rand_obs, obs_rad)        
         self.tmp_curr_pos = np.zeros((self.world.dimension,1), dtype=np.float64)
@@ -55,7 +56,10 @@ class NavFuncPlanner():
                 break
         
         if plot:
-            self.plot_2d(start_pos, self.goal_pos)    
+            if self.world.dimension == 2:
+                self.plot_2d(start_pos, self.goal_pos)
+            elif self.world.dimension == 3:
+                self.plot_3d(start_pos, self.goal_pos)
     
     
     def _express_nav_func(self) -> None:
@@ -123,7 +127,6 @@ class NavFuncPlanner():
     
     
     def plot_2d(self, start_pos : np.array, goal_pos : np.array) -> None:
-            
         # Create a figure
         fig, axs = plt.subplots()
         
@@ -164,7 +167,33 @@ class NavFuncPlanner():
         
         # Show the plot
         plt.show()
+    
+    def plot_3d(self, start_pos : np.array, goal_pos : np.array) -> None:
+        if self.world.dimension == 2:
+            return
         
+        fig = plt.figure()
+        ax = fig.add_subplot(projection='3d')
+        
+        ax.grid(True)
+        
+        # Plot path
+        plt.plot(self.path[0,:], self.path[1,:], self.path[2,:], 'b-', label='Path')
+        
+        # plot obstacles as spheres
+        for center in self.world.obstacles:
+            u = np.linspace(0, 2 * np.pi, 50)
+            v = np.linspace(0, np.pi, 50)
+            x = center[0] + self.world.obstacle_rad * np.outer(np.cos(u), np.sin(v))
+            y = center[1] + self.world.obstacle_rad * np.outer(np.sin(u), np.sin(v))
+            z = center[2] + self.world.obstacle_rad * np.outer(np.ones(np.size(u)), np.cos(v))
+            ax.plot_surface(x, y, z, color='red')
+        
+        # Plot goal and start
+        ax.scatter(*start_pos, color='orange', label='Start')
+        ax.scatter(*goal_pos, color='green', label='Goal')
+        
+        plt.show()
     
     
     # TODO: implement unique obstacle radii
@@ -175,7 +204,7 @@ class NavFuncPlanner():
             if world_dim not in [2, 3]:
                 raise ValueError("Specified world dimension not implemented! Must be 2 or 3.")
             
-            # Set users configuration        
+            # Set users configuration
             self.radius = world_sphere_rad # World radius
             self.dimension = world_dim # Dimension of world (e.g. 2D or 3D)
             self.obstacle_num = num_rand_obs # Number of random obstacles
@@ -213,8 +242,10 @@ class NavFuncPlanner():
 if __name__ == "__main__":
     # For testing
     np.random.seed(1)
-    planner = NavFuncPlanner(world_dim=2, world_sphere_rad=10, num_rand_obs=5, obs_rad=0.2, goal_pos=np.array([0.0,7.5]), kappa=7)
+    planner = NavFuncPlanner(world_dim=3, world_sphere_rad=10, num_rand_obs=5, obs_rad=0.2, goal_pos=np.array([0.0,7.5,3.0]), kappa=7)
     # planner.compute_path(start_pos=np.array([-1.0,-3.0, -3.0]), step_size=0.2, plot = True)
-    planner.compute_path(start_pos=np.array([-1.0,-3.0]), step_size=0.3, plot = True)
+    planner.compute_path(start_pos=np.array([-1.0,-3.0,0.0]), step_size=0.3, plot=True)
+    
+    animate_path(planner.path, final_time=10)
     exit(0)
     

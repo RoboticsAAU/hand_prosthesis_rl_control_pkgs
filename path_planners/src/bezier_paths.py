@@ -1,7 +1,6 @@
 import numpy as np
 import bezier
 from path_visualiser import animate_path
-import matplotlib.pyplot as plt
 
 class BezierPlanner():
     def __init__(self):
@@ -82,8 +81,8 @@ if __name__ == "__main__":
     control_points = np.array([[0, 1, 9],
                                [0, 3, 9],
                                [0, 5, 9]])
-    bp.generate_bezier_curve(control_points)
-    #bp.generate_bezier_curves_random(np.array([0, 0, 0]), np.array([9, 9, 9]), 2)
+    #bp.generate_bezier_curve(control_points)
+    bp.generate_bezier_curves_random(np.array([0, 0, 0]), np.array([9, 9, 9]), 2)
     
     path = bp.sample_bezier_curve_constant(100)
     path2 = bp.sample_bezier_curve_velocity(np.linspace(0, 1, 100))
