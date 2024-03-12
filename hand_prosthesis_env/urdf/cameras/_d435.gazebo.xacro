@@ -136,11 +136,10 @@ This is the Gazebo URDF model for an rgbd camera adapted from the Intel RealSens
             <stddev>0.007</stddev>
           </noise>
         </camera>
-        <always_on>1</always_on>
         <update_rate>30</update_rate>
-        <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <plugin name="${topics_ns}_color_controller" filename="libgazebo_ros_camera.so">
           <updateRate>30.0</updateRate>
-          <cameraName>camera/color</cameraName>
+          <cameraName>${camera_name}/color</cameraName>
           <imageTopicName>image_raw</imageTopicName>
           <frameName>${color_optical_frame}</frameName>
           <cameraInfoTopicName>camera_info</cameraInfoTopicName>

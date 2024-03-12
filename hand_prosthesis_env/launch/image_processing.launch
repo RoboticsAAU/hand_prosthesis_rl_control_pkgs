@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <launch>
 	<!-- input topics -->
-	<arg name="rgb_camera_info"               default="/camera/color/camera_info"/>
-	<arg name="rgb_image_raw"                 default="/camera/color/image_raw"/>
-	<arg name="rgb_image_rect"                default="/camera/color/image_rect"/>
+	<arg name="rgb_camera_info"               default="/mia_hand_camera/camera/color/camera_info"/>
+	<arg name="rgb_image_raw"                 default="/mia_hand_camera/camera/color/image_raw"/>
+	<arg name="rgb_image_rect"                default="/mia_hand_camera/camera/color/image_rect"/>
 
 	<!-- input topics -->
 	<arg name="depth_camera_info"             default="/camera/depth/camera_info"/>
 	<arg name="depth_image_raw"   	          default="/camera/depth/image_raw"/>
-	<arg name="depth_image_rect"   	          default="/camera/depth/image_rect"/>
+	<arg name="depth_image_rect"   	          default="/mia_hand_camera/camera/depth/image_rect"/>
 
 	<!-- depth registered topics -->
-	<arg name="depth_registered_camera_info"  default="/camera/depth_registered/camera_info"/> 
-	<arg name="depth_registered_image_rect"   default="/camera/depth_registered/image_rect"/> 
-	<arg name="depth_registered_points"       default="/camera/depth_registered/points"/> 
+	<arg name="depth_registered_camera_info"  default="/mia_hand_camera/camera/depth_registered/camera_info"/> 
+	<arg name="depth_registered_image_rect"   default="/mia_hand_camera/camera/depth_registered/image_rect"/> 
+	<arg name="depth_registered_points"       default="/mia_hand_camera/camera/depth_registered/points"/> 
 
 	<node pkg="nodelet" type="nodelet" name="image_proc_nodelet_manager" args="manager" />
 

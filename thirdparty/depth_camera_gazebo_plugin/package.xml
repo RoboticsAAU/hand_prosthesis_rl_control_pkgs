@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>depth_camera_gazebo_plugin</name>
+  <version>1.1.0</version>
+  <description>Generic depth camera Gazebo plugin package - adapted from realsense gazebo plugin package</description>
+  
+  <maintainer email="rmhpdf@mp.aau.dk">Rui Pimentel de Figueiredo</maintainer>
+  <author email="rmhpdf@mp.aau.dk">Rui Pimentel de Figueiredo</author>
+
+  <license>Apache 2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>gazebo_ros</depend>
+  <depend>roscpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>image_transport</depend>
+  <depend>camera_info_manager</depend>
+
+  <export>
+    <gazebo_ros
+      plugin_path="${prefix}/lib"
+      gazebo_media_path="${prefix}"
+      gazebo_model_path="${prefix}/models"
+      />
+  </export>
+</package>

@@ -1,11 +1,12 @@
 import numpy
 import rospy
+#import ros_numpy.point_cloud2 as pc2
 from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
 from sensor_msgs.msg import PointCloud2
 #from mia_hand_msgs.msg import FingersData
 #from mia_hand_msgs.msg import FingersStrainGauges
-
+import sensor_msgs.point_cloud2 as pc2
 
 from gazebo.robot_gazebo_env import RobotGazeboEnv
 
@@ -37,12 +38,12 @@ class MiaHandEnv(RobotGazeboEnv):
         self._check_all_sensors_ready()
         
         # We Start all the ROS related Subscribers and publishers
-        rospy.Subscriber("/mia_hand_sim/joint_states", JointState, self._joints_callback)
-        rospy.Subscriber("/camera/depth/points", PointCloud2, self._camera_depth_points_callback)
+        rospy.Subscriber("/mia_hand/joint_states", JointState, self._joints_callback)
+        rospy.Subscriber("/mia_hand/camera/depth_registered/points", PointCloud2, self._camera_depth_points_callback)
         
-        self._thumb_vel_pub = rospy.Publisher('/mia_hand_sim/j_thumb_fle_velocity_controller/command', Float64, queue_size=1)
-        self._index_vel_pub = rospy.Publisher('/mia_hand_sim/j_index_fle_velocity_controller/command', Float64, queue_size=1)
-        self._mrl_vel_pub = rospy.Publisher('/mia_hand_sim/j_mrl_fle_velocity_controller/command', Float64, queue_size=1)
+        self._thumb_vel_pub = rospy.Publisher('/mia_hand/j_thumb_fle_velocity_controller/command', Float64, queue_size=1)
+        self._index_vel_pub = rospy.Publisher('/mia_hand/j_index_fle_velocity_controller/command', Float64, queue_size=1)
+        self._mrl_vel_pub = rospy.Publisher('/mia_hand/j_mrl_fle_velocity_controller/command', Float64, queue_size=1)
         
         self._check_publishers_connection()
 
@@ -52,7 +53,7 @@ class MiaHandEnv(RobotGazeboEnv):
 
 
     # Methods needed by the RobotGazeboEnv
-    # ----------------------------    
+    # ----------------------------
 
     def _check_all_systems_ready(self):
         """
@@ -118,12 +119,14 @@ class MiaHandEnv(RobotGazeboEnv):
 
         rospy.logdebug("All Publishers READY")
     
-    def _joints_callback(self, data):
-        self.joints = data
+    def _joints_callback(self, data : JointState):
+        self.joints = data.position
+        self.joints_vel = data.velocity
+        self.joints_effort = data.effort
         
-    def _camera_depth_points_callback(self, data):
-        self.camera_depth_points = data
-    
+    def _camera_depth_points_callback(self, data : PointCloud2):
+        self.depth_points_xyz = data
+        
     # Methods that the TrainingEnvironment will need to define here as virtual
     # because they will be used in RobotGazeboEnv GrandParentClass and defined in the
     # TrainingEnvironment.
