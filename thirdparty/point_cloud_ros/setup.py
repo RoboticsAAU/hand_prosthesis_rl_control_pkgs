@@ -5,8 +5,8 @@ from catkin_pkg.python_setup import generate_distutils_setup
 
 # fetch values from package.xml
 setup_args = generate_distutils_setup(
-    #scripts=['scripts/test.py'],
-    packages=['hand_prosthesis_rl'],
+    scripts=[''],
+    packages=['point_cloud_ros'],
     package_dir={'': 'src'},
 )
 

@@ -1,42 +1,38 @@
 <?xml version="1.0"?>
 <launch>
-
-    <!-- Load parameters under namespace-->
-    <rosparam command="load" file="$(find hand_prosthesis_rl)/params/mia_hand.yaml" ns="/mia_hand" />
-
-
     <!-- Arguments you can pass this launch file, for example paused:=true -->
     <arg name="Rviz_on" default="true" doc="If true, start Rviz and the joint state gui" />
     <arg name="use_joint_gui" default="false" doc="If true, start Rviz and the joint state gui" />
-    <arg name="paused" default="false"/>
+    <arg name="paused" default="true"/>
     <arg name="use_sim_time" default="true"/>
     <arg name="Gazebo_gui" default="true"/>
     <arg name="headless" default="false"/>
     <arg name="debug" default="false"/>
-    <arg name="robotNamespace" default="mia_hand_sim"/> <!-- /mia_hand -->
+    <arg name="image_view" default="false"/>
+    <arg name="robotNamespace" default="mia_hand_camera"/> <!-- /mia_hand -->
     <arg name="load_default_mia_model" default="false" />
     <arg name="right_hand" default="false" doc="True to for right hand False otherwise" /> <!-- Params to set right or left Mia hand version  -->
     <arg name="joint_limits_config_filename" default="joint_limits.yaml" doc="name of the yaml file to calibrate joints limit of URDF file" />
     <arg name="transmission_config_filename" default="transmission_config.yaml" doc="name of the yaml file to calibrate transmissions of MiaHand" />
 
-    <!-- Launch Mia bringup -->
-    <include file="$(find mia_hand_bringup)/launch/mia_hand_Sim.launch">
+    <!-- Launch Mia RL environment bringup -->
+    <include file="$(find hand_prosthesis_env)/launch/hand_env_bringup.launch">
         <arg name="Rviz_on" value="$(arg Rviz_on)"/>
         <arg name="use_joint_gui" value="$(arg use_joint_gui)"/>
-        <arg name="debug" value="$(arg debug)" />
-        <arg name="Gazebo_gui" value="$(arg Gazebo_gui)" />
         <arg name="paused" value="$(arg paused)"/>
         <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+        <arg name="Gazebo_gui" value="$(arg Gazebo_gui)" />
         <arg name="headless" value="$(arg headless)"/>
-        <arg name="robotNamespace"   value="$(arg robotNamespace)"/> <!-- /mia_hand -->
-        <arg name="load_default_mia_model"   value="$(arg load_default_mia_model)"/>
-        <arg name="right_hand"   value="$(arg right_hand)"/>
+        <arg name="debug" value="$(arg debug)" />
+        <arg name="image_view" default="$(arg image_view)"/>
+        <arg name="robotNamespace" value="$(arg robotNamespace)"/> <!-- /mia_hand -->
+        <arg name="load_default_mia_model" value="$(arg load_default_mia_model)"/>
+        <arg name="right_hand" value="$(arg right_hand)"/>
         <arg name="joint_limits_config_filename" value="$(arg joint_limits_config_filename)" />
         <arg name="transmission_config_filename" value="$(arg transmission_config_filename)" />
     </include>
 
-    
-    <!-- Launch Mia RL environment -->
-    <node name="mia_hand_rl_env" pkg="hand_prosthesis_rl" type="train.py" output="screen" args="--log_level=debug" />
+    <!-- Launch Mia RL node -->
+    <node name="mia_hand_rl" pkg="hand_prosthesis_rl" type="test.py" output="screen" args="--log_level=debug" />
 
 </launch>

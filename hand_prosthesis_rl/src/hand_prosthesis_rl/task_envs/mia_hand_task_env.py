@@ -1,7 +1,7 @@
 import rospy
 import numpy
 from gym import spaces
-from robot_envs import mia_hand_env
+from hand_prosthesis_rl.robot_envs import mia_hand_env
 from gym.envs.registration import register
 from geometry_msgs.msg import Vector3
 

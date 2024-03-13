@@ -2,8 +2,7 @@
 
 import rospy
 import numpy as np
-from robot_envs.mia_hand_env import MiaHandEnv
-
+from hand_prosthesis_rl.robot_envs.mia_hand_env import MiaHandEnv
 
 def main():
     mia_env = MiaHandEnv()
