@@ -39,7 +39,7 @@ class MiaHandEnv(RobotGazeboEnv):
         
         # We Start all the ROS related Subscribers and publishers
         rospy.Subscriber("/mia_hand_camera/joint_states", JointState, self._joints_callback)
-        rospy.Subscriber("/mia_hand_camera/camera/depth_registered/points", PointCloud2, self._camera_depth_points_callback)
+        rospy.Subscriber("/mia_hand_camera/camera/depth_registered/points", PointCloud2, self._camera_point_cloud_callback)
         
         self._thumb_vel_pub = rospy.Publisher('/mia_hand_camera/j_thumb_fle_velocity_controller/command', Float64, queue_size=1)
         self._index_vel_pub = rospy.Publisher('/mia_hand_camera/j_index_fle_velocity_controller/command', Float64, queue_size=1)
@@ -124,8 +124,9 @@ class MiaHandEnv(RobotGazeboEnv):
         self.joints_vel = data.velocity
         self.joints_effort = data.effort
         
-    def _camera_depth_points_callback(self, data : PointCloud2):
-        self.depth_points_xyz = data
+    def _camera_point_cloud_callback(self, data : PointCloud2):
+        self.point_cloud =  o3d_ros.convertCloudFromRosToOpen3d(data)
+        
         
     # Methods that the TrainingEnvironment will need to define here as virtual
     # because they will be used in RobotGazeboEnv GrandParentClass and defined in the
