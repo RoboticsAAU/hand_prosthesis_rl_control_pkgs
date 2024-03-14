@@ -53,7 +53,7 @@
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
 #include <sdf/sdf.hh>
-// hand_rl_ws/src/move_hand_pkgs/
+
 #ifdef NO_ERROR
 // NO_ERROR is a macro defined in Windows that's used as an enum in tf2
 #undef NO_ERROR
