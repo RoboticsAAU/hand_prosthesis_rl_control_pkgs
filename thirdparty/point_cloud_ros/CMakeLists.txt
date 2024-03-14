@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(hand_prosthesis_rl)
+project(point_cloud_ros)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -10,7 +10,6 @@ project(hand_prosthesis_rl)
 find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
-  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -47,10 +46,10 @@ catkin_python_setup()
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-   FILES
-   RLExperimentInfo.msg
- )
+# add_message_files(
+#    FILES
+#    RLExperimentInfo.msg
+#  )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -67,10 +66,10 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-   DEPENDENCIES
-   std_msgs
- )
+# generate_messages(
+#    DEPENDENCIES
+#    std_msgs
+#  )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -102,7 +101,7 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  DEPENDS message_runtime rospy gazebo_msgs std_msgs geometry_msgs controller_manager_msgs
+  # DEPENDS message_runtime rospy gazebo_msgs std_msgs geometry_msgs controller_manager_msgs
   # system_lib
 )
 
@@ -116,6 +115,7 @@ include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
 )
+
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
@@ -151,16 +151,13 @@ include_directories(
 ## Install ##
 #############
 
-catkin_install_python(PROGRAMS scripts/test.py
-                      DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-
 # all install targets should use catkin DESTINATION variables
 # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 # install(PROGRAMS
-#   src/training/train.py
+#   src/point_cloud_ros/lib_cloud_conversion_Open3D_ROS.py
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 

@@ -1,14 +1,14 @@
 import numpy
 import rospy
-#import ros_numpy.point_cloud2 as pc2
 from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
 from sensor_msgs.msg import PointCloud2
 #from mia_hand_msgs.msg import FingersData
 #from mia_hand_msgs.msg import FingersStrainGauges
 import sensor_msgs.point_cloud2 as pc2
+from hand_prosthesis_rl.gazebo.robot_gazebo_env import RobotGazeboEnv
+import point_cloud_ros.lib_cloud_conversion_Open3D_ROS as o3d_ros
 
-from gazebo.robot_gazebo_env import RobotGazeboEnv
 
 class MiaHandEnv(RobotGazeboEnv):
     """Superclass for all Robot environments.
@@ -32,18 +32,18 @@ class MiaHandEnv(RobotGazeboEnv):
                                                 reset_controls=False,
                                                 start_init_physics_parameters=False,
                                                 reset_world_or_sim="WORLD")
-
+        
         self.gazebo.unpauseSim()
     
         self._check_all_sensors_ready()
         
         # We Start all the ROS related Subscribers and publishers
-        rospy.Subscriber("/mia_hand/joint_states", JointState, self._joints_callback)
-        rospy.Subscriber("/mia_hand/camera/depth_registered/points", PointCloud2, self._camera_depth_points_callback)
+        rospy.Subscriber("/mia_hand_camera/joint_states", JointState, self._joints_callback)
+        rospy.Subscriber("/mia_hand_camera/camera/depth_registered/points", PointCloud2, self._camera_point_cloud_callback)
         
-        self._thumb_vel_pub = rospy.Publisher('/mia_hand/j_thumb_fle_velocity_controller/command', Float64, queue_size=1)
-        self._index_vel_pub = rospy.Publisher('/mia_hand/j_index_fle_velocity_controller/command', Float64, queue_size=1)
-        self._mrl_vel_pub = rospy.Publisher('/mia_hand/j_mrl_fle_velocity_controller/command', Float64, queue_size=1)
+        self._thumb_vel_pub = rospy.Publisher('/mia_hand_camera/j_thumb_fle_velocity_controller/command', Float64, queue_size=1)
+        self._index_vel_pub = rospy.Publisher('/mia_hand_camera/j_index_fle_velocity_controller/command', Float64, queue_size=1)
+        self._mrl_vel_pub = rospy.Publisher('/mia_hand_camera/j_mrl_fle_velocity_controller/command', Float64, queue_size=1)
         
         self._check_publishers_connection()
 
@@ -69,20 +69,20 @@ class MiaHandEnv(RobotGazeboEnv):
         self.hand_joints_data = None
         while self.hand_joints_data is None and not rospy.is_shutdown():
             try:
-                self.hand_joints_data = rospy.wait_for_message("/mia_hand_sim/joint_states", JointState, timeout=1.0)
-                rospy.loginfo("Current mia_hand_sim/joint_states READY=>" + str(self.hand_joints_data))
+                self.hand_joints_data = rospy.wait_for_message("/mia_hand_camera/joint_states", JointState, timeout=1.0)
+                #rospy.loginfo("Current mia_hand_camera/joint_states READY=>" + str(self.hand_joints_data))
 
             except:
-                rospy.logerr("Current mia_hand_sim/joint_states not ready yet, retrying for getting joint_states")
+                rospy.logerr("Current mia_hand_camera/joint_states not ready yet, retrying for getting joint_states")
         
-        # self.camera_pc_data = None
-        # while self.camera_pc_data is None and not rospy.is_shutdown():
-        #     try:
-        #         self.camera_pc_data = rospy.wait_for_message("/camera/depth/points", PointCloud2, timeout=1.0)
-        #         rospy.loginfo("Current camera/depth/points READY=>" + str(self.camera_pc_data))
+        self.camera_pc_data = None
+        while self.camera_pc_data is None and not rospy.is_shutdown():
+            try:
+                self.camera_pc_data = rospy.wait_for_message("/mia_hand_camera/camera/depth_registered/points", PointCloud2, timeout=1.0)
+                #rospy.loginfo("Current /mia_hand_camera/camera/depth_registered/points READY=>" + str(self.camera_pc_data))
 
-        #     except:
-        #         rospy.logerr("Current camera/depth/points not ready yet, retrying for getting joint_states")
+            except:
+                rospy.logerr("Current /mia_hand_camera/camera/depth_registered/points not ready yet, retrying for getting joint_states")
 
         rospy.loginfo("ALL SENSORS READY")
     
@@ -124,8 +124,9 @@ class MiaHandEnv(RobotGazeboEnv):
         self.joints_vel = data.velocity
         self.joints_effort = data.effort
         
-    def _camera_depth_points_callback(self, data : PointCloud2):
-        self.depth_points_xyz = data
+    def _camera_point_cloud_callback(self, data : PointCloud2):
+        self.point_cloud =  o3d_ros.convertCloudFromRosToOpen3d(data)
+        
         
     # Methods that the TrainingEnvironment will need to define here as virtual
     # because they will be used in RobotGazeboEnv GrandParentClass and defined in the
