@@ -144,6 +144,8 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
         mrl_vel = action[2]
         self.last_mrl_vel = mrl_vel
         
+        #index_vel, thumb_vel, mrl_vel = action[0], action[1], action[2]
+        
         # Mia hand is set to execute the speeds
         velocities = numpy.array([index_vel, thumb_vel, mrl_vel]) 
         
