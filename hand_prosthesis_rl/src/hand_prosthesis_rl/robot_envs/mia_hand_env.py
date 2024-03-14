@@ -7,7 +7,7 @@ from sensor_msgs.msg import PointCloud2
 #from mia_hand_msgs.msg import FingersStrainGauges
 import sensor_msgs.point_cloud2 as pc2
 from hand_prosthesis_rl.gazebo.robot_gazebo_env import RobotGazeboEnv
-import point_cloud_ros.lib_cloud_conversion_Open3D_ROS as o3d_ros
+import hand_prosthesis_rl.utilities.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
 
 class MiaHandEnv(RobotGazeboEnv):
     """Superclass for all Robot environments.

@@ -56,8 +56,7 @@ class URDFHandler():
                 mesh_files.append(file_path)
         return mesh_files
 
-    
-    
+
 if __name__ == "__main__":
     # # Get an instance of RosPack with the default search paths
     # rospack = rospkg.RosPack()

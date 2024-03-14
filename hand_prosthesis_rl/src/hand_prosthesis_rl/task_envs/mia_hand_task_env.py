@@ -17,8 +17,7 @@ register(
 class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
     def __init__(self):
         """
-        This Task Env is designed for having the TurtleBot3 in the turtlebot3 world
-        closed room with columns.
+        This Task Env is designed for having the Mia hand in the hand grasping world.
         It will learn how to move around without crashing.
         """
         
@@ -26,10 +25,10 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
         self.index_vel_lb = rospy.get_param('/mia_hand/index_vel_lb')
         self.index_vel_ub = rospy.get_param('/mia_hand/index_vel_ub')
         self.thumb_vel_lb = rospy.get_param('/mia_hand/thumb_vel_lb')
-        self.thumb_vel_ub = rospy.get_param('/mia_hand/thumb_vel_ub') 
+        self.thumb_vel_ub = rospy.get_param('/mia_hand/thumb_vel_ub')
         self.mrl_vel_lb = rospy.get_param('/mia_hand/mrl_vel_lb')
-        self.mrl_vel_ub = rospy.get_param('/mia_hand/mrl_vel_ub')        
-                
+        self.mrl_vel_ub = rospy.get_param('/mia_hand/mrl_vel_ub')
+        
         as_low = numpy.array([self.index_vel_lb,
                             self.thumb_vel_lb,
                             self.mrl_vel_lb])
@@ -42,26 +41,11 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
         
         # We set the reward range, which is not compulsory but here we do it.
         self.reward_range = (-numpy.inf, numpy.inf)
-        
-        
-        #number_observations = rospy.get_param('/turtlebot3/n_observations')
-        """
-        We set the Observation space for the 6 observations
-        cube_observations = [
-            round(current_disk_roll_vel, 0),
-            round(y_distance, 1),
-            round(roll, 1),
-            round(pitch, 1),
-            round(y_linear_speed,1),
-            round(yaw, 1),
-        ]
-        """
-        
+                
         # Initial velocities
         self.init_index_vel = 0
         self.init_thumb_vel = 0
         self.init_mrl_vel = 0
-        
         
         
         # We create two arrays based on the binary values that will be assigned
