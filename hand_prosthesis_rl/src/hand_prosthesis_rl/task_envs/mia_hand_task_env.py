@@ -1,10 +1,12 @@
 import rospy
 import numpy as np
 from gym import spaces
-from hand_prosthesis_rl.robot_envs import mia_hand_env
 from gym.envs.registration import register
-from geometry_msgs.msg import Vector3
 from functools import cached_property
+from hand_prosthesis_rl.robot_envs import mia_hand_env
+from hand_prosthesis_rl.utilities.robot_utils import generate_free_robot_hand_info
+
+OBJECT_LIFT_LOWER_LIMIT = -0.03
 
 # The path is __init__.py of openai_ros, where we import the TurtleBot2MazeEnv directly
 timestep_limit_per_episode = 10000 # Can be any Value
@@ -112,20 +114,12 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
         
         rospy.logdebug("Start Set Action ==>"+str(action))
         
-        # Current and previous actions are stored before sending it to the parent class MiaHandEnv
-        index_vel = action[0]       
-        self.last_index_vel = index_vel
+        # Get the action
+        action = np.array([action[0], action[1], action[2]])
         
-        thumb_vel = action[1]
-        self.last_thumb_vel = thumb_vel
-        
-        mrl_vel = action[2]
-        self.last_mrl_vel = mrl_vel
-        
-        #index_vel, thumb_vel, mrl_vel = action[0], action[1], action[2]
-        
-        # Mia hand is set to execute the speeds
-        velocities = np.array([index_vel, thumb_vel, mrl_vel]) 
+        # Get the new joint velocities
+        velocities = self.joints_vel + action
+        velocities.clip(self._as_low, self._as_high)
         
         self.move_fingers(velocities)
         
@@ -138,34 +132,22 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
         :return:
         """
         rospy.logdebug("Start Get Observation ==>")
-        # We get the laser scan data
-        laser_scan = self.get_laser_scan()
-        
-        discretized_observations = self.discretize_scan_observation(    laser_scan,
-                                                                        self.new_ranges
-                                                                        )
 
-        rospy.logdebug("Observations==>"+str(discretized_observations))
+        observation = {
+            "joints" : self.joints,
+            "joints_vel" : self.joints_vel,
+            "points" : self.point_cloud_handler.points
+        }
+        
+        rospy.logdebug("Observations==>"+str(observation))
         rospy.logdebug("END Get Observation ==>")
-        return discretized_observations
-
-
-    def _is_done(self, observations):
+        return observation
         
-        if self._episode_done:
-            rospy.logerr("Mia hand is Too Close to wall==>")
-        else:
-            rospy.logwarn("Mia hand is NOT close to a wall ==>")
-            
+
+    def _is_done(self):
         # Now we check if it has crashed based on the imu
-        imu_data = self.get_imu()
-        linear_acceleration_magnitude = self.get_vector_magnitude(imu_data.linear_acceleration)
-        if linear_acceleration_magnitude > self.max_linear_aceleration:
-            rospy.logerr("Mia hand Crashed==>"+str(linear_acceleration_magnitude)+">"+str(self.max_linear_aceleration))
+        if self._object_lift > OBJECT_LIFT_LOWER_LIMIT:
             self._episode_done = True
-        else:
-            rospy.logerr("DIDNT crash Mia hand ==>"+str(linear_acceleration_magnitude)+">"+str(self.max_linear_aceleration))
-        
 
         return self._episode_done
 

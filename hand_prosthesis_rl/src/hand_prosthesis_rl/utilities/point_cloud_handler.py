@@ -7,8 +7,8 @@ from pathlib import Path
 from hand_prosthesis_rl.utilities.urdf_handler import URDFHandler
 
 class PointCloudHandler():
-    def __init__(self):
-        self._pc = o3d.geometry.PointCloud()
+    def __init__(self, point_cloud : o3d.geometry.PointCloud = None):
+        self._pc = point_cloud if point_cloud is not None else o3d.geometry.PointCloud()
     
     def visualize(self):
         """
@@ -125,7 +125,11 @@ class PointCloudHandler():
         
     @property
     def pc(self):
-        return self._pc.copy()
+        return self._pc
+    
+    @pc.setter
+    def pc(self, point_cloud : o3d.geometry.PointCloud):
+        self._pc = point_cloud
 
     @property
     def points(self):

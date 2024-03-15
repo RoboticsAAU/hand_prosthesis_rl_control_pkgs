@@ -8,6 +8,8 @@ from sensor_msgs.msg import PointCloud2
 import sensor_msgs.point_cloud2 as pc2
 from hand_prosthesis_rl.gazebo.robot_gazebo_env import RobotGazeboEnv
 import hand_prosthesis_rl.utilities.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
+from hand_prosthesis_rl.utilities.tf_handler import TFHandler
+from hand_prosthesis_rl.utilities.point_cloud_handler import PointCloudHandler
 
 class MiaHandEnv(RobotGazeboEnv):
     """Superclass for all Robot environments.
@@ -21,11 +23,9 @@ class MiaHandEnv(RobotGazeboEnv):
         
         # Internal Vars
         self.controllers_list = []
-
         self.robot_name_space = ""
         
         # We launch the init function of the Parent Class RobotGazeboEnv
-        
         super(MiaHandEnv, self).__init__(controllers_list=self.controllers_list,
                                                 robot_name_space=self.robot_name_space,
                                                 reset_controls=False,
@@ -45,8 +45,12 @@ class MiaHandEnv(RobotGazeboEnv):
         self._mrl_vel_pub = rospy.Publisher('/mia_hand_camera/j_mrl_fle_velocity_controller/command', Float64, queue_size=1)
         
         self._check_publishers_connection()
-
+        
         self.gazebo.pauseSim()
+        
+        # Initialise handlers
+        self.point_cloud_handler = PointCloudHandler()
+        self.tf_handler = TFHandler()
         
         rospy.loginfo("Finished MiaHanEnv INIT...")
 
@@ -124,7 +128,7 @@ class MiaHandEnv(RobotGazeboEnv):
         self.joints_effort = data.effort
         
     def _camera_point_cloud_callback(self, data : PointCloud2):
-        self.point_cloud =  o3d_ros.convertCloudFromRosToOpen3d(data)
+        self.point_cloud_handler.pc = o3d_ros.convertCloudFromRosToOpen3d(data)
         
         
     # Methods that the TrainingEnvironment will need to define here as virtual
