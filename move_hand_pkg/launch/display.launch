@@ -8,7 +8,7 @@
   <!-- Arguments you can pass this launch file, for example paused:=true -->
   <arg name="Rviz_on" default="true" doc="If true, start Rviz and the joint state gui" />
   <arg name="use_joint_gui" default="false" doc="If true, start Rviz and the joint state gui" />
-  <arg name="paused" default="false"/>
+  <arg name="paused" default="true"/>
   <arg name="use_sim_time" default="true"/>
   <arg name="Gazebo_gui" default="true"/>
   <arg name="headless" default="false"/>
@@ -113,7 +113,7 @@
       />
 
       <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-      args="-urdf -model mia_hand -param robot_description"/>
+      args="-x 0.0 -y 0.0 -z 1.0 -Y 0.0 -unpause -urdf -model mia_hand -param robot_description"/>
 
       <!-- Load the path of the config file of the MIA trasnsmission -->
       <param name="mia_transmissions_config_" type="string"
@@ -129,7 +129,6 @@
       <node name="rqt_joint_trajectory_controller" pkg="rqt_joint_trajectory_controller" type="rqt_joint_trajectory_controller" />
 
     </group>
-
 
     <!-- spawn controller -->
   <node name="trajectory_ctrl_spawner" pkg="controller_manager" type="spawner"

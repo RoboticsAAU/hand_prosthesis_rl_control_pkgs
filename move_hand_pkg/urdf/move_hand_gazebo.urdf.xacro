@@ -37,11 +37,13 @@
   <gazebo>
     <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
       <robotNamespace>/${robotNamespace}</robotNamespace>
-      <!--robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType -->
+        <!-- robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType -->
         <robotSimType>mia/MiaHWSim</robotSimType>
     </plugin>
     
     <plugin name="gazebo_ros_move_hand" filename="gazebo_ros_move_hand.so">
+      <!-- name of the link that should be moved around.  -->
+      <link_name>base_link</link_name>
 
     </plugin>
   </gazebo>

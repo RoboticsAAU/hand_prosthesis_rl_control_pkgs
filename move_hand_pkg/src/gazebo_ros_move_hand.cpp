@@ -198,8 +198,10 @@ GazeboRosMoveHand::~GazeboRosMoveHand()
 {
 }
 
+// The _model object refers to the model object in the filetree in gazebo. A model consists of a collectn of links, joints and other physical proporteis. 
 void GazeboRosMoveHand::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
 {
+
   impl_->model_ = _model;
   
   auto pose = impl_->model_->WorldPose();
@@ -244,7 +246,7 @@ void GazeboRosMoveHand::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _
   }
 
   impl_->link_->SetGravityMode(false);
-
+  
   impl_->mass_ = impl_->link_->GetInertial()->Mass();
   impl_->cl_ = 2.0 * sqrt(impl_->kl_ * impl_->mass_);
   impl_->ca_ = 2.0 * sqrt(impl_->ka_ * impl_->link_->GetInertial()->IXX());

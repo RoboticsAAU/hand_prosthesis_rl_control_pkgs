@@ -68,23 +68,24 @@
             <xacro:mia_hand_robot_left joint_limits_parameters_file= '$(find mia_hand_description)/calibration/$(arg joint_limits_config_filename)' />
         </xacro:unless>
     </xacro:unless>
+    
 
-    <!--world to palm transform-->
-    <link name="world"/>
+    <!-- world to palm transform-->
+    <link name="base_link"/>
 
     <xacro:if value="$(arg right_hand)">
         <joint name="j_palm" type="fixed">
-        <origin xyz="0 0 0.2" rpy="1.57 0 0"/> <!--origin xyz="0 0 0.2" rpy="1.57 3.14 0""/-->
-        <parent link="world"/>
+        <origin xyz="0 0 0" rpy="1.57 0 0"/> <!-- origin xyz="0 0 0.2" rpy="1.57 3.14 0""/ -->
+        <parent link="base_link"/>
         <child link="palm"/>
         </joint>
     </xacro:if>
     <xacro:unless value="$(arg right_hand)">
         <joint name="j_palm" type="fixed">
-        <origin xyz="0 0 0.2" rpy="1.57 3.14 0"/> <!--origin xyz="0 0 0.2" rpy="1.57 3.14 0""/-->
-        <parent link="world"/>
+        <origin xyz="0 0 0" rpy="1.57 3.14 0"/> <!-- origin xyz="0 0 0.2" rpy="1.57 3.14 0""/ -->
+        <parent link="base_link"/>
         <child link="palm"/>
-        </joint>
+        </joint> 
     </xacro:unless>
 
 </robot>
