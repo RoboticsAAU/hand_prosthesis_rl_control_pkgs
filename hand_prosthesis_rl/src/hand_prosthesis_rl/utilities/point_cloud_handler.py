@@ -95,22 +95,22 @@ class PointCloudHandler():
     @staticmethod
     def scale(pc : o3d.geometry.PointCloud,
               scale_factors : np.array, 
-              centre : np.array = None):
+              transform : np.array = None):
         """
         It will scale the point cloud by the scale factors.
         :param scale_factor: The scale factors in each direction
-        :param centre: The centre of the scaling
+        :param transform: The coordinate frame to scale the point cloud about
         :return:
         """
-        if centre is not None:
-            pc.translate(-centre)
+        if transform is not None:
+            pc.transform(np.linalg.inv(transform))
         
         scaling_matrix = np.diag(np.append(scale_factors, 1))
         
         pc.transform(scaling_matrix)
         
-        if centre is not None:
-            pc.translate(centre)
+        if transform is not None:
+            pc.transform(transform)
         
     @staticmethod
     def transform(pc : o3d.geometry.PointCloud,
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     ignore_files = ["1.001.stl", "UR_flange.stl"]
     stl_folder = rospack.get_path('mia_hand_description') + "/meshes/stl"
     stl_files = [file for file in glob.glob(stl_folder + "/*") if (Path(file).name not in ignore_files)]
-    [folder + "/convex.stl" for folder in glob.glob("path/to/shapenet/*")]
+    
     # Extract stl files for left and right hand respectively
     stl_files_left, stl_files_right = [], []
     for x in stl_files:
@@ -160,15 +160,18 @@ if __name__ == "__main__":
     for stl_file in stl_files_right:
         origin, scale = urdf_handler.get_origin_and_scale(Path(stl_file).stem)
         
+        link_name = urdf_handler.get_link_name(Path(stl_file).stem)
+        origin = urdf_handler.get_link_transform("palm", link_name) @ origin        
+        
         # Create a dictionary for each mesh file
         mesh_dict[Path(stl_file).stem] = {
             'path': stl_file,  # Construct the path for the file
             'scale_factors': scale,  # Assign scale factors
-            'origin': None  # Assign origin
+            'origin': origin  # Assign origin
         }
     
     # Load the stl file
-    point_cloud_handler.sample_from_meshes(mesh_dict, 1000)
+    point_cloud_handler.sample_from_meshes(mesh_dict, 10000)
     #pc_plane = PointCloudHandler.sample_from_mesh("./plane.stl", 1000)
     #point_cloud_handler.combine(pc_plane)
     

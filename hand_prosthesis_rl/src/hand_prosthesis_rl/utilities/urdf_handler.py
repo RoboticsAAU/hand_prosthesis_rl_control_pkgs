@@ -12,29 +12,11 @@ DEFAULT_PATH = rospack.get_path("hand_prosthesis_env") + "/urdf/hands/mia_hand_d
 class URDFHandler():
     def __init__(self, urdf_file_path = DEFAULT_PATH):
         self._urdf_model = urdfpy.URDF.load(urdf_file_path)
-        
-    def get_link_names(self):
-        link_names = []
-        for link in self._urdf_model.links:
-            link_names.append(link.name)
-        return link_names
-
-    def get_joint_names(self):
-        joint_names = []
+        self._transform_relations = {}
+        self._transform_dict = {}
         for joint in self._urdf_model.joints:
-            joint_names.append(joint.name)
-        return joint_names
-
-    def get_joint_position(self, joint_name):
-        for joint in self._urdf_model.joints:
-            if joint.name == joint_name:
-                return joint.origin.xyz[2]
-
-    def get_joint_positions(self):
-        joint_positions = {}
-        for joint in self._urdf_model.joints:
-            joint_positions[joint.name] = joint.origin.xyz[2]
-        return joint_positions
+            self._transform_relations[joint.child] = joint.parent
+            self._transform_dict[(joint.parent, joint.child)] = joint.origin
 
     def get_origin_and_scale(self, mesh_name):
         # Search link name by mesh name
@@ -44,7 +26,31 @@ class URDFHandler():
                     origin = visual.origin
                     scale = visual.geometry.mesh.scale
                     break
-        return origin, scale
+        return origin, scale    
+    
+    def get_link_name(self, mesh_name):
+        for link in self._urdf_model.links:
+            for visual in link.visuals:
+                if mesh_name in visual.geometry.mesh.filename:
+                    return link.name
+        return None
+    
+    def get_link_transform(self, parent, child):
+        if parent == child:
+            return np.eye(4)
+        
+        if child not in self._transform_relations:
+            raise ValueError("The child link is not in the transform relations")
+        
+        tmp_parent = self._transform_relations[child]
+        
+        transform = self._transform_dict[(tmp_parent, child)]
+        while tmp_parent != parent:
+            child = tmp_parent
+            tmp_parent = self._transform_relations[tmp_parent]
+            transform = self._transform_dict[(tmp_parent, child)] @ transform
+        
+        return transform
     
     # CAN BE USED IF WE FIX THE MESH FILE PATHS
     def get_mesh_files(self):
