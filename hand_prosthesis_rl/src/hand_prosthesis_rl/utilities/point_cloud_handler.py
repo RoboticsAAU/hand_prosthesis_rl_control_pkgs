@@ -56,7 +56,17 @@ class PointCloudHandler():
         (plane_coeffs, plane_indices) = self._pc.segment_plane(distance_threshold=2, ransac_n=3, num_iterations=1000)
         
         # Remove the plane from the point cloud
-        self._pc = self._pc.select_by_index(plane_indices, invert=True)        
+        self._pc = self._pc.select_by_index(plane_indices, invert=True)
+        
+    
+    def update_cardinality(self, num_points : int):
+        """
+        It will update the cardinality of the point cloud.
+        :param num_points: The number of points to sample
+        :return:
+        """
+        self._pc = self._pc.uniform_down_sample(num_points)        
+    
     
     def combine(self, 
                 point_cloud : o3d.geometry.PointCloud):
