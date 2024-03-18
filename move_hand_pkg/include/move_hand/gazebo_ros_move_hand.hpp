@@ -128,6 +128,7 @@ protected:
 
 private:
   /// Private data pointer
+  // Deleted when the impl_ goes out of scope. Cannot be copied, only moved. Only one pointer can point to this particular memory address. 
   std::unique_ptr<GazeboRosMoveHandPrivate> impl_;
 };
 }  // namespace gazebo_plugins
