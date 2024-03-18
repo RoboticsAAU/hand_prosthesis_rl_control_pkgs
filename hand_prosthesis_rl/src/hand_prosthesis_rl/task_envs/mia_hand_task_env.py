@@ -24,6 +24,21 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
         It will learn how to move around without crashing.
         """
         
+        self.camera_infos = {
+            "camera": {
+                "point_cloud": {
+                    "ref_frame": "palm",
+                    "num_points": 512,
+                    "fov_x": 60,
+                    "fov_y": 60,
+                    "max_range": 1.5,
+                    "min_range": 0.5
+                }
+            }
+        }
+        
+        self.imagine_pts = 512
+        
         # Define the upper and lower bounds for velocity (Params are loaded in launch file)
         self.index_vel_lb = rospy.get_param('/mia_hand/index_vel_lb')
         self.index_vel_ub = rospy.get_param('/mia_hand/index_vel_ub')
@@ -63,18 +78,6 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
         self.end_episode_points = rospy.get_param("/mia_hand/end_episode_points")
 
         self.cumulated_steps = 0.0
-
-        self.camera_infos = {
-            "wrist_cam": {
-                "point_cloud": {
-                    "num_points": 512,
-                    "fov_x": 60,
-                    "fov_y": 60,
-                    "max_range": 1.5,
-                    "min_range": 0.5
-                }
-            }
-        }
         
         self.use_imagined = True
 
@@ -204,5 +207,50 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
             obs_dict[key_name] = spec
             
         if self.use_imagined:
+            self.update_imagination()
+            obs_dict["imagination"] = spaces.Box(low=-np.inf, high=np.inf, shape=((self.imagine_pts,) + (3,)))
+            
+        return spaces.Dict(obs_dict)
     
+    def get_all_observations(self):
+        raise NotImplementedError() 
+            
+    def get_camera_obs(self):
+        obs_dict = {}
         
+        for cam_name, cam_config in self.camera_infos.items():
+            for modality_name in cam_config.keys():
+                key_name = f"{cam_name}-{modality_name}"
+                
+                if modality_name == 'rgb':
+                    raise NotImplementedError()
+                
+                elif modality_name == 'depth':
+                    raise NotImplementedError()
+                
+                elif modality_name == 'point_cloud':
+                    # Remove table and enforce cardinality
+                    self.point_cloud_handler.remove_plane()
+                    self.point_cloud_handler.update_cardinality(512)
+
+                    # Transform point cloud to palm frame
+                    transform = self.tf_handler.get_transform_matrix(cam_name, "palm")
+                    self.point_cloud_handler.transform(transform)
+                
+                else:
+                    raise RuntimeError("Modality not supported")
+                
+                obs_dict[key_name] = self.point_cloud_handler.points
+                
+        if self.use_imagined:
+            self.update_imagination()
+            obs_dict.update(self.imagination)
+        
+        return obs_dict
+        
+    def update_imagination(self):
+        raise NotImplementedError() 
+        
+    
+
+            

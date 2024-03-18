@@ -1,5 +1,8 @@
 import numpy
 import rospy
+import rospkg
+import glob
+from pathlib import Path
 from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
 from sensor_msgs.msg import PointCloud2
@@ -10,6 +13,7 @@ from hand_prosthesis_rl.gazebo.robot_gazebo_env import RobotGazeboEnv
 import hand_prosthesis_rl.utilities.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
 from hand_prosthesis_rl.utilities.tf_handler import TFHandler
 from hand_prosthesis_rl.utilities.point_cloud_handler import PointCloudHandler
+from hand_prosthesis_rl.utilities.urdf_handler import URDFHandler
 
 class MiaHandEnv(RobotGazeboEnv):
     """Superclass for all Robot environments.
@@ -33,7 +37,7 @@ class MiaHandEnv(RobotGazeboEnv):
                                                 reset_world_or_sim="WORLD")
         
         self.gazebo.unpauseSim()
-    
+
         self._check_all_sensors_ready()
         
         # We Start all the ROS related Subscribers and publishers
@@ -49,7 +53,9 @@ class MiaHandEnv(RobotGazeboEnv):
         self.gazebo.pauseSim()
         
         # Initialise handlers
-        self.point_cloud_handler = PointCloudHandler()
+        self.pc_cam_handler = PointCloudHandler()
+        self.pc_imagine_handler = PointCloudHandler()        
+        
         self.tf_handler = TFHandler()
         
         rospy.loginfo("Finished MiaHanEnv INIT...")
@@ -128,8 +134,7 @@ class MiaHandEnv(RobotGazeboEnv):
         self.joints_effort = data.effort
         
     def _camera_point_cloud_callback(self, data : PointCloud2):
-        self.point_cloud_handler.pc = o3d_ros.convertCloudFromRosToOpen3d(data)
-        
+        self.pc_cam_handler.pc = o3d_ros.convertCloudFromRosToOpen3d(data)
         
     # Methods that the TrainingEnvironment will need to define here as virtual
     # because they will be used in RobotGazeboEnv GrandParentClass and defined in the
@@ -205,4 +210,3 @@ class MiaHandEnv(RobotGazeboEnv):
         
         vel_value.data = speeds[2]
         self._mrl_vel_pub.publish(vel_value)
-        
