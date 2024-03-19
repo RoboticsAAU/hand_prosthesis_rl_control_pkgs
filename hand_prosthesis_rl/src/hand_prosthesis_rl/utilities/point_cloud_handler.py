@@ -59,8 +59,9 @@ class PointCloudHandler():
         
         # Initialise the point clouds
         initial_count = self.count
-        num_pc = max(mesh_dict.values(), key=lambda x: x["group_index"]) + 1
+        num_pc = max(mesh_dict.values(), key=lambda x: x["group_index"])["group_index"] + 1
         self._pc.extend([o3d.geometry.PointCloud() for _ in range(num_pc)])
+        self._transforms.extend([None for _ in range(num_pc)])
         
         # Go through each mesh file in the dictionary
         for mesh_values in mesh_dict.values():
@@ -74,7 +75,7 @@ class PointCloudHandler():
             
             # Set the new point cloud
             index = initial_count + mesh_values["group_index"]
-            self.combine(point_cloud, index)
+            self.combine(point_cloud, index=index)
             
             # Set the transform of the group
             if self._transforms[index] is None:
@@ -221,16 +222,18 @@ if __name__ == "__main__":
         
         link_name = urdf_handler.get_link_name(Path(stl_file).stem)
         origin = urdf_handler.get_link_transform("palm", link_name) @ origin
-        for group, links in groups.items():
-            if any(link in link_name for link in links):
-                break
+        group_index = None
+        for group_name, links in groups.items():
+            if not any(link in link_name for link in links):
+                continue
+            group_index = list(groups.keys()).index(group_name)
         
         # Create a dictionary for each mesh file
         mesh_dict[Path(stl_file).stem] = {
             'path': stl_file,  # Construct the path for the file
             'scale_factors': scale,  # Assign scale factors
             'origin': origin,  # Assign origin
-            'group' : group
+            'group_index' : group_index
         }
     
     
