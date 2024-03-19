@@ -14,7 +14,7 @@
     <arg name="image_view" default="false"/>
     <arg name="robotNamespace" default="mia_hand_camera"/> <!-- /mia_hand -->
     <arg name="load_default_mia_model" default="false" />
-    <arg name="right_hand" default="false" doc="True to for right hand False otherwise" /> <!-- Params to set right or left Mia hand version  -->
+    <arg name="right_hand" default="true" doc="True to for right hand False otherwise" /> <!-- Params to set right or left Mia hand version  -->
     <arg name="joint_limits_config_filename" default="joint_limits.yaml" doc="name of the yaml file to calibrate joints limit of URDF file" />
     <arg name="transmission_config_filename" default="transmission_config.yaml" doc="name of the yaml file to calibrate transmissions of MiaHand" />
 

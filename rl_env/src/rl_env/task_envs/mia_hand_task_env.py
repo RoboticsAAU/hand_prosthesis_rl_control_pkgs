@@ -249,10 +249,10 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
         self.group_frames = {group_index: None for group_index in range(len(self.config_imagined["groups"].keys()))}
         mesh_dict = {}  # Initialize an empty dictionary
         for stl_file in self.config_imagined["stl_files"]:
-            origin, scale = self.urdf_handler.get_origin_and_scale(Path(stl_file).stem)
-            origin = np.eye(4)
+            visual_origin, scale = self.urdf_handler.get_visual_origin_and_scale(Path(stl_file).stem)
+            
             link_name = self.urdf_handler.get_link_name(Path(stl_file).stem)
-            origin = self.urdf_handler.get_link_transform(self.config_imagined["ref_frame"], link_name) @ origin
+            link_origin = self.urdf_handler.get_link_transform(self.config_imagined["ref_frame"], link_name)
             
             group_index = None
             for group_name, links in self.config_imagined["groups"].items():
@@ -264,7 +264,8 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
             mesh_dict[Path(stl_file).stem] = {
                 'path': stl_file,  # Construct the path for the file
                 'scale_factors': scale,  # Assign scale factors
-                'origin': origin,  # Assign origin
+                'visual_origin': visual_origin,  # Assign origin
+                'link_origin' : link_origin,
                 'group_index' : group_index
             }
             
@@ -283,10 +284,12 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
             rel_transform = np.linalg.inv(self.pc_imagine_handler.transforms[group_index]) @ transform
             np.set_printoptions(precision=3)
             tmp = self.config_imagined["ref_frame"]
-            print(f"URDF From {tmp} to {frame}: {self.pc_imagine_handler.transforms[group_index]}")
-            #print(f"Relative transform{rel_transform}")
-            print(f"TF2 From {tmp} to {frame}: {transform}")
+            print("------------------------------")
+            print(f"URDF From {tmp} to {frame}:\n {self.pc_imagine_handler.transforms[group_index]}")
+            print(f"TF2 From {tmp} to {frame}:\n {transform}")
+            print(f"Relative transform:\n{rel_transform}")
+            print("------------------------------")
             
             self.pc_imagine_handler.transform(self.pc_imagine_handler.pc[group_index], rel_transform)
             
-            self.pc_imagine_handler.transforms[group_index] = transform
+            self.pc_imagine_handler._transforms[group_index] = transform

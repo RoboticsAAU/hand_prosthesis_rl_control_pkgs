@@ -63,15 +63,15 @@ def main():
     rospy.sleep(2)
     
     while not rospy.is_shutdown():
-        # current_time = rospy.get_time()
+        current_time = rospy.get_time()
         
-        # # Alternating between opening and closing hand
-        # alternating_time = 5
-        # if (int(current_time) % (2*alternating_time)) < alternating_time:
-        #     speed = 0.5
-        # else:
-        #     speed = -0.5
-        # mia_world_env.move_fingers(np.repeat(speed, 3))
+        # Alternating between opening and closing hand
+        alternating_time = 5
+        if (int(current_time) % (2*alternating_time)) < alternating_time:
+            speed = 0.5
+        else:
+            speed = -0.5
+        mia_world_env.move_fingers(np.repeat(speed, 3))
         rospy.sleep(0.1)
         mia_world_env.pc_imagine_handler.visualize(combined=True)
         mia_world_env.update_imagination()

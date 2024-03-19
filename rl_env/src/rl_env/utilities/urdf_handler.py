@@ -18,7 +18,7 @@ class URDFHandler():
             self._transform_relations[joint.child] = joint.parent
             self._transform_dict[(joint.parent, joint.child)] = joint.origin
 
-    def get_origin_and_scale(self, mesh_name):
+    def get_visual_origin_and_scale(self, mesh_name):
         # Search link name by mesh name
         for link in self._urdf_model.links:
             for visual in link.visuals:
@@ -71,7 +71,6 @@ if __name__ == "__main__":
     # urdf_file = rospack.get_path('mia_hand_description') + "/urdf/mia_hand_default.urdf"
     
     urdf_handler = URDFHandler(DEFAULT_PATH)
-    print(urdf_handler.get_link_names())
     
-    origin, scale = urdf_handler.get_origin_and_scale("little_finger")
+    origin, scale = urdf_handler.get_visual_origin_and_scale("little_finger")
     
