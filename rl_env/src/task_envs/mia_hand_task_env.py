@@ -4,8 +4,8 @@ from pathlib import Path
 from gym import spaces
 from gym.envs.registration import register
 from functools import cached_property
-from rl_env.robot_envs import mia_hand_env
-from rl_env.utilities.robot_utils import generate_free_robot_hand_info
+from robot_envs.mia_hand_env import MiaHandEnv
+from utilities.robot_utils import generate_free_robot_hand_info
 
 OBJECT_LIFT_LOWER_LIMIT = -0.03
 
@@ -18,7 +18,7 @@ register(
         #timestep_limit=timestep_limit_per_episode,
     )
 
-class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
+class MiaHandWorldEnv(MiaHandEnv):
     def __init__(self, config):
         """
         This Task Env is designed for having the Mia hand in the hand grasping world.

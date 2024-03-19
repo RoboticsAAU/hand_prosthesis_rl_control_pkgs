@@ -7,11 +7,11 @@ from sensor_msgs.msg import JointState
 from sensor_msgs.msg import PointCloud2
 #from mia_hand_msgs.msg import FingersData
 #from mia_hand_msgs.msg import FingersStrainGauges
-from rl_env.gazebo.robot_gazebo_env import RobotGazeboEnv
-import rl_env.utilities.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
-from rl_env.utilities.tf_handler import TFHandler
-from rl_env.utilities.point_cloud_handler import PointCloudHandler
-from rl_env.utilities.urdf_handler import URDFHandler
+from gazebo.robot_gazebo_env import RobotGazeboEnv
+import utilities.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
+from utilities.tf_handler import TFHandler
+from utilities.point_cloud_handler import PointCloudHandler
+from utilities.urdf_handler import URDFHandler
 
 class MiaHandEnv(RobotGazeboEnv):
     """Superclass for all Robot environments.

@@ -5,7 +5,7 @@ import numpy as np
 import rospkg
 import glob
 from pathlib import Path
-from rl_env.task_envs.mia_hand_task_env import MiaHandWorldEnv
+from task_envs.mia_hand_task_env import MiaHandWorldEnv
 
 
 def main():

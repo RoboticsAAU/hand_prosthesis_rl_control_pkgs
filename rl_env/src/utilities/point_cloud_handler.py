@@ -5,7 +5,7 @@ import rospkg
 import glob
 from time import time
 from pathlib import Path
-from rl_env.utilities.urdf_handler import URDFHandler
+from utilities.urdf_handler import URDFHandler
 
 class PointCloudHandler():
     def __init__(self, point_clouds : List[o3d.geometry.PointCloud] = None, transforms : List[np.ndarray] = None):
