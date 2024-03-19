@@ -288,46 +288,46 @@ void GazeboRosMoveHand::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _
       impl_->robot_base_frame_.c_str());
   }
 
-  impl_->covariance_[0] =  _sdf->Get<double>("covariance_x",     0.00001).first;
-  impl_->covariance_[1] =  _sdf->Get<double>("covariance_y",     0.00001).first;
-  impl_->covariance_[2] =  _sdf->Get<double>("covariance_z",     0.00001).first;
-  impl_->covariance_[3] =  _sdf->Get<double>("covariance_roll",  0.001).first;
-  impl_->covariance_[4] =  _sdf->Get<double>("covariance_pitch", 0.001).first;
-  impl_->covariance_[5] =  _sdf->Get<double>("covariance_yaw",   0.001).first;
-  impl_->covariance_[6] =  _sdf->Get<double>("covariance_vx",     0.00001).first;
-  impl_->covariance_[7] =  _sdf->Get<double>("covariance_vy",     0.00001).first;
-  impl_->covariance_[8] =  _sdf->Get<double>("covariance_vz",     0.00001).first;
-  impl_->covariance_[9] =  _sdf->Get<double>("covariance_vroll",  0.001).first;
-  impl_->covariance_[10] = _sdf->Get<double>("covariance_vpitch", 0.001).first;
-  impl_->covariance_[11] = _sdf->Get<double>("covariance_vyaw",   0.001).first;
+  // impl_->covariance_[0] =  _sdf->Get<double>("covariance_x",     0.00001).first;
+  // impl_->covariance_[1] =  _sdf->Get<double>("covariance_y",     0.00001).first;
+  // impl_->covariance_[2] =  _sdf->Get<double>("covariance_z",     0.00001).first;
+  // impl_->covariance_[3] =  _sdf->Get<double>("covariance_roll",  0.001).first;
+  // impl_->covariance_[4] =  _sdf->Get<double>("covariance_pitch", 0.001).first;
+  // impl_->covariance_[5] =  _sdf->Get<double>("covariance_yaw",   0.001).first;
+  // impl_->covariance_[6] =  _sdf->Get<double>("covariance_vx",     0.00001).first;
+  // impl_->covariance_[7] =  _sdf->Get<double>("covariance_vy",     0.00001).first;
+  // impl_->covariance_[8] =  _sdf->Get<double>("covariance_vz",     0.00001).first;
+  // impl_->covariance_[9] =  _sdf->Get<double>("covariance_vroll",  0.001).first;
+  // impl_->covariance_[10] = _sdf->Get<double>("covariance_vpitch", 0.001).first;
+  // impl_->covariance_[11] = _sdf->Get<double>("covariance_vyaw",   0.001).first;
 
-  impl_->bias_[0] =  _sdf->Get<double>("bias_x",     0.00001).first;
-  impl_->bias_[1] =  _sdf->Get<double>("bias_y",     0.00001).first;
-  impl_->bias_[2] =  _sdf->Get<double>("bias_z",     0.00001).first;
-  impl_->bias_[3] =  _sdf->Get<double>("bias_roll",  0.001).first;
-  impl_->bias_[4] =  _sdf->Get<double>("bias_pitch", 0.001).first;
-  impl_->bias_[5] =  _sdf->Get<double>("bias_yaw",   0.001).first;
-  impl_->bias_[6] =  _sdf->Get<double>("bias_vx",     0.00001).first;
-  impl_->bias_[7] =  _sdf->Get<double>("bias_vy",     0.00001).first;
-  impl_->bias_[8] =  _sdf->Get<double>("bias_vz",     0.00001).first;
-  impl_->bias_[9] =  _sdf->Get<double>("bias_vroll",  0.001).first;
-  impl_->bias_[10] = _sdf->Get<double>("bias_vpitch", 0.001).first;
-  impl_->bias_[11] = _sdf->Get<double>("bias_vyaw",   0.001).first;
+  // impl_->bias_[0] =  _sdf->Get<double>("bias_x",     0.00001).first;
+  // impl_->bias_[1] =  _sdf->Get<double>("bias_y",     0.00001).first;
+  // impl_->bias_[2] =  _sdf->Get<double>("bias_z",     0.00001).first;
+  // impl_->bias_[3] =  _sdf->Get<double>("bias_roll",  0.001).first;
+  // impl_->bias_[4] =  _sdf->Get<double>("bias_pitch", 0.001).first;
+  // impl_->bias_[5] =  _sdf->Get<double>("bias_yaw",   0.001).first;
+  // impl_->bias_[6] =  _sdf->Get<double>("bias_vx",     0.00001).first;
+  // impl_->bias_[7] =  _sdf->Get<double>("bias_vy",     0.00001).first;
+  // impl_->bias_[8] =  _sdf->Get<double>("bias_vz",     0.00001).first;
+  // impl_->bias_[9] =  _sdf->Get<double>("bias_vroll",  0.001).first;
+  // impl_->bias_[10] = _sdf->Get<double>("bias_vpitch", 0.001).first;
+  // impl_->bias_[11] = _sdf->Get<double>("bias_vyaw",   0.001).first;
 
-  // Set covariance
-  impl_->odom_.pose.covariance[0] =  impl_->covariance_[0];
-  impl_->odom_.pose.covariance[7] =  impl_->covariance_[1];
-  impl_->odom_.pose.covariance[14] = impl_->covariance_[2];
-  impl_->odom_.pose.covariance[21] = impl_->covariance_[3];
-  impl_->odom_.pose.covariance[28] = impl_->covariance_[4];
-  impl_->odom_.pose.covariance[35] = impl_->covariance_[5];
+  // // Set covariance
+  // impl_->odom_.pose.covariance[0] =  impl_->covariance_[0];
+  // impl_->odom_.pose.covariance[7] =  impl_->covariance_[1];
+  // impl_->odom_.pose.covariance[14] = impl_->covariance_[2];
+  // impl_->odom_.pose.covariance[21] = impl_->covariance_[3];
+  // impl_->odom_.pose.covariance[28] = impl_->covariance_[4];
+  // impl_->odom_.pose.covariance[35] = impl_->covariance_[5];
 
-  impl_->odom_.twist.covariance[0] =  impl_->covariance_[6];
-  impl_->odom_.twist.covariance[7] =  impl_->covariance_[7];
-  impl_->odom_.twist.covariance[14] = impl_->covariance_[8];
-  impl_->odom_.twist.covariance[21] = impl_->covariance_[9];
-  impl_->odom_.twist.covariance[28] = impl_->covariance_[10];
-  impl_->odom_.twist.covariance[35] = impl_->covariance_[11];
+  // impl_->odom_.twist.covariance[0] =  impl_->covariance_[6];
+  // impl_->odom_.twist.covariance[7] =  impl_->covariance_[7];
+  // impl_->odom_.twist.covariance[14] = impl_->covariance_[8];
+  // impl_->odom_.twist.covariance[21] = impl_->covariance_[9];
+  // impl_->odom_.twist.covariance[28] = impl_->covariance_[10];
+  // impl_->odom_.twist.covariance[35] = impl_->covariance_[11];
 
 
   impl_->max_acc_ = _sdf->Get<double>("max_acc", 10).first;
@@ -516,36 +516,36 @@ void GazeboRosMoveHandPrivate::UpdateOdometryWorld()
   odom_.pose.pose.orientation.z = qt.Z();
   odom_.pose.pose.orientation.w = qt.W();
 
-  odom_.pose.pose.position.x += ignition::math::Rand::DblNormal(bias_[0], covariance_[0]);
-  odom_.pose.pose.position.y += ignition::math::Rand::DblNormal(bias_[1], covariance_[1]);
-  odom_.pose.pose.position.z += ignition::math::Rand::DblNormal(bias_[2], covariance_[2]);
+  // odom_.pose.pose.position.x += ignition::math::Rand::DblNormal(bias_[0], covariance_[0]);
+  // odom_.pose.pose.position.y += ignition::math::Rand::DblNormal(bias_[1], covariance_[1]);
+  // odom_.pose.pose.position.z += ignition::math::Rand::DblNormal(bias_[2], covariance_[2]);
 
-  ignition::math::Quaternion q_noise(ignition::math::Rand::DblNormal(bias_[3], covariance_[3]), 
-                                     ignition::math::Rand::DblNormal(bias_[4], covariance_[4]),
-                                     ignition::math::Rand::DblNormal(bias_[5], covariance_[5]));
+  // ignition::math::Quaternion q_noise(ignition::math::Rand::DblNormal(bias_[3], covariance_[3]), 
+  //                                    ignition::math::Rand::DblNormal(bias_[4], covariance_[4]),
+  //                                    ignition::math::Rand::DblNormal(bias_[5], covariance_[5]));
   
-  odom_.pose.pose.orientation.x += q_noise.X();
-  odom_.pose.pose.orientation.y += q_noise.Y();
-  odom_.pose.pose.orientation.z += q_noise.Z();
-  odom_.pose.pose.orientation.w += q_noise.W();
+  // odom_.pose.pose.orientation.x += q_noise.X();
+  // odom_.pose.pose.orientation.y += q_noise.Y();
+  // odom_.pose.pose.orientation.z += q_noise.Z();
+  // odom_.pose.pose.orientation.w += q_noise.W();
 
   // Get velocity in odom frame
   auto linear = model_->RelativeLinearVel();
   odom_.twist.twist.linear.x = linear.X();
   odom_.twist.twist.linear.y = linear.Y();
   odom_.twist.twist.linear.z = linear.Z();
-  odom_.twist.twist.linear.x += ignition::math::Rand::DblNormal(bias_[6], covariance_[6]);
-  odom_.twist.twist.linear.y += ignition::math::Rand::DblNormal(bias_[7], covariance_[7]);
-  odom_.twist.twist.linear.z += ignition::math::Rand::DblNormal(bias_[8], covariance_[8]);
+  // odom_.twist.twist.linear.x += ignition::math::Rand::DblNormal(bias_[6], covariance_[6]);
+  // odom_.twist.twist.linear.y += ignition::math::Rand::DblNormal(bias_[7], covariance_[7]);
+  // odom_.twist.twist.linear.z += ignition::math::Rand::DblNormal(bias_[8], covariance_[8]);
 
   
   auto angular = model_->RelativeAngularVel();
   odom_.twist.twist.angular.x = angular.X();
   odom_.twist.twist.angular.y = angular.Y();
   odom_.twist.twist.angular.z = angular.Z();
-  odom_.twist.twist.angular.x += ignition::math::Rand::DblNormal(bias_[9], covariance_[9]);
-  odom_.twist.twist.angular.y += ignition::math::Rand::DblNormal(bias_[10], covariance_[10]);
-  odom_.twist.twist.angular.z += ignition::math::Rand::DblNormal(bias_[11], covariance_[11]);
+  // odom_.twist.twist.angular.x += ignition::math::Rand::DblNormal(bias_[9], covariance_[9]);
+  // odom_.twist.twist.angular.y += ignition::math::Rand::DblNormal(bias_[10], covariance_[10]);
+  // odom_.twist.twist.angular.z += ignition::math::Rand::DblNormal(bias_[11], covariance_[11]);
 }
 
 void GazeboRosMoveHandPrivate::PublishOdometryTf(const gazebo::common::Time & _current_time)
