@@ -1,19 +1,17 @@
 import numpy
 import rospy
 import rospkg
-import glob
-from pathlib import Path
+import open3d as o3d
 from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
 from sensor_msgs.msg import PointCloud2
 #from mia_hand_msgs.msg import FingersData
 #from mia_hand_msgs.msg import FingersStrainGauges
-import sensor_msgs.point_cloud2 as pc2
-from hand_prosthesis_rl.gazebo.robot_gazebo_env import RobotGazeboEnv
-import hand_prosthesis_rl.utilities.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
-from hand_prosthesis_rl.utilities.tf_handler import TFHandler
-from hand_prosthesis_rl.utilities.point_cloud_handler import PointCloudHandler
-from hand_prosthesis_rl.utilities.urdf_handler import URDFHandler
+from rl_env.gazebo.robot_gazebo_env import RobotGazeboEnv
+import rl_env.utilities.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
+from rl_env.utilities.tf_handler import TFHandler
+from rl_env.utilities.point_cloud_handler import PointCloudHandler
+from rl_env.utilities.urdf_handler import URDFHandler
 
 class MiaHandEnv(RobotGazeboEnv):
     """Superclass for all Robot environments.
@@ -24,10 +22,19 @@ class MiaHandEnv(RobotGazeboEnv):
         """
         # Variables that we give through the constructor.
         rospy.loginfo("Start MiaHanEnv INIT...")
-        
+                
         # Internal Vars
         self.controllers_list = []
         self.robot_name_space = ""
+        # Get an instance of RosPack with the default search paths
+        rospack = rospkg.RosPack()
+        
+        # Initialise handlers
+        urdf_path = rospack.get_path("simulation_world") + "/urdf/hands/mia_hand_default.urdf"
+        self.urdf_handler = URDFHandler(urdf_path)
+        self.pc_cam_handler = PointCloudHandler(point_clouds=[o3d.geometry.PointCloud()])
+        self.pc_imagine_handler = PointCloudHandler()
+        self.tf_handler = TFHandler()
         
         # We launch the init function of the Parent Class RobotGazeboEnv
         super(MiaHandEnv, self).__init__(controllers_list=self.controllers_list,
@@ -52,13 +59,7 @@ class MiaHandEnv(RobotGazeboEnv):
         
         self.gazebo.pauseSim()
         
-        # Initialise handlers
-        self.urdf_handler = URDFHandler()
         
-        self.pc_cam_handler = PointCloudHandler()
-        self.pc_imagine_handler = PointCloudHandler()
-        
-        self.tf_handler = TFHandler()
         
         rospy.loginfo("Finished MiaHanEnv INIT...")
 
@@ -136,7 +137,7 @@ class MiaHandEnv(RobotGazeboEnv):
         self.joints_effort = data.effort
         
     def _camera_point_cloud_callback(self, data : PointCloud2):
-        self.pc_cam_handler.pc = o3d_ros.convertCloudFromRosToOpen3d(data)
+        self.pc_cam_handler.pc[0] = o3d_ros.convertCloudFromRosToOpen3d(data)
         
     # Methods that the TrainingEnvironment will need to define here as virtual
     # because they will be used in RobotGazeboEnv GrandParentClass and defined in the

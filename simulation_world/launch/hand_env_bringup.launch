@@ -41,7 +41,7 @@
      </include>
 
      <!-- Load robot URDF to param server and run robot_state_publisher for rviz etc -->
-     <include file="$(find hand_prosthesis_env)/launch/view_hand_env.launch">
+     <include file="$(find simulation_world)/launch/view_hand_env.launch">
           <arg name="Rviz_on" value="$(arg Rviz_on)"/>
           <arg name="use_joint_gui" value="$(arg use_joint_gui)"/>
           <arg name="hw_interface_thumb_fle" value="$(arg hw_interface_thumb_fle)"/>
@@ -57,7 +57,7 @@
      <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
      <group ns = "$(arg robotNamespace)">
           <!-- Load urdf as robot description -->
-          <param name="robot_description" command="$(find xacro)/xacro '$(find hand_prosthesis_env)/urdf/hands/mia_hand_camera_launch.urdf.xacro'
+          <param name="robot_description" command="$(find xacro)/xacro '$(find simulation_world)/urdf/hands/mia_hand_camera_launch.urdf.xacro'
                default_mia_model:=$(arg load_default_mia_model)
                right_hand:=$(arg right_hand)
                robotNamespace:=$(arg robotNamespace)
@@ -84,7 +84,7 @@
 
 
      <!-- Run image processing (rectification and registration) -->
-     <include file="$(find hand_prosthesis_env)/launch/image_processing.launch"/>
+     <include file="$(find simulation_world)/launch/image_processing.launch"/>
 
      <!-- Run image_view to visualize the rectified and registered images -->
      <node if="$(arg image_view)" name="image_view_rgb" pkg="image_view" type="image_view" respawn="false" output="screen">

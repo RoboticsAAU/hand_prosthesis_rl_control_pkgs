@@ -7,7 +7,7 @@ import rospkg
 import os
 
 rospack = rospkg.RosPack()
-DEFAULT_PATH = rospack.get_path("hand_prosthesis_env") + "/urdf/hands/mia_hand_default.urdf"
+DEFAULT_PATH = rospack.get_path("simulation_world") + "/urdf/hands/mia_hand_default.urdf"
 
 class URDFHandler():
     def __init__(self, urdf_file_path = DEFAULT_PATH):

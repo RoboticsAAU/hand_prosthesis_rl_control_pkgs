@@ -4,7 +4,7 @@ import numpy as np
 import rospkg
 
 rospack = rospkg.RosPack()
-hand_path = rospack.get_path("hand_prosthesis_env") + "/urdf/hands"
+hand_path = rospack.get_path("simulation_world") + "/urdf/hands"
 
 class FreeRobotInfo(NamedTuple):
     path: str

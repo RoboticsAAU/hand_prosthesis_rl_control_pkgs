@@ -1,9 +1,9 @@
 import rospy
 import gym
 from gym.utils import seeding
-from hand_prosthesis_rl.gazebo.gazebo_connection import GazeboConnection
-from hand_prosthesis_rl.gazebo.controllers_connection import ControllersConnection
-from hand_prosthesis_rl.msg import RLExperimentInfo
+from rl_env.gazebo.gazebo_connection import GazeboConnection
+from rl_env.gazebo.controllers_connection import ControllersConnection
+from rl_env.msg import RLExperimentInfo
 
 # https://github.com/openai/gym/blob/master/gym/core.py
 class RobotGazeboEnv(gym.Env):

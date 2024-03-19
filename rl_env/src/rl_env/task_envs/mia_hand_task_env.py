@@ -4,8 +4,8 @@ from pathlib import Path
 from gym import spaces
 from gym.envs.registration import register
 from functools import cached_property
-from hand_prosthesis_rl.robot_envs import mia_hand_env
-from hand_prosthesis_rl.utilities.robot_utils import generate_free_robot_hand_info
+from rl_env.robot_envs import mia_hand_env
+from rl_env.utilities.robot_utils import generate_free_robot_hand_info
 
 OBJECT_LIFT_LOWER_LIMIT = -0.03
 
@@ -15,38 +15,28 @@ timestep_limit_per_episode = 10000 # Can be any Value
 register(
         id='MiaHandWorld-v0',
         entry_point='task_envs.mia_hand_task_env:MiaHandWorldEnv',
-        timestep_limit=timestep_limit_per_episode,
+        #timestep_limit=timestep_limit_per_episode,
     )
 
 class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
-    def __init__(self):
+    def __init__(self, config):
         """
         This Task Env is designed for having the Mia hand in the hand grasping world.
         It will learn how to move around without crashing.
         """
         
-        self.camera_infos = {
-            "camera": {
-                "point_cloud": {
-                    "ref_frame": "palm",
-                    "num_points": 512,
-                    "fov_x": 60,
-                    "fov_y": 60,
-                    "max_range": 1.5,
-                    "min_range": 0.5
-                }
-            }
-        }
-        
-        self.imagine_pts = 512
+        self.config_imagined = config["config_imagined"]
+        self.config_cameras = config["config_cameras"]
+        self.group_frames = {}
         
         # Define the upper and lower bounds for velocity (Params are loaded in launch file)
-        self.index_vel_lb = rospy.get_param('/mia_hand/index_vel_lb')
-        self.index_vel_ub = rospy.get_param('/mia_hand/index_vel_ub')
-        self.thumb_vel_lb = rospy.get_param('/mia_hand/thumb_vel_lb')
-        self.thumb_vel_ub = rospy.get_param('/mia_hand/thumb_vel_ub')
-        self.mrl_vel_lb = rospy.get_param('/mia_hand/mrl_vel_lb')
-        self.mrl_vel_ub = rospy.get_param('/mia_hand/mrl_vel_ub')
+        
+        self.index_vel_lb = rospy.get_param('/mia_hand_camera/index_vel_lb')
+        self.index_vel_ub = rospy.get_param('/mia_hand_camera/index_vel_ub')
+        self.thumb_vel_lb = rospy.get_param('/mia_hand_camera/thumb_vel_lb')
+        self.thumb_vel_ub = rospy.get_param('/mia_hand_camera/thumb_vel_ub')
+        self.mrl_vel_lb = rospy.get_param('/mia_hand_camera/mrl_vel_lb')
+        self.mrl_vel_ub = rospy.get_param('/mia_hand_camera/mrl_vel_ub')
         
         # Bounds for joint velocities
         self.vel_lb = np.array([self.index_vel_lb, self.thumb_vel_lb, self.mrl_vel_lb])
@@ -61,26 +51,25 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
         self.init_mrl_vel = 0
         
         # Define the upper and lower bounds for positions
-        self.index_pos_lb = rospy.get_param('/mia_hand/index_pos_lb')
-        self.index_pos_ub = rospy.get_param('/mia_hand/index_pos_ub')
-        self.thumb_pos_lb = rospy.get_param('/mia_hand/thumb_pos_lb')
-        self.thumb_pos_ub = rospy.get_param('/mia_hand/thumb_pos_ub')
-        self.mrl_pos_lb = rospy.get_param('/mia_hand/mrl_pos_lb')
-        self.mrl_pos_ub = rospy.get_param('/mia_hand/mrl_pos_ub')
+        self.index_pos_lb = rospy.get_param('/mia_hand_camera/index_pos_lb')
+        self.index_pos_ub = rospy.get_param('/mia_hand_camera/index_pos_ub')
+        self.thumb_pos_lb = rospy.get_param('/mia_hand_camera/thumb_pos_lb')
+        self.thumb_pos_ub = rospy.get_param('/mia_hand_camera/thumb_pos_ub')
+        self.mrl_pos_lb = rospy.get_param('/mia_hand_camera/mrl_pos_lb')
+        self.mrl_pos_ub = rospy.get_param('/mia_hand_camera/mrl_pos_ub')
         
         # Bounds for joint positions        
         self.pos_lb = np.array([self.index_pos_lb, self.thumb_pos_lb, self.mrl_pos_lb])
         self.pos_ub = np.array([self.index_pos_ub, self.thumb_pos_ub, self.mrl_pos_ub])
-        
-        rospy.logdebug("ACTION SPACES TYPE===>"+str(self._action_space()))
-        rospy.logdebug("OBSERVATION SPACES TYPE===>"+str(self._obs_space()))
+                
+        rospy.logdebug("ACTION SPACES TYPE===>"+str(self._action_space))
+        rospy.logdebug("OBSERVATION SPACES TYPE===>"+str(self._obs_space))
         
         # Rewards
-        self.end_episode_points = rospy.get_param("/mia_hand/end_episode_points")
+        self.end_episode_points = rospy.get_param("/mia_hand_camera/end_episode_points")
 
         self.cumulated_steps = 0.0
         
-        self.use_imagined = True
 
         # Here we will add any init functions prior to starting the MyRobotEnv
         super(MiaHandWorldEnv, self).__init__()
@@ -186,7 +175,7 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
         state_space = spaces.Box(self.pos_lb, self.pos_ub, dtype = np.float32)
         obs_dict = {"state": state_space}
         
-        for cam_name, cam_config in self.camera_infos.items():
+        for cam_name, cam_config in self.config_cameras.items():
             for modality_name in cam_config.keys():
                 key_name = f"{cam_name}-{modality_name}" 
                 
@@ -207,19 +196,25 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
             
             obs_dict[key_name] = spec
             
-        if self.use_imagined:
+        if self.config_imagined is not None:
             self.update_imagination()
-            obs_dict["imagination"] = spaces.Box(low=-np.inf, high=np.inf, shape=((self.imagine_pts,) + (3,)))
+            obs_dict["imagination"] = spaces.Box(low=-np.inf, high=np.inf, shape=((self.config_imagined["num_points"],) + (3,)))
             
         return spaces.Dict(obs_dict)
     
     def get_all_observations(self):
-        raise NotImplementedError() 
+        camera_obs = self.get_camera_obs()
+        state_obs = self.get_state_obs()
+        camera_obs.update(state_obs)
+        return camera_obs
+    
+    def get_state_obs(self):
+        raise NotImplementedError()
             
     def get_camera_obs(self):
         obs_dict = {}
         
-        for cam_name, cam_config in self.camera_infos.items():
+        for cam_name, cam_config in self.config_cameras.items():
             for modality_name in cam_config.keys():
                 key_name = f"{cam_name}-{modality_name}"
                 
@@ -243,27 +238,27 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
                 
                 obs_dict[key_name] = self.point_cloud_handler.points
                 
-        if self.use_imagined:
+        if self.config_imagined is not None:
             self.update_imagination()
             obs_dict.update(self.imagination)
         
         return obs_dict
         
-    def setup_imagination(self, config):
+    def setup_imagination(self):
         # config has: "stl_files", "ref_frame", "groups", "num_points"
-        self.group_frames = {group_index: None for group_index in range(len(config["groups"].keys()))}
+        self.group_frames = {group_index: None for group_index in range(len(self.config_imagined["groups"].keys()))}
         mesh_dict = {}  # Initialize an empty dictionary
-        for stl_file in config["stl_files"].values():
+        for stl_file in self.config_imagined["stl_files"]:
             origin, scale = self.urdf_handler.get_origin_and_scale(Path(stl_file).stem)
-            
+            origin = np.eye(4)
             link_name = self.urdf_handler.get_link_name(Path(stl_file).stem)
-            origin = self.urdf_handler.get_link_transform(config["ref_frame"], link_name) @ origin
+            origin = self.urdf_handler.get_link_transform(self.config_imagined["ref_frame"], link_name) @ origin
             
             group_index = None
-            for group_name, links in config["groups"].items():
+            for group_name, links in self.config_imagined["groups"].items():
                 if not any(link in link_name for link in links):
                     continue
-                group_index = list(config["groups"].keys()).index(group_name)
+                group_index = list(self.config_imagined["groups"].keys()).index(group_name)
             
             # Create a dictionary for each mesh file
             mesh_dict[Path(stl_file).stem] = {
@@ -273,21 +268,25 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
                 'group_index' : group_index
             }
             
-            if self.group_frames[group_index] is not None:
+            if self.group_frames[group_index] is None:
                 self.group_frames[group_index] = link_name
         
-        self.pc_imagine_handler.sample_from_meshes(mesh_dict, 10*config["num_points"])
-        self.pc_imagine_handler.update_cardinality(config["num_points"])
+        self.pc_imagine_handler.sample_from_meshes(mesh_dict, 10*self.config_imagined["num_points"])
+        self.pc_imagine_handler.update_cardinality(self.config_imagined["num_points"]//len(self.config_imagined["groups"]), voxel_size=0.001)
         
-        
-        
-    def update_imagination(self, config):
+    def update_imagination(self):
         for group_index, frame in self.group_frames.items():
             # Get the transform to the reference frame
-            transform = self.tf_handler.get_transform(frame, config["ref_frame"])
-            
+            tf_transform = self.tf_handler.get_transform(self.config_imagined["ref_frame"], frame)            
+            transform = self.tf_handler.convert_tf_to_matrix(tf_transform)
             # Get the relative transform and update the transform
             rel_transform = np.linalg.inv(self.pc_imagine_handler.transforms[group_index]) @ transform
-            self.pc_imagine_handler.transform(self.pc_imagine_handler._pc, rel_transform)
+            np.set_printoptions(precision=3)
+            tmp = self.config_imagined["ref_frame"]
+            print(f"URDF From {tmp} to {frame}: {self.pc_imagine_handler.transforms[group_index]}")
+            #print(f"Relative transform{rel_transform}")
+            print(f"TF2 From {tmp} to {frame}: {transform}")
+            
+            self.pc_imagine_handler.transform(self.pc_imagine_handler.pc[group_index], rel_transform)
             
             self.pc_imagine_handler.transforms[group_index] = transform
