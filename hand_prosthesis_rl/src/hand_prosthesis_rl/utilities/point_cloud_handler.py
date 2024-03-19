@@ -12,6 +12,8 @@ class PointCloudHandler():
         self._pc = point_clouds if point_clouds is not None else []
         self._transforms = transforms if transforms is not None else []
     
+    
+    # OBS: When calling functions with this decorator with non-default index, remember to do explicit assignment of index (i.e. index = n), otherwise it won't be listed in kwargs    
     def _check_multiple_run(func):
         """
         Decorator to run a function on all point clouds if no index is given.
@@ -21,11 +23,9 @@ class PointCloudHandler():
                 tmp_kwargs = kwargs.copy()
                 for index in range(len(self._pc)):
                     tmp_kwargs['index'] = index
-                    print(args)
-                    print(tmp_kwargs)
                     func(self, *args, **tmp_kwargs)
             else:
-                func(*args, **kwargs)
+                func(self, *args, **kwargs)
         
         return wrapper
     
@@ -104,10 +104,10 @@ class PointCloudHandler():
         """
         self._pc[index] = self._pc[index].voxel_down_sample(voxel_size)
         self._pc[index] = self._pc[index].random_down_sample(num_points/len(self._pc[index].points))
-        print(len(self.points))
+    
     
     @_check_multiple_run
-    def combine(self, point_cloud : o3d.geometry.PointCloud, index : Optional[int] = None):
+    def combine(self, point_cloud : o3d.geometry.PointCloud, index : int = None):
         """
         It will combine the point cloud with the current point cloud.
         :param point_cloud: The point cloud to combine
@@ -244,7 +244,7 @@ if __name__ == "__main__":
     print(f"Duration: {duration:.5f} seconds")
     
     start_time = time()
-    point_cloud_handler.update_cardinality(1000)
+    point_cloud_handler.update_cardinality(200)
     duration = time() - start_time
     print(f"Duration: {duration:.5f} seconds")
     
