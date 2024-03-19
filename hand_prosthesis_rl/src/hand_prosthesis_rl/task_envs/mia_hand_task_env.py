@@ -1,5 +1,6 @@
 import rospy
 import numpy as np
+from pathlib import Path
 from gym import spaces
 from gym.envs.registration import register
 from functools import cached_property
@@ -248,9 +249,45 @@ class MiaHandWorldEnv(mia_hand_env.MiaHandEnv):
         
         return obs_dict
         
-    def update_imagination(self):
-        raise NotImplementedError() 
-        
-    
-
+    def setup_imagination(self, config):
+        # config has: "stl_files", "ref_frame", "groups", "num_points"
+        self.group_frames = {group_index: None for group_index in range(len(config["groups"].keys()))}
+        mesh_dict = {}  # Initialize an empty dictionary
+        for stl_file in config["stl_files"].values():
+            origin, scale = self.urdf_handler.get_origin_and_scale(Path(stl_file).stem)
             
+            link_name = self.urdf_handler.get_link_name(Path(stl_file).stem)
+            origin = self.urdf_handler.get_link_transform(config["ref_frame"], link_name) @ origin
+            
+            group_index = None
+            for group_name, links in config["groups"].items():
+                if not any(link in link_name for link in links):
+                    continue
+                group_index = list(config["groups"].keys()).index(group_name)
+            
+            # Create a dictionary for each mesh file
+            mesh_dict[Path(stl_file).stem] = {
+                'path': stl_file,  # Construct the path for the file
+                'scale_factors': scale,  # Assign scale factors
+                'origin': origin,  # Assign origin
+                'group_index' : group_index
+            }
+            
+            if self.group_frames[group_index] is not None:
+                self.group_frames[group_index] = link_name
+        
+        self.pc_imagine_handler.sample_from_meshes(mesh_dict, 10*config["num_points"])
+        self.pc_imagine_handler.update_cardinality(config["num_points"])
+        
+        
+        
+    def update_imagination(self, config):
+        for group_index, frame in self.group_frames.items():
+            # Get the transform to the reference frame
+            transform = self.tf_handler.get_transform(frame, config["ref_frame"])
+            
+            # Get the relative transform and update the transform
+            rel_transform = np.linalg.inv(self.pc_imagine_handler.transforms[group_index]) @ transform
+            self.pc_imagine_handler.transform(self.pc_imagine_handler._pc, rel_transform)
+            
+            self.pc_imagine_handler.transforms[group_index] = transform

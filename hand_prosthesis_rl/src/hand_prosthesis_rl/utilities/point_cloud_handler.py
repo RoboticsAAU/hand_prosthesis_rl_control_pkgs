@@ -1,6 +1,6 @@
 import open3d as o3d
 import numpy as np
-from typing import List, Optional
+from typing import List, Optional, Dict
 import rospkg
 import glob
 from time import time
@@ -8,10 +8,14 @@ from pathlib import Path
 from hand_prosthesis_rl.utilities.urdf_handler import URDFHandler
 
 class PointCloudHandler():
-    def __init__(self, point_clouds : List[o3d.geometry.PointCloud] = None):
+    def __init__(self, point_clouds : List[o3d.geometry.PointCloud] = None, transforms : List[np.ndarray] = None):
         self._pc = point_clouds if point_clouds is not None else []
-        
+        self._transforms = transforms if transforms is not None else []
+    
     def _check_multiple_run(func):
+        """
+        Decorator to run a function on all point clouds if no index is given.
+        """
         def wrapper(self, *args, **kwargs):
             if kwargs.get('index') is None:
                 tmp_kwargs = kwargs.copy()
@@ -26,12 +30,12 @@ class PointCloudHandler():
         return wrapper
     
     
-    @_check_multiple_run    
-    def visualize(self, index : int = 0):
+    @_check_multiple_run
+    def visualize(self, index : Optional[int] = None):
         """
         Visualize its own point cloud.
         :param point_cloud: Open3D PointCloud object
-        :return:
+        :param index: The index of the point cloud
         """
         if self._pc is None:
             raise ValueError("The point cloud is not set.")
@@ -47,37 +51,41 @@ class PointCloudHandler():
                            mesh_dict : dict, 
                            total_sample_points : int = 1000):
         """
-        It will sample the mesh files (either .stl or .obj).
-        :param stl_files: The path to the stl files
+        It will sample the mesh files (either .stl or .obj) given by the dict.
+        :param mesh_dict: Dictionary containing the mesh files, scale factors, origins, and group indices
         :param total_sample_points: The total number of points to sample
-        :return:
         """
         sample_points = total_sample_points // len(mesh_dict)
         
-        groups = []
+        # Initialise the point clouds
         initial_count = self.count
+        num_pc = max(mesh_dict.values(), key=lambda x: x["group_index"]) + 1
+        self._pc.extend([o3d.geometry.PointCloud() for _ in range(num_pc)])
+        
+        # Go through each mesh file in the dictionary
         for mesh_values in mesh_dict.values():
-            if mesh_values["group"] not in groups:
-                groups.append(mesh_values["group"])
-                self._pc.append(o3d.geometry.PointCloud())
-            
             point_cloud = self.sample_from_mesh(mesh_values["path"], sample_points)
             
+            # Apply the scale factors and origin
             if mesh_values["scale_factors"] is not None:
                 self.scale(point_cloud, mesh_values["scale_factors"])
-            
             if mesh_values["origin"] is not None:
                 self.transform(point_cloud, mesh_values["origin"])
             
-            index = groups.index(mesh_values["group"]) + initial_count
+            # Set the new point cloud
+            index = initial_count + mesh_values["group_index"]
             self.combine(point_cloud, index)
+            
+            # Set the transform of the group
+            if self._transforms[index] is None:
+                self._transforms[index] = mesh_values["origin"] if mesh_values["origin"] is not None else np.eye(4)
     
     
     @_check_multiple_run
-    def remove_plane(self, index : int = 0):
+    def remove_plane(self, index : Optional[int] = None):
         """
         It will remove the plane from the point cloud.
-        :return:
+        :param index: The index of the point cloud
         """
         # Isolate the plane in the point cloud
         (plane_coeffs, plane_indices) = self._pc[index].segment_plane(distance_threshold=2, ransac_n=3, num_iterations=1000)
@@ -87,12 +95,12 @@ class PointCloudHandler():
         
     
     @_check_multiple_run
-    def update_cardinality(self, num_points : int, voxel_size : float = 0.005, index : int = None):
+    def update_cardinality(self, num_points : int, voxel_size : float = 0.005, index : Optional[int] = None):
         """
         It will update the cardinality of the point cloud.
         :param num_points: The number of points in output pc
         :param voxel_size: The voxel size used during sampling 
-        :return:
+        :param index: The index of the point cloud
         """
         self._pc[index] = self._pc[index].voxel_down_sample(voxel_size)
         self._pc[index] = self._pc[index].random_down_sample(num_points/len(self._pc[index].points))
@@ -103,13 +111,18 @@ class PointCloudHandler():
         """
         It will combine the point cloud with the current point cloud.
         :param point_cloud: The point cloud to combine
+        :param index: The index of the point cloud
         """
         self._pc[index] += point_cloud
     
     @_check_multiple_run
-    def clear(self, index : int = None):
+    def clear(self, index : Optional[int] = None):
+        """
+        It will clear the point cloud.
+        :param index: The index of the point cloud
+        """
         self._pc[index].clear()
-        
+    
     
     @staticmethod
     def sample_from_mesh(mesh_file : str, 
@@ -135,13 +148,12 @@ class PointCloudHandler():
 
     @staticmethod
     def scale(pc : o3d.geometry.PointCloud,
-              scale_factors : np.array, 
+              scale_factors : np.array,
               transform : np.array = None):
         """
         It will scale the point cloud by the scale factors.
         :param scale_factor: The scale factors in each direction
         :param transform: The coordinate frame to scale the point cloud about
-        :return:
         """
         if transform is not None:
             pc.transform(np.linalg.inv(transform))
@@ -159,7 +171,6 @@ class PointCloudHandler():
         """
         It will transform the point cloud.
         :param pc: The point cloud
-        :return:
         """
         pc.transform(transform)
         
@@ -192,8 +203,6 @@ if __name__ == "__main__":
     ignore_files = ["1.001.stl", "UR_flange.stl"]
     stl_folder = rospack.get_path('mia_hand_description') + "/meshes/stl"
     stl_files = [file for file in glob.glob(stl_folder + "/*") if (Path(file).name not in ignore_files)]
-    
-
     
     # Extract stl files for left and right hand respectively
     stl_files_left, stl_files_right = [], []

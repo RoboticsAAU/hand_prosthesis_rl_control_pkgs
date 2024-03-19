@@ -53,8 +53,10 @@ class MiaHandEnv(RobotGazeboEnv):
         self.gazebo.pauseSim()
         
         # Initialise handlers
+        self.urdf_handler = URDFHandler()
+        
         self.pc_cam_handler = PointCloudHandler()
-        self.pc_imagine_handler = PointCloudHandler()        
+        self.pc_imagine_handler = PointCloudHandler()
         
         self.tf_handler = TFHandler()
         
