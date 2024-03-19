@@ -43,10 +43,10 @@
  */
 
 
-#include <gazebo/common/Time.hh>
-#include <gazebo/physics/Link.hh>
-#include <gazebo/physics/Model.hh>
-#include <gazebo/physics/World.hh>
+#include <gazebo-11/gazebo/common/Time.hh>
+#include <gazebo-11/gazebo/physics/Link.hh>
+#include <gazebo-11/gazebo/physics/Model.hh>
+#include <gazebo-11/gazebo/physics/World.hh>
 #include <move_hand/gazebo_ros_move_hand.hpp>
 #include <gazebo/transport/Node.hh>
 #include <geometry_msgs/Pose.h>
