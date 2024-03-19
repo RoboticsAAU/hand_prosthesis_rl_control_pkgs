@@ -19,9 +19,10 @@ class PointCloudHandler():
         Decorator to run a function on all point clouds if no index is given.
         """
         def wrapper(self, *args, **kwargs):
-            if kwargs.get('index') is None:
+            combined = kwargs.get('combined', False)
+            if not combined and kwargs.get('index') is None:
                 tmp_kwargs = kwargs.copy()
-                for index in range(len(self._pc)):
+                for index in range(self.count):
                     tmp_kwargs['index'] = index
                     func(self, *args, **tmp_kwargs)
             else:
@@ -31,25 +32,63 @@ class PointCloudHandler():
     
     
     @_check_multiple_run
-    def visualize(self, index : Optional[int] = None):
+    def visualize(self, combined : bool = False, index : Optional[int] = None):
         """
         Visualize its own point cloud.
         :param point_cloud: Open3D PointCloud object
         :param index: The index of the point cloud
         """
-        if self._pc is None:
+        if self.count == 0:
             raise ValueError("The point cloud is not set.")
         
+        pc = self._pc[index] if not combined else self.get_combined()
         vis = o3d.visualization.Visualizer()
         vis.create_window()
-        vis.add_geometry(self._pc[index])
+        vis.add_geometry(pc)
         vis.run()
         vis.destroy_window()
     
+    @_check_multiple_run
+    def remove_plane(self, index : Optional[int] = None):
+        """
+        It will remove the plane from the point cloud.
+        :param index: The index of the point cloud
+        """
+        # Isolate the plane in the point cloud
+        (plane_coeffs, plane_indices) = self._pc[index].segment_plane(distance_threshold=2, ransac_n=3, num_iterations=1000)
+        
+        # Remove the plane from the point cloud
+        self._pc[index] = self._pc[index].select_by_index(plane_indices, invert=True)
     
-    def sample_from_meshes(self, 
-                           mesh_dict : dict, 
-                           total_sample_points : int = 1000):
+    @_check_multiple_run
+    def update_cardinality(self, num_points : int, voxel_size : float = 0.005, index : Optional[int] = None):
+        """
+        It will update the cardinality of the point cloud.
+        :param num_points: The number of points in output pc
+        :param voxel_size: The voxel size used during sampling 
+        :param index: The index of the point cloud
+        """
+        self._pc[index] = self._pc[index].voxel_down_sample(voxel_size)
+        self._pc[index] = self._pc[index].random_down_sample(num_points/len(self._pc[index].points))
+    
+    @_check_multiple_run
+    def add(self, point_cloud : o3d.geometry.PointCloud, index : int = None):
+        """
+        It will add the point cloud with the current point cloud.
+        :param point_cloud: The point cloud to add
+        :param index: The index of the point cloud
+        """
+        self._pc[index] += point_cloud
+    
+    @_check_multiple_run
+    def clear(self, index : Optional[int] = None):
+        """
+        It will clear the point cloud.
+        :param index: The index of the point cloud
+        """
+        self._pc[index].clear()
+    
+    def sample_from_meshes(self, mesh_dict : dict, total_sample_points : int = 1000):
         """
         It will sample the mesh files (either .stl or .obj) given by the dict.
         :param mesh_dict: Dictionary containing the mesh files, scale factors, origins, and group indices
@@ -75,55 +114,23 @@ class PointCloudHandler():
             
             # Set the new point cloud
             index = initial_count + mesh_values["group_index"]
-            self.combine(point_cloud, index=index)
+            self.add(point_cloud, index=index)
             
             # Set the transform of the group
             if self._transforms[index] is None:
                 self._transforms[index] = mesh_values["origin"] if mesh_values["origin"] is not None else np.eye(4)
     
-    
-    @_check_multiple_run
-    def remove_plane(self, index : Optional[int] = None):
+    def get_combined(self, index_list : Optional[List[int]] = None):
         """
-        It will remove the plane from the point cloud.
-        :param index: The index of the point cloud
+        It will combine all the point clouds.
+        :param index_list: The list of indices to combine
+        :return: The combined point cloud
         """
-        # Isolate the plane in the point cloud
-        (plane_coeffs, plane_indices) = self._pc[index].segment_plane(distance_threshold=2, ransac_n=3, num_iterations=1000)
+        pc = o3d.geometry.PointCloud()
+        for index in (index_list if index_list is not None else range(self.count)):
+            pc += self._pc[index]
         
-        # Remove the plane from the point cloud
-        self._pc[index] = self._pc[index].select_by_index(plane_indices, invert=True)
-        
-    
-    @_check_multiple_run
-    def update_cardinality(self, num_points : int, voxel_size : float = 0.005, index : Optional[int] = None):
-        """
-        It will update the cardinality of the point cloud.
-        :param num_points: The number of points in output pc
-        :param voxel_size: The voxel size used during sampling 
-        :param index: The index of the point cloud
-        """
-        self._pc[index] = self._pc[index].voxel_down_sample(voxel_size)
-        self._pc[index] = self._pc[index].random_down_sample(num_points/len(self._pc[index].points))
-    
-    
-    @_check_multiple_run
-    def combine(self, point_cloud : o3d.geometry.PointCloud, index : int = None):
-        """
-        It will combine the point cloud with the current point cloud.
-        :param point_cloud: The point cloud to combine
-        :param index: The index of the point cloud
-        """
-        self._pc[index] += point_cloud
-    
-    @_check_multiple_run
-    def clear(self, index : Optional[int] = None):
-        """
-        It will clear the point cloud.
-        :param index: The index of the point cloud
-        """
-        self._pc[index].clear()
-    
+        return pc
     
     @staticmethod
     def sample_from_mesh(mesh_file : str, 
@@ -241,7 +248,7 @@ if __name__ == "__main__":
     # Load the stl file
     point_cloud_handler.sample_from_meshes(mesh_dict, 10000)
     #pc_plane = PointCloudHandler.sample_from_mesh("./plane.stl", 1000)
-    #point_cloud_handler.combine(pc_plane)
+    #point_cloud_handler.add(pc_plane)
     
     duration = time() - start_time
     print(f"Duration: {duration:.5f} seconds")
@@ -252,7 +259,7 @@ if __name__ == "__main__":
     print(f"Duration: {duration:.5f} seconds")
     
     # Visualize the point cloud
-    point_cloud_handler.visualize()
+    point_cloud_handler.visualize(combined=True)
     
     #point_cloud_handler.remove_plane()
     #point_cloud_handler.visualize()
