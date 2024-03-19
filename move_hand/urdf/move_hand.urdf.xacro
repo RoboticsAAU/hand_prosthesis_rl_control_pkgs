@@ -28,7 +28,7 @@
     <xacro:include filename="$(find mia_hand_description)/materials/materials.xacro"/>
 
     <!-- Import Transmission and all Gazebo-customization elements, including Gazebo colors and teh Gazebo plugin-->
-    <xacro:include filename="$(find move_hand_pkg)/urdf/move_hand_gazebo.urdf.xacro" />
+    <xacro:include filename="$(find move_hand)/urdf/move_hand_gazebo.urdf.xacro" />
 
     <xacro:mia_gazebo hw_interface_thumb_fle="$(arg hw_interface_thumb_fle)"
                         hw_interface_index_fle="$(arg hw_interface_index_fle)"
@@ -89,4 +89,3 @@
     </xacro:unless>
 
 </robot>
-

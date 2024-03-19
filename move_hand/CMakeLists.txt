@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5.1)
-project(move_hand_pkg)
+project(move_hand)
 add_compile_options(-std=c++17)
 # 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")

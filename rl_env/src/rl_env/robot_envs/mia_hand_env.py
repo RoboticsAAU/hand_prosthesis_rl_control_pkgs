@@ -55,7 +55,7 @@ class MiaHandEnv(RobotGazeboEnv):
         self._index_vel_pub = rospy.Publisher('/mia_hand_camera/j_index_fle_velocity_controller/command', Float64, queue_size=1)
         self._mrl_vel_pub = rospy.Publisher('/mia_hand_camera/j_mrl_fle_velocity_controller/command', Float64, queue_size=1)
         
-        self._check_publishers_connection()
+        self._wait_for_publishers_connection()
         
         self.gazebo.pauseSim()
         
@@ -98,7 +98,7 @@ class MiaHandEnv(RobotGazeboEnv):
 
         rospy.loginfo("ALL SENSORS READY")
     
-    def _check_publishers_connection(self):
+    def _wait_for_publishers_connection(self):
         """
         Checks that all the publishers are working
         :return:
@@ -184,7 +184,7 @@ class MiaHandEnv(RobotGazeboEnv):
         vel_value = Float64()
         vel_value.data = speed
         rospy.logdebug("MiaHand Float64 Cmd>>" + str(vel_value))
-        self._check_publishers_connection()
+        self._wait_for_publishers_connection()
         if finger_id == "thumb":
             self._thumb_vel_pub.publish(vel_value)
         elif finger_id == "index":
@@ -202,7 +202,7 @@ class MiaHandEnv(RobotGazeboEnv):
         """
         vel_value = Float64()
         
-        self._check_publishers_connection()
+        self._wait_for_publishers_connection()
         rospy.logdebug("MiaHand Float64 Cmd>>" + str(vel_value))
         
         vel_value.data = speeds[0]

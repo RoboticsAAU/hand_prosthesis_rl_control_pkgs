@@ -35,7 +35,7 @@
 #ifndef GAZEBO_PLUGINS__GAZEBO_ROS_DIFF_DRIVE_HPP_
 #define GAZEBO_PLUGINS__GAZEBO_ROS_DIFF_DRIVE_HPP_
 
-#include <gazebo/common/Plugin.hh>
+#include <gazebo-11/gazebo/common/Plugin.hh>
 
 #include <memory>
 
