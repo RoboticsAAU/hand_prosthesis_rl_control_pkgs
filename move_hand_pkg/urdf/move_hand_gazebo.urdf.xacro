@@ -42,9 +42,45 @@
     </plugin>
     
     <plugin name="gazebo_ros_move_hand" filename="gazebo_ros_move_hand.so">
+      
+      <ros>
+        <!-- Namespace for the nodes -->
+        <namespace>/move_hand</namespace>
+
+      </ros>
+
       <!-- name of the link that should be moved around.  -->
       <link_name>base_link</link_name>
+      
+      <!-- Defaults to world -->
+      <!-- The plugin expects TF 'frame_id' + "_desired" -->
+      <!-- <frame_id>link</frame_id> -->
 
+      <!-- Force and Torque gains -->
+      <ka>200</ka>
+      <kl>200</kl>
+
+      <!-- Max Acceleration -->
+      <max_acc>10</max_acc>
+
+      <!-- Fake pitch and roll -->
+      <fake_pitch_roll>true</fake_pitch_roll>
+
+      <!-- Odometry output -->
+      <update_rate>50 </update_rate>
+      <publish_odom>true</publish_odom>
+      <publish_odom_tf>false</publish_odom_tf>
+
+      <!-- Topics -->
+      <cmd_vel_topic>/cmd_vel</cmd_vel_topic>
+      <cmd_pos_topic>/cmd_pos</cmd_pos_topic>
+
+      <odometry_topic>odom</odometry_topic>
+      <odometry_frame>odom</odometry_frame>
+      <robot_base_frame>base_link</robot_base_frame>
+
+
+      
     </plugin>
   </gazebo>
 
