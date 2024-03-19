@@ -409,7 +409,7 @@ void GazeboRosMoveHandPrivate::OnUpdate(const gazebo::common::UpdateInfo & _info
       auto curr_acc = m_acc*(target_linear_vel_cmd_rotated-target_linear_vel_cmd_rotated_prev_)/dt;
       target_linear_vel_cmd_rotated_prev_ = target_linear_vel_cmd_rotated;
       auto accz = std::clamp(curr_acc.getZ(), 0.0, abs(curr_acc.getZ()));
-      q_new.setRPY(atan2(-curr_acc.getY(),accz+9.8), atan2(curr_acc.getX(),accz+9.8), yaw); // cheap, dirty, trick to make it look more realistic...
+      q_new.setRPY(atan2(-curr_acc.getY(),accz+9.80665), atan2(curr_acc.getX(),accz+9.80665), yaw); // cheap, dirty, trick to make it look more realistic...
     } else {
       q_new.setRPY(0.0, 0.0, yaw);
     }
