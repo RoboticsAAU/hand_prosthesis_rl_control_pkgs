@@ -1,7 +1,8 @@
 import rospy
-import numpy as np
+import numpy as np 
 import tf2_ros
 import tf2_geometry_msgs
+from scipy.spatial.transform import Rotation
 from geometry_msgs.msg import TransformStamped
 from geometry_msgs.msg import PoseStamped
 
@@ -38,3 +39,24 @@ class TFHandler():
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
             rospy.logwarn("Failed to transform pose: %s", str(e))
             return None
+        
+    def convert_tf_to_matrix(self, transform : TransformStamped):
+        """
+        It will convert a transform to a 3x3 rotation matrix.
+        :param transform: The transform
+        :return: The 3x3 rotation matrix
+        """
+        
+        R = Rotation.from_quat([transform.transform.rotation.x,
+                                transform.transform.rotation.y,
+                                transform.transform.rotation.z,
+                                transform.transform.rotation.w]).as_matrix()
+        
+        t = np.array([transform.transform.translation.x,
+                      transform.transform.translation.y,
+                      transform.transform.translation.z])
+        
+        T = np.concatenate((R, t.reshape(-1,1)), axis=1)
+        T = np.concatenate((T, np.array([[0, 0, 0, 1]])), axis=0)
+        
+        return T

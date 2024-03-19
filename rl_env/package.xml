@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>hand_prosthesis_rl</name>
+  <name>rl_env</name>
   <version>1.0.0</version>
-  <description>The hand_prosthesis_rl package</description>
+  <description>The rl_env package</description>
   <maintainer email="vrisag20@student.aau.dk">Victor Risager</maintainer>
   <maintainer email="ddoros20@student.aau.dk">Daniel Doroshenko</maintainer>
   <maintainer email="jbla20@student.aau.dk">Jakob Bøgh Larsen</maintainer>

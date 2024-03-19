@@ -5,7 +5,7 @@ import rospkg
 import glob
 from time import time
 from pathlib import Path
-from hand_prosthesis_rl.utilities.urdf_handler import URDFHandler
+from rl_env.utilities.urdf_handler import URDFHandler
 
 class PointCloudHandler():
     def __init__(self, point_clouds : List[o3d.geometry.PointCloud] = None, transforms : List[np.ndarray] = None):
@@ -190,7 +190,11 @@ class PointCloudHandler():
     @pc.setter
     def pc(self, point_cloud : o3d.geometry.PointCloud):
         self._pc = point_cloud
-
+        
+    @property
+    def transforms(self):
+        return self._transforms
+        
     @property
     def points(self):
         return np.asarray(self.pc.points)
