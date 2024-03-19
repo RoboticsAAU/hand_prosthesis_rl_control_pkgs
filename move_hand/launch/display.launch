@@ -105,7 +105,7 @@
    <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
    <group ns = "$(arg robotNamespace)">
       <!-- Load urd as robot description -->
-      <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find move_hand_pkg)/urdf/move_hand.urdf.xacro'
+      <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find move_hand)/urdf/move_hand.urdf.xacro'
       default_mia_model:=$(arg load_default_mia_model)
       right_hand:=$(arg right_hand)
       robotNamespace:=$(arg robotNamespace)
