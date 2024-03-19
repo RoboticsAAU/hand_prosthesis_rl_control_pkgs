@@ -1,6 +1,6 @@
 import numpy as np
 import bezier
-from path_visualiser import animate_path
+from hand_rl_ws.src.hand_prosthesis_rl_control_pkgs.move_hand.scripts.path_planners.path_visualiser import animate_path
 
 class BezierPlanner():
     def __init__(self):
