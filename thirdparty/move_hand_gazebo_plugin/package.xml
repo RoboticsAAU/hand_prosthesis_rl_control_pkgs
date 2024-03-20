@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="2">
-    <name>move_hand</name>
+    <name>move_hand_gazebo_plugin</name>
     <version>0.0.0</version>
-    <description>TODO: Package description</description>
+    <description>Gazebo Plugin that moves a robotic prosthesis hand in gazebo, providing full manuverability, based on the standard "hand of god" plugin.</description>
     <maintainer email="vrisag20@student.aau.dk">Victor Risager</maintainer>
     <maintainer email="ddoros20@student.aau.dk">Daniel Doroshenko</maintainer>
     <maintainer email="jbla20@student.aau.dk">Jakob Bøgh Larsen</maintainer>
@@ -11,6 +11,9 @@
     <license>TODO: License declaration</license>
 
     <author>Victor Risager</author>
+    <author>Daniel Doroshenko</author>
+    <author>Jakob Bøgh Larsen</author>
+    <author>Withanage Chathushka Jayashan</author>
 
     <buildtool_depend>catkin</buildtool_depend>
 

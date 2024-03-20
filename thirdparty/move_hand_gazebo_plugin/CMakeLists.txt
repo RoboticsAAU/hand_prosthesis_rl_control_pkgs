@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5.1)
-project(move_hand)
+project(move_hand_gazebo_plugin)
 add_compile_options(-std=c++17)
 # 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -23,6 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_geometry_msgs
   tf2_ros
   trajectory_msgs
+  roscpp
 )
 
 # uncomment the following section in order to fill in
@@ -71,13 +72,9 @@ if(ENABLE_PROFILER)
 endif()
 
 
-# install(DIRECTORY
-#   world
-#   DESTINATION share/${PROJECT_NAME}/
-# )
 
 install(
-  DIRECTORY src launch description
+  DIRECTORY src 
   DESTINATION share/${PROJECT_NAME}
 )
 
