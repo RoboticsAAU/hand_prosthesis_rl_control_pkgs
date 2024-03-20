@@ -24,16 +24,9 @@ def main():
         for x in stl_files:
             (stl_files_right, stl_files_left)["mirrored" in x].append(x)
         
-        # Create a dictionary for the stl files
-        groups = {"palm" : ["palm"], 
-                "thumb" : ["thumb"],
-                "index" : ["index"],
-                "mrl" : ["middle", "ring", "little"]}
-        
         config_imagined = {"stl_files" : stl_files_right,
                             "ref_frame" : "palm",
-                            "groups" : groups,
-                            "num_points" : 1000}
+                            "num_points" : 512}
         
         config_cameras = {
             "camera": {
@@ -73,7 +66,7 @@ def main():
             speed = -0.5
         mia_world_env.move_fingers(np.repeat(speed, 3))
         rospy.sleep(0.1)
-        mia_world_env.pc_imagine_handler.visualize(combined=True)
+        mia_world_env.pc_imagine_handler.visualize()
         mia_world_env.update_imagination()
 
 if __name__ == "__main__":

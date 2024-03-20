@@ -25,9 +25,12 @@ class MiaHandWorldEnv(MiaHandEnv):
         It will learn how to move around without crashing.
         """
         
+        # Here we will add any init functions prior to starting the MyRobotEnv
+        super(MiaHandWorldEnv, self).__init__()
+        
         self.config_imagined = config["config_imagined"]
         self.config_cameras = config["config_cameras"]
-        self.group_frames = {}
+        self.imagined_groups = {}
         
         # Define the upper and lower bounds for velocity (Params are loaded in launch file)
         
@@ -69,10 +72,7 @@ class MiaHandWorldEnv(MiaHandEnv):
         self.end_episode_points = rospy.get_param("/mia_hand_camera/end_episode_points")
 
         self.cumulated_steps = 0.0
-        
-
-        # Here we will add any init functions prior to starting the MyRobotEnv
-        super(MiaHandWorldEnv, self).__init__()
+    
 
     def _set_init_pose(self):
         """Sets the Robot in its init pose
@@ -246,50 +246,79 @@ class MiaHandWorldEnv(MiaHandEnv):
         
     def setup_imagination(self):
         # config has: "stl_files", "ref_frame", "groups", "num_points"
-        self.group_frames = {group_index: None for group_index in range(len(self.config_imagined["groups"].keys()))}
+        # Define the imagined groups where each group corresponds to a movable joint in the hand (along with base palm)
+        free_joints = self.urdf_handler.get_free_joints()
+        self.imagined_groups = {free_joint : self.urdf_handler.get_free_joint_group(free_joint) for free_joint in free_joints}
+        self.imagined_groups["j_" + self.config_imagined["ref_frame"]] = self.urdf_handler.get_link_group(self.config_imagined["ref_frame"])
+        
         mesh_dict = {}  # Initialize an empty dictionary
         for stl_file in self.config_imagined["stl_files"]:
+            # Get the origin and scale for the mesh
             visual_origin, scale = self.urdf_handler.get_visual_origin_and_scale(Path(stl_file).stem)
             
+            # Get the link name assoicated with the mesh and obtain the origin (transformation) from the reference
             link_name = self.urdf_handler.get_link_name(Path(stl_file).stem)
             link_origin = self.urdf_handler.get_link_transform(self.config_imagined["ref_frame"], link_name)
             
+            # Get the group index of the link
             group_index = None
-            for group_name, links in self.config_imagined["groups"].items():
+            for group_name, links in self.imagined_groups.items():
                 if not any(link in link_name for link in links):
                     continue
-                group_index = list(self.config_imagined["groups"].keys()).index(group_name)
+                # Save the group index and the group
+                group_index = list(self.imagined_groups.keys()).index(group_name)
+                group = self.imagined_groups[group_name]
+                break
+            
+            # Fix the transformation to have both visual and link origin at the group parent frame
+            # (necessary since urdf is not consistent with the link tree)
+            group_parent = group[0]
+            while link_name != group_parent:
+                index = group.index(link_name)
+                
+                visual_origin = self.urdf_handler.get_link_transform(group[index - 1], link_name) @ visual_origin
+                link_origin = link_origin @ np.linalg.inv(self.urdf_handler.get_link_transform(group[index - 1], link_name))
+                
+                link_name = group[index - 1]
             
             # Create a dictionary for each mesh file
             mesh_dict[Path(stl_file).stem] = {
-                'path': stl_file,  # Construct the path for the file
-                'scale_factors': scale,  # Assign scale factors
-                'visual_origin': visual_origin,  # Assign origin
+                'path': stl_file,
+                'scale_factors': scale,
+                'visual_origin': visual_origin,
                 'link_origin' : link_origin,
                 'group_index' : group_index
             }
-            
-            if self.group_frames[group_index] is None:
-                self.group_frames[group_index] = link_name
         
+        # Sample the point clouds from the meshes using the ImaginedPointCloudHandler
+        # It creates a point cloud for each mesh and stores it from index 1 to n
         self.pc_imagine_handler.sample_from_meshes(mesh_dict, 10*self.config_imagined["num_points"])
-        self.pc_imagine_handler.update_cardinality(self.config_imagined["num_points"]//len(self.config_imagined["groups"]), voxel_size=0.001)
         
+        # Update the hand point cloud, which is the combination of the individual groups transformed to the palm frame
+        # We here downsample the point cloud to the desired number of points (for even distribution of points)
+        self.pc_imagine_handler.update_hand(self.config_imagined["num_points"])
+        
+    
     def update_imagination(self):
-        for group_index, frame in self.group_frames.items():
-            # Get the transform to the reference frame
-            tf_transform = self.tf_handler.get_transform(self.config_imagined["ref_frame"], frame)            
+        # Go through each point cloud group and update the transform
+        for index, group_links in enumerate(self.imagined_groups.values()):
+            # Set frame and group index
+            frame = group_links[0]
+            group_index = index + 1
+            
+            # Get the transform to the reference frame and convert it to a transformation matrix
+            tf_transform = self.tf_handler.get_transform(frame, self.config_imagined["ref_frame"])            
             transform = self.tf_handler.convert_tf_to_matrix(tf_transform)
-            # Get the relative transform and update the transform
-            rel_transform = np.linalg.inv(self.pc_imagine_handler.transforms[group_index]) @ transform
-            np.set_printoptions(precision=3)
-            tmp = self.config_imagined["ref_frame"]
-            print("------------------------------")
-            print(f"URDF From {tmp} to {frame}:\n {self.pc_imagine_handler.transforms[group_index]}")
-            print(f"TF2 From {tmp} to {frame}:\n {transform}")
-            print(f"Relative transform:\n{rel_transform}")
-            print("------------------------------")
             
-            self.pc_imagine_handler.transform(self.pc_imagine_handler.pc[group_index], rel_transform)
+            # Get the relative transform from the initial transform (describes relative finger movement)
+            rel_transform = np.linalg.inv(self.pc_imagine_handler.initial_transforms[group_index]) @ transform
             
-            self.pc_imagine_handler._transforms[group_index] = transform
+            # Update the transform of the group
+            self.pc_imagine_handler.transforms[group_index] = self.pc_imagine_handler.initial_transforms[group_index] @ rel_transform
+
+            # rospy.logdebug(f"URDF From {frame} to {self.config_imagined['ref_frame']}:\n {self.pc_imagine_handler.transforms[group_index]}")
+            # rospy.logdebug(f"TF2 From {frame} to {self.config_imagined['ref_frame']}:\n {transform}")
+            # rospy.logdebug(f"Relative transform:\n {rel_transform}")
+
+        # Update the overall hand point cloud based on the updated group point clouds
+        self.pc_imagine_handler.update_hand()
