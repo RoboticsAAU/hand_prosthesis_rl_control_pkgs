@@ -10,7 +10,7 @@ from sensor_msgs.msg import PointCloud2
 from gazebo.robot_gazebo_env import RobotGazeboEnv
 import utilities.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
 from utilities.tf_handler import TFHandler
-from utilities.point_cloud_handler import PointCloudHandler
+from utilities.point_cloud_handler import PointCloudHandler, ImaginedPointCloudHandler
 from utilities.urdf_handler import URDFHandler
 
 class MiaHandEnv(RobotGazeboEnv):
@@ -33,7 +33,7 @@ class MiaHandEnv(RobotGazeboEnv):
         urdf_path = rospack.get_path("simulation_world") + "/urdf/hands/mia_hand_default.urdf"
         self.urdf_handler = URDFHandler(urdf_path)
         self.pc_cam_handler = PointCloudHandler(point_clouds=[o3d.geometry.PointCloud()])
-        self.pc_imagine_handler = PointCloudHandler()
+        self.pc_imagine_handler = ImaginedPointCloudHandler()
         self.tf_handler = TFHandler()
         
         # We launch the init function of the Parent Class RobotGazeboEnv
@@ -58,8 +58,6 @@ class MiaHandEnv(RobotGazeboEnv):
         self._wait_for_publishers_connection()
         
         self.gazebo.pauseSim()
-        
-        
         
         rospy.loginfo("Finished MiaHanEnv INIT...")
 

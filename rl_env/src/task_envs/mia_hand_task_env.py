@@ -246,7 +246,7 @@ class MiaHandWorldEnv(MiaHandEnv):
         
     def setup_imagination(self):
         # config has: "stl_files", "ref_frame", "groups", "num_points"
-        self.group_frames = {group_index: None for group_index in range(len(self.config_imagined["groups"].keys()))}
+        self.group_frames = {group_index: None for group_index in range(1, len(self.config_imagined["groups"].keys()))}
         mesh_dict = {}  # Initialize an empty dictionary
         for stl_file in self.config_imagined["stl_files"]:
             visual_origin, scale = self.urdf_handler.get_visual_origin_and_scale(Path(stl_file).stem)
@@ -254,11 +254,24 @@ class MiaHandWorldEnv(MiaHandEnv):
             link_name = self.urdf_handler.get_link_name(Path(stl_file).stem)
             link_origin = self.urdf_handler.get_link_transform(self.config_imagined["ref_frame"], link_name)
             
+            # Get the group index of the link
             group_index = None
             for group_name, links in self.config_imagined["groups"].items():
                 if not any(link in link_name for link in links):
                     continue
                 group_index = list(self.config_imagined["groups"].keys()).index(group_name)
+                group = self.config_imagined["groups"][group_name]
+                break
+            
+            # Fix the transformation to have origin at the group parent link
+            group_parent = group[0]
+            while link_name != group_parent:
+                index = group.index(link_name)
+                
+                visual_origin = self.urdf_handler.get_link_transform(group[index - 1], link_name) @ visual_origin
+                link_origin = link_origin @ np.linalg.inv(self.urdf_handler.get_link_transform(group[index - 1], link_name))
+                
+                link_name = group[index - 1]
             
             # Create a dictionary for each mesh file
             mesh_dict[Path(stl_file).stem] = {
@@ -268,20 +281,20 @@ class MiaHandWorldEnv(MiaHandEnv):
                 'link_origin' : link_origin,
                 'group_index' : group_index
             }
-            
-            if self.group_frames[group_index] is None:
-                self.group_frames[group_index] = link_name
         
         self.pc_imagine_handler.sample_from_meshes(mesh_dict, 10*self.config_imagined["num_points"])
-        self.pc_imagine_handler.update_cardinality(self.config_imagined["num_points"]//len(self.config_imagined["groups"]), voxel_size=0.001)
+        self.pc_imagine_handler.update_hand(self.config_imagined["num_points"])
+        #self.pc_imagine_handler.update_cardinality(self.config_imagined["num_points"]//len(self.config_imagined["groups"]), voxel_size=0.001, index=0)
+        
         
     def update_imagination(self):
         for group_index, frame in self.group_frames.items():
             # Get the transform to the reference frame
-            tf_transform = self.tf_handler.get_transform(self.config_imagined["ref_frame"], frame)            
+            tf_transform = self.tf_handler.get_transform(frame, self.config_imagined["ref_frame"])            
             transform = self.tf_handler.convert_tf_to_matrix(tf_transform)
             # Get the relative transform and update the transform
             rel_transform = np.linalg.inv(self.pc_imagine_handler.transforms[group_index]) @ transform
+            
             np.set_printoptions(precision=3)
             tmp = self.config_imagined["ref_frame"]
             print("------------------------------")
@@ -290,6 +303,8 @@ class MiaHandWorldEnv(MiaHandEnv):
             print(f"Relative transform:\n{rel_transform}")
             print("------------------------------")
             
-            self.pc_imagine_handler.transform(self.pc_imagine_handler.pc[group_index], rel_transform)
+            #self.pc_imagine_handler.transform(self.pc_imagine_handler.pc[group_index], rel_transform)
             
-            self.pc_imagine_handler._transforms[group_index] = transform
+            self.pc_imagine_handler.transforms[group_index] = self.pc_imagine_handler.initial_transforms[group_index] @ transform
+
+        self.pc_imagine_handler.update_hand()

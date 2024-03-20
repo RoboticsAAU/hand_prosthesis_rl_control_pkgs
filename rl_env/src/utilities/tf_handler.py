@@ -12,7 +12,6 @@ class TFHandler():
         # and the listener will listen for new transforms and update the buffer.
         self._tf_buffer = tf2_ros.Buffer()
         self._tf_listener = tf2_ros.TransformListener(self._tf_buffer)
-        
     
     def get_transform(self, child_frame_id : str, parent_frame_id : str = "world") -> TransformStamped:
         """
@@ -22,7 +21,7 @@ class TFHandler():
         :return: The transform
         """
         try:
-            return self._tf_buffer.lookup_transform(child_frame_id, parent_frame_id, rospy.Time(0))
+            return self._tf_buffer.lookup_transform(parent_frame_id, child_frame_id, rospy.Time(0))
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
             rospy.logwarn("Failed to get transform: %s", str(e))
             return None

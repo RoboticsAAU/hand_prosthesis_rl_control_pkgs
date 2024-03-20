@@ -17,6 +17,8 @@ class URDFHandler():
         for joint in self._urdf_model.joints:
             self._transform_relations[joint.child] = joint.parent
             self._transform_dict[(joint.parent, joint.child)] = joint.origin
+        self._joints = {joint.name : joint for joint in self._urdf_model.joints}
+        self._links = {link.name : link for link in self._urdf_model.links}
 
     def get_visual_origin_and_scale(self, mesh_name):
         # Search link name by mesh name
@@ -51,6 +53,34 @@ class URDFHandler():
             transform = self._transform_dict[(tmp_parent, child)] @ transform
         
         return transform
+    
+    def get_free_joints(self):
+        return [joint.name for joint in self._urdf_model.joints if joint.joint_type in ["revolute", "continuous"]]
+    
+    def get_link_child(self, link_name):
+        # Get the joint as the first entry in the list that has the link as parent
+        joint = next((joint for joint in self._urdf_model.joints if joint.parent == link_name), None)
+        
+        if joint is None or (joint.name in self.get_free_joints() and joint.name != joint):
+            return None
+        
+        return joint.child
+    
+    def get_link_group(self, link):
+        link_group = []
+        while link != None:
+            link_group.append(link)
+            link = self.get_link_child(link)
+            
+        return link_group
+    
+    def get_free_joint_group(self, free_joint):
+        child_link = self._joints[free_joint].child
+        return self.get_link_group(child_link)
+    
+    def is_group_parent(self, link):
+        test = self.get_link_group(link)
+        return link == self.get_link_group(link)[0]
     
     # CAN BE USED IF WE FIX THE MESH FILE PATHS
     def get_mesh_files(self):

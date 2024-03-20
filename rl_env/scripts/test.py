@@ -73,7 +73,7 @@ def main():
             speed = -0.5
         mia_world_env.move_fingers(np.repeat(speed, 3))
         rospy.sleep(0.1)
-        mia_world_env.pc_imagine_handler.visualize(combined=True)
+        mia_world_env.pc_imagine_handler.visualize()
         mia_world_env.update_imagination()
 
 if __name__ == "__main__":
