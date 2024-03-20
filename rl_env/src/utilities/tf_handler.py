@@ -15,7 +15,7 @@ class TFHandler():
     
     def get_transform(self, child_frame_id : str, parent_frame_id : str = "world") -> TransformStamped:
         """
-        It will get the transform from the parent_frame_id to the child_frame_id.
+        Get the transform from the parent_frame_id to the child_frame_id.
         :param parent_frame_id: The parent frame id (default is "world")
         :param child_frame_id: The child frame id
         :return: The transform
@@ -28,7 +28,7 @@ class TFHandler():
     
     def transform_pose(self, input_pose, target_frame : str):
         """
-        It will transform the input_pose to the target_frame.
+        Transform the input_pose to the target_frame.
         :param input_pose: The input pose
         :param target_frame: The target frame
         :return: The transformed pose
@@ -41,20 +41,22 @@ class TFHandler():
         
     def convert_tf_to_matrix(self, transform : TransformStamped):
         """
-        It will convert a transform to a 3x3 rotation matrix.
-        :param transform: The transform
-        :return: The 3x3 rotation matrix
+        Convert a tf transform to a numpy 4x4 transformation matrix.
+        :param transform: The tf transform
+        :return: The 4x4 transformation matrix
         """
-        
+        # Convert the quaternion to a numpy rotation matrix
         R = Rotation.from_quat([transform.transform.rotation.x,
                                 transform.transform.rotation.y,
                                 transform.transform.rotation.z,
                                 transform.transform.rotation.w]).as_matrix()
         
+        # Save the translation as a numpy array
         t = np.array([transform.transform.translation.x,
                       transform.transform.translation.y,
                       transform.transform.translation.z])
         
+        # Create the 4x4 transformation matrix
         T = np.concatenate((R, t.reshape(-1,1)), axis=1)
         T = np.concatenate((T, np.array([[0, 0, 0, 1]])), axis=0)
         
