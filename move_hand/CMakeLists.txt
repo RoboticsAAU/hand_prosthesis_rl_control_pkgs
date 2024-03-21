@@ -170,9 +170,16 @@ install(DIRECTORY urdf/
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 # install(PROGRAMS
-#   src/training/train.py
+#   src/gazebo_interface.py
+#   src/move_hand_controller.py
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
+
+catkin_install_python(PROGRAMS 
+                      src/move_hand_controller.py
+                      src/gazebo_interface.py
+                      DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
 
 ## Mark executables and/or libraries for installation
 # install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
