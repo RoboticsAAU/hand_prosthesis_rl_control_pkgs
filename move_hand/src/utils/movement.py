@@ -26,6 +26,24 @@ def next_position(velocity: Twist, current_position: Pose, dt: float) -> Pose:
     return new_pose
 
 
+def sample_position_in_sphere(radius: float, inner_radius: float = 0.0) -> np.ndarray[float]:
+    # Sample a random position within a sphere of radius r and subtracting a sphere of inner radius r
+    phi = np.random.uniform(0,2*np.pi)
+    costheta = np.random.uniform(-1,1)
+    u = np.random.uniform(inner_radius/radius,1)
+    
+    theta = np.arccos(costheta)
+    r = radius * np.cbrt(u)
+    
+    x = r * np.sin(theta) * np.cos(phi)
+    y = r * np.sin(theta) * np.sin(phi)
+    z = r * np.cos(theta)  
+
+    return np.array([x, y, z])
+
+
+
+
 
 '''
 import numpy as np
