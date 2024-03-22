@@ -8,6 +8,7 @@ setup_args = generate_distutils_setup(
     packages=[
         # Folders in the src directory
         'utils',
+        'move_hand',
         # 'utilities.addons'  # Subpackage notation
     ],
     package_dir={'': 'src'},  # Packages are directly under 'src'

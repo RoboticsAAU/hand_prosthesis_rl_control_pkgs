@@ -64,7 +64,7 @@ class GazeboInterface():
                 pass
 
 
-    def reset(self):
+    def reset_to(self, position: np.ndarray[float]):
         # Should reset the position of the hand, and all other objects in the world.
         pass
 
@@ -145,33 +145,8 @@ class GazeboInterface():
         rospy.logwarn("The gazebo model: '", self.hand_name, "', was not found in the list of list of model states in gazebo. Check the name of the desired model in the gazebo world")
 
 
-
-
-
 def main():
-    # Test move hand controller class
-    gazebointerface = GazeboInterface(hand_name='mia_hand')
-    # pose = Pose(position=Point(x=1.0, y=1.0, z=1.0), orientation=Quaternion(x=0.0, y=0.0, z=0.0, w=0.0))
-    # vel = Twist(linear=Point(x=0.0, y=0.0, z=0.0), angular=Point(x=0.0, y=0.0, z=0.0))
-    vel = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-    steps = 0
-    while not rospy.is_shutdown():
-        # pose.position.z += 0.001
-        # gazebointerface.set_position(pose)
-        
-
-        # vel.linear.x = - math.sin(steps * 0.001) 
-        # vel.linear.y = math.cos(steps * 0.001) 
-        # vel.angular.z = 3.0
-
-
-        vel[0] = - math.sin(steps * 0.001)
-        vel[1] = math.cos(steps * 0.001)
-        vel[5] = 3.0
-
-        gazebointerface.set_velocity(vel)
-        steps += 1
-        gazebointerface._rate.sleep()
+    pass
 
 
 
