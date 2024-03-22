@@ -4,9 +4,10 @@ import rospy
 from gazebo_msgs.msg import ModelState, ModelStates
 from geometry_msgs.msg import Pose, Twist, Point, Quaternion
 import math
+import numpy as np
 
 # Utils
-from utils.ros_helper_functions import _is_connected
+from utils.ros_helper_functions import _is_connected, velocity_decorator
 from utils.movement import next_position
 
 
@@ -79,48 +80,28 @@ class GazeboInterface():
         except Exception as e:
             rospy.logwarn("Failed to set position because: ", e)
 
-    def set_velocity(self, velocity: Twist):
-        """ Set the velocity of the hand to the given velocity. """
+    def set_velocity(self, velocity):
+        """ Set the velocity of the hand to the given velocity. The velocity can be of type Twist or numpy.ndarray[float] with 6 dimensions."""
         try:
             self._publish_velocity(velocity)
         except Exception as e:
             rospy.logwarn("Failed to set velocity because: ", e)
 
 
-
-
     # ------------------- Private methods ------------------- #
-    def _publish_velocity(self, velocity: Twist):
-        """ Publish the velocity of the hand to the gazebo world. Includes metadata of the controller in the message."""
-
-        # Verify that the position is not None
-        if velocity is None:
-            raise ValueError("The position cannot be None")
-        
-        # Verify that the position is of type Pose
-        if not isinstance(velocity, Twist):
-            raise ValueError("The position must be of type Pose")
-        
-        # Final check before publishing
-        if not _is_connected(self._pub_state):
-            raise rospy.ROSException("The publisher is not connected")
-            
-        # Set the data of the message
+    @velocity_decorator
+    def _publish_velocity(self, velocity):
+        """Publish the velocity of the hand to the gazebo world. Includes metadata of the controller in the message."""
         modelstate = ModelState()
+        # Set the metadata of the message
         modelstate.model_name = self.hand_name
         modelstate.reference_frame = 'world'
-        # Compute the next position of the hand using forward propagation in time. 
+        # Forward propagate the position of the hand in time and set the next position based on the velocity and delta time.
         modelstate.pose = next_position(velocity, self.current_state.pose, 1.0 / float(self.hz))
-        
-        # Use the current position of the hand as the same position.
-        # modelstate.pose = self.current_state.pose
-
-
-
-        # Publish the message
         self._pub_state.publish(modelstate)
+    
 
-
+    
 
     def _publish_position(self, position: Pose, reference_frame: str = 'world'):
         """ Publish the position of the hand to the gazebo world. Includes metadata of the controller in the message. Overwrites the current position of the hand in the simulation."""
@@ -171,14 +152,23 @@ def main():
     # Test move hand controller class
     gazebointerface = GazeboInterface(hand_name='mia_hand')
     # pose = Pose(position=Point(x=1.0, y=1.0, z=1.0), orientation=Quaternion(x=0.0, y=0.0, z=0.0, w=0.0))
-    vel = Twist(linear=Point(x=0.0, y=0.0, z=0.0), angular=Point(x=0.0, y=0.0, z=0.0))
+    # vel = Twist(linear=Point(x=0.0, y=0.0, z=0.0), angular=Point(x=0.0, y=0.0, z=0.0))
+    vel = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
     steps = 0
     while not rospy.is_shutdown():
         # pose.position.z += 0.001
         # gazebointerface.set_position(pose)
-        vel.linear.x = - math.sin(steps * 0.001) 
-        vel.linear.y = math.cos(steps * 0.001) 
-        vel.angular.z = 3.0
+        
+
+        # vel.linear.x = - math.sin(steps * 0.001) 
+        # vel.linear.y = math.cos(steps * 0.001) 
+        # vel.angular.z = 3.0
+
+
+        vel[0] = - math.sin(steps * 0.001)
+        vel[1] = math.cos(steps * 0.001)
+        vel[5] = 3.0
+
         gazebointerface.set_velocity(vel)
         steps += 1
         gazebointerface._rate.sleep()
