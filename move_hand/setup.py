@@ -12,6 +12,13 @@ setup_args = generate_distutils_setup(
         # 'utilities.addons'  # Subpackage notation
     ],
     package_dir={'': 'src'},  # Packages are directly under 'src'
+    install_requires=[
+        'numpy',
+        'matplotlib',
+        'sympy',
+        'tqdm',
+        'bezier',
+    ]  # Required dependencies
 )
 
 setup(**setup_args)

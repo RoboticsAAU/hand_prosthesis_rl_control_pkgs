@@ -1,0 +1,5 @@
+repositories:
+  mia_hand_ros_pkgs:
+    type: git
+    url: https://bitbucket.org/prensiliasrl/mia_hand_ros_pkgs.git
+    version: master
