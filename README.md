@@ -10,7 +10,7 @@ The code has been tested on
 sudo apt-get install python3-catkin-tools python3-vcstool
 ```
 
-### Clone
+### Clone and compile
 Create a workspace and clone the code:
 ```sh
 mkdir -p hand_prosthesis_ws/src && cd hand_prosthesis_ws/src
