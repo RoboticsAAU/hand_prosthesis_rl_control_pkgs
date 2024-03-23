@@ -6,8 +6,9 @@ The code has been tested on
 * Ubuntu 20.04 with ROS Noetic
 
 ### Install dependencies
+Install [catkin tools](https://catkin-tools.readthedocs.io/en/latest/installing.html) and [vcstools](https://github.com/dirk-thomas/vcstool).
 ```sh
-sudo apt-get install python3-catkin-tools python3-vcstool
+sudo apt-get install python3-catkin-tools python3-vcstool python3-osrf-pycommon
 ```
 
 ### Clone and compile
@@ -19,7 +20,7 @@ vcs-import < ./hand_prosthesis_rl_control_pkgs/dependencies.yaml
 cd ..
 ```
 
-Now the code can be compiled (make command is optional:
+Now the code can be compiled (build option is not required):
 ```sh
 catkin_make --cmake-args "-DCMAKE_EXPORT_COMPILE_COMMANDS=On"
 ```
