@@ -1,0 +1,3 @@
+-r move_hand/requirements.txt
+-r rl_env/requirements.txt
+-r simulation_world/requirements.txt

@@ -14,15 +14,7 @@ setup_args = generate_distutils_setup(
         'utilities',
         'utilities.addons'  # Subpackage notation
     ],
-    package_dir={'': 'src'},  # Packages are directly under 'src'
-    install_requires=[
-        'numpy',
-        'gym',
-        'open3d',
-        'tf2_ros',
-        'scipy',
-        'urdfpy',
-    ]  # Required dependencies
+    package_dir={'': 'src'}  # Packages are directly under 'src'
 )
 
 setup(**setup_args)

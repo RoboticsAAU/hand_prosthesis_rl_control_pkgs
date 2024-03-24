@@ -16,6 +16,7 @@ Create a workspace and clone the code:
 ```sh
 mkdir -p hand_prosthesis_ws/src && cd hand_prosthesis_ws/src
 git clone https://github.com/RoboticsAAU/hand_prosthesis_rl_control_pkgs.git
+pip3 install -r ./hand_prosthesis_rl_control_pkgs/requirements.txt
 vcs-import < ./hand_prosthesis_rl_control_pkgs/dependencies.yaml
 cd ..
 ```
