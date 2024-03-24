@@ -46,7 +46,7 @@ class PointCloudHandler():
         pc = self._pc[index] if not combined else self.get_combined()
         
         # Create a mesh representing the global coordinate frame axes
-        axis_mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.02)
+        axis_mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.020)
         
         # Visualize the point cloud
         vis = o3d.visualization.Visualizer()
@@ -197,12 +197,12 @@ class ImaginedPointCloudHandler(PointCloudHandler):
         self._transforms.append(np.eye(4))
         self._initial_transforms = self._transforms.copy()
 
-    def visualize(self, index : int = 0):
+    def visualize(self, index : Optional[int] = None):
         """
         Visualize the point cloud.
         :param index: The index of the point cloud to visualize
         """
-        if index == 0:
+        if index == 0 or index is None:
             self.update_hand()
         return super().visualize(index=index)
 
@@ -331,7 +331,7 @@ if __name__ == "__main__":
 
     start_time = time()
     # Load the stl file
-    point_cloud_handler.sample_from_meshes(mesh_dict, 10000)
+    point_cloud_handler.sample_from_meshes(mesh_dict, 2000)
     #pc_plane = PointCloudHandler.sample_from_mesh("./plane.stl", 1000)
     #point_cloud_handler.add(pc_plane)
     
@@ -342,7 +342,7 @@ if __name__ == "__main__":
                         [0.707, 0.707, 0, 0],
                         [0, 0, 1, 0],
                         [0, 0, 0, 1]])
-    point_cloud_handler._transforms[3] = point_cloud_handler._transforms[3] @ transform
+    #point_cloud_handler._transforms[3] = point_cloud_handler._transforms[3] @ transform
     #point_cloud_handler._pc[2] = point_cloud_handler._pc[2].transform(transform)
     start_time = time()
     #point_cloud_handler.update_cardinality(250)

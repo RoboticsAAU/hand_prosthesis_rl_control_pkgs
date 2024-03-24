@@ -4,7 +4,6 @@ np.float = np.float64
 np.bool = np.bool_
 import urdfpy
 import rospkg
-import os
 
 rospack = rospkg.RosPack()
 DEFAULT_PATH = rospack.get_path("simulation_world") + "/urdf/hands/mia_hand_default.urdf"
@@ -77,7 +76,7 @@ class URDFHandler():
             tmp_parent = self._transform_relations[tmp_parent]
             transform = self._transform_dict[(tmp_parent, child)] @ transform
         
-        return transform
+        return transform.copy()
     
     def get_free_joints(self):
         """
