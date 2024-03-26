@@ -4,7 +4,7 @@ import rospy
 from gazebo_msgs.msg import ModelState, ModelStates
 from geometry_msgs.msg import Pose, Twist, Point, Quaternion
 import numpy as np
-from typing import Union
+from typing import Union, Type
 
 # Utils
 from utils.ros_helper_functions import _is_connected
@@ -12,11 +12,14 @@ from utils.movement import next_pose
 
 
 class GazeboInterface():
-    def __init__(self, hand_name: str = 'mia_hand'):
+    def __init__(self, hand_config : Type[HandConfig]):#hand_name: str = 'mia_hand'):
         """ hand_name: str is the name of the model in the gazebo world."""
         # The node must have log_level=rospy.DEBUG to see the log_debug messages to the /rosout topic.
         rospy.init_node('gazebo_interface', log_level=rospy.ERROR)
-    
+
+        self.hand_config_obj = hand_config
+        self.hand_config_obj.hand_name
+
         # Publishers
         self._pub_state = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=10)
 
