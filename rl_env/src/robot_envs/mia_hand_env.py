@@ -60,7 +60,7 @@ class MiaHandEnv(RobotGazeboEnv):
         self.gazebo.pauseSim()
         
         rospy.loginfo("Finished MiaHanEnv INIT...")
-
+    
 
     # Methods needed by the RobotGazeboEnv
     # ----------------------------

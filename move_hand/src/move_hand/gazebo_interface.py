@@ -45,6 +45,7 @@ class GazeboInterface():
                 # This is to avoid error when world is rested, time when backwards.
                 pass
 
+    # TODO: Move to the utils folder
     def wait_for_connection(self):
         """ Wait for the connection to the publishers and subscribers. """
         while not _is_connected(self._pub_state) and not rospy.is_shutdown():
@@ -71,6 +72,7 @@ class GazeboInterface():
         if model_name is None:
             model_name = self.hand_name
 
+        # TODO: Use the model_name to reset the model to the given pose.
         self.set_pose(pose)
 
     def step(self, action: ModelState) -> bool:

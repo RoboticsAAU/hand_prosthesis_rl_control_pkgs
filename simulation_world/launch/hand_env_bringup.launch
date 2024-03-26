@@ -8,7 +8,7 @@
      <arg name="Gazebo_gui" default="true"/>
      <arg name="headless" default="false"/>
      <arg name="debug" default="false"/>
-     <arg name="image_view" default="true"/>
+     <arg name="image_view" default="false"/>
      <arg name="robotNamespace"         default="mia_hand_camera"/> <!-- /mia_hand_camera -->
      <arg name="load_default_mia_model" default="false" />
      <arg name="right_hand" default="false" doc="True to for right hand False otherwise" /> <!-- Params to set right or left Mia hand version  -->
