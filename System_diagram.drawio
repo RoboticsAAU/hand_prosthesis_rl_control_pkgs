@@ -1,17 +1,17 @@
-<mxfile host="app.diagrams.net" modified="2024-03-26T09:51:59.531Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" etag="zX1NUmy8K_JyQkRl2EqX" version="24.1.0" type="github">
+<mxfile host="app.diagrams.net" modified="2024-03-26T09:52:40.202Z" agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:123.0) Gecko/20100101 Firefox/123.0" etag="tCeywVR3u_am4Hs96rY-" version="24.1.0" type="github">
   <diagram name="Page-1" id="Umjo93Ruco6CvuzdIonu">
-    <mxGraphModel dx="998" dy="661" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1193" dy="563" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         <mxCell id="nU8wIVuHtzJu9R2tz0JM-1" value="Move_Hand_Interface" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="180" y="200" width="180" height="60" as="geometry" />
+          <mxGeometry x="180" y="210" width="180" height="60" as="geometry" />
         </mxCell>
         <mxCell id="nU8wIVuHtzJu9R2tz0JM-2" value="Another test" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" parent="1" vertex="1">
           <mxGeometry x="350" y="420" width="80" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="oCHzuk4YcUVD4lck-Lmb-1" value="Graspit_Interface" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="440" y="200" width="180" height="60" as="geometry" />
+        <mxCell id="oCHzuk4YcUVD4lck-Lmb-1" value="Graspit_Interface" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="440" y="210" width="180" height="60" as="geometry" />
         </mxCell>
         <mxCell id="AU54Axx41KT1v_264xvr-1" value="Test" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
           <mxGeometry x="540" y="370" width="120" height="80" as="geometry" />
