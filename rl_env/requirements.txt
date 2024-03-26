@@ -4,4 +4,4 @@ open3d
 tf2_ros
 scipy
 urdfpy
-stable-baselines
+stable-baselines3 #[extra]

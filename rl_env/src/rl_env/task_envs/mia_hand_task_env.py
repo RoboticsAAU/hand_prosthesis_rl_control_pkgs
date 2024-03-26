@@ -5,6 +5,7 @@ from gym import spaces
 from gym.envs.registration import register
 from functools import cached_property
 from rl_env.robot_envs.mia_hand_env import MiaHandEnv
+from sim_world.gazebo.gazebo_interface import GazeboInterface
 
 OBJECT_LIFT_LOWER_LIMIT = -0.03
 
@@ -18,48 +19,37 @@ register(
     )
 
 class MiaHandWorldEnv(MiaHandEnv):
-    def __init__(self, config):
+    def __init__(self, gazebo_interface : GazeboInterface):
         """
         This Task Env is designed for having the Mia hand in the hand grasping world.
         It will learn how to move around without crashing.
         """
+        self._gazebo_interface = gazebo_interface
         
         # Here we will add any init functions prior to starting the MyRobotEnv
         super(MiaHandWorldEnv, self).__init__()
         
-        self.config_imagined = config["config_imagined"]
-        self.config_cameras = config["config_cameras"]
-        self.imagined_groups = {}
-        
-        robot_namespace = rospy.get_param('~robotNamespace', 'mia_hand_camera')
+        # Get the robot name
+        robot_namespace = self._gazebo_interface.hand_config.hand_name
         rospy.logdebug("ROBOT NAMESPACE==>"+str(robot_namespace))
         
-        # Define the upper and lower bounds for velocity (Params are loaded in launch file)
-        self.index_vel_lb = rospy.get_param(f'{robot_namespace}/index_vel_lb')
-        self.index_vel_ub = rospy.get_param(f'{robot_namespace}/index_vel_ub')
-        self.thumb_vel_lb = rospy.get_param(f'{robot_namespace}/thumb_vel_lb')
-        self.thumb_vel_ub = rospy.get_param(f'{robot_namespace}/thumb_vel_ub')
-        self.mrl_vel_lb = rospy.get_param(f'{robot_namespace}/mrl_vel_lb')
-        self.mrl_vel_ub = rospy.get_param(f'{robot_namespace}/mrl_vel_ub')
-        
-        # Bounds for joint velocities
-        self.vel_lb = np.array([self.index_vel_lb, self.thumb_vel_lb, self.mrl_vel_lb])
-        self.vel_ub = np.array([self.index_vel_ub, self.thumb_vel_ub, self.mrl_vel_ub])
-        
-        # We set the reward range, which is not compulsory but here we do it.
-        self.reward_range = (-np.inf, np.inf)
-        
-        # Define the upper and lower bounds for positions
-        self.index_pos_lb = rospy.get_param(f'{robot_namespace}/index_pos_lb')
-        self.index_pos_ub = rospy.get_param(f'{robot_namespace}/index_pos_ub')
-        self.thumb_pos_lb = rospy.get_param(f'{robot_namespace}/thumb_pos_lb')
-        self.thumb_pos_ub = rospy.get_param(f'{robot_namespace}/thumb_pos_ub')
-        self.mrl_pos_lb = rospy.get_param(f'{robot_namespace}/mrl_pos_lb')
-        self.mrl_pos_ub = rospy.get_param(f'{robot_namespace}/mrl_pos_ub')
+        # Get the configurations for the cameras and the imagined point cloud
+        self.config_imagined = self._gazebo_interface.hand_config["config_imagined"]
+        self.config_cameras = self._gazebo_interface.hand_config["config_cameras"]
+        self.imagined_groups = {}
         
         # Bounds for joint positions
-        self.pos_lb = np.array([self.index_pos_lb, self.thumb_pos_lb, self.mrl_pos_lb])
-        self.pos_ub = np.array([self.index_pos_ub, self.thumb_pos_ub, self.mrl_pos_ub])
+        joint_limits = self._gazebo_interface.hand_config["joint_limits"]
+        self.pos_lb = np.array([joint_limits[finger + "_pos_range"][0] for finger in ["thumb", "index", "mrl"]])
+        self.pos_ub = np.array([joint_limits[finger + "_pos_range"][1] for finger in ["thumb", "index", "mrl"]])
+        
+        # Bounds for joint velocities
+        vel_limits = self._gazebo_interface.hand_config["velocity_limits"]
+        self.vel_lb = np.array([vel_limits[finger + "_pos_range"][0] for finger in ["thumb", "index", "mrl"]])
+        self.vel_ub = np.array([vel_limits[finger + "_pos_range"][1] for finger in ["thumb", "index", "mrl"]])
+        
+        # We set the reward range (not compulsory)
+        self.reward_range = (-np.inf, np.inf)
         
         rospy.logdebug("ACTION SPACES TYPE===>"+str(self._action_space))
         rospy.logdebug("OBSERVATION SPACES TYPE===>"+str(self._obs_space))
@@ -89,7 +79,7 @@ class MiaHandWorldEnv(MiaHandEnv):
 
     
     # Methods needed by the TrainingEnvironment
-    def _init_env_variables(self):
+    def init_env_variables(self):
         """
         Inits variables needs to be initialised each time we reset at the start
         of an episode.
@@ -101,7 +91,7 @@ class MiaHandWorldEnv(MiaHandEnv):
         self._episode_done = False
 
 
-    def _set_action(self, action):
+    def set_action(self, action):
         """
         This method will set the velocity of the hand based on the action number given.
         :param action: The action integer that set s what movement to do next.
@@ -121,7 +111,7 @@ class MiaHandWorldEnv(MiaHandEnv):
         rospy.logdebug("END Set Action ==>"+str(action))
 
 
-    def _get_obs(self):
+    def get_obs(self):
         """
         Fetch observations from the Mia Hand
         :return: observation
@@ -139,7 +129,7 @@ class MiaHandWorldEnv(MiaHandEnv):
         return observation
         
 
-    def _is_done(self):
+    def is_done(self):
         # Now we check if it has crashed based on the imu
         if self._object_lift > OBJECT_LIFT_LOWER_LIMIT:
             self._episode_done = True
@@ -147,13 +137,13 @@ class MiaHandWorldEnv(MiaHandEnv):
         return self._episode_done
 
 
-    def _compute_reward(self):
+    def compute_reward(self):
         """
         Compute the reward for the given rl step
         :return: reward
         """
         # Check if episode is done
-        if self._is_done():
+        if self.is_done():
             return self.end_episode_points
         
         # Obtain the shortest distance between finger and object

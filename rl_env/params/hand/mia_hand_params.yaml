@@ -1,4 +1,4 @@
-# Topics that the Gazebo Interface will subscribe and publish to.
+# Topics for Gazebo Interface
 subscriptions:
   joint_state_topic: /joint_states
   camera_points_topic: /camera/depth_registered/points
@@ -21,3 +21,14 @@ config_imagined:
   right_hand: true
   ref_frame: "palm"
   num_points: 512
+
+# Joint and velocity limits
+joint_limits:
+  thumb_pos_range: [0.029, 1.313]
+  index_pos_range: [-1.177, 1.188]
+  mrl_pos_range: [-0.120, 1.303]
+
+velocity_limits:
+  thumb_vel_range: [-1.0, 1.0]
+  index_vel_range: [-1.0, 1.0]
+  mrl_vel_range: [-1.0, 1.0]

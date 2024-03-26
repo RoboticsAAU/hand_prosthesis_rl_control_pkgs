@@ -3,7 +3,7 @@
 import rospy
 import numpy as np
 import math
-from move_hand.controller.gazebo_interface import GazeboInterface
+from sim_world.gazebo.gazebo_interface import GazeboInterface
 
 
 # TODO: Compute trajectories for the hand
@@ -11,9 +11,9 @@ from move_hand.controller.gazebo_interface import GazeboInterface
 
 
 class HandController:
-    def __init__(self):
+    def __init__(self, gazebo_interface : GazeboInterface):
         # Create the gazebo interface
-        self._gazebo_interface = GazeboInterface(hand_name='mia_hand')
+        self._gazebo_interface = gazebo_interface
 
     def move_hand(self, position):
         # Publish the position and velocity of the hand

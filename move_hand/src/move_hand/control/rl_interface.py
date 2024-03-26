@@ -2,8 +2,8 @@ import numpy as np
 from typing import Tuple
 
 # Local libraries
-from move_hand.controller.gazebo_interface import GazeboInterface
-from move_hand.controller.move_hand_controller import HandController
+from sim_world.gazebo.gazebo_interface import GazeboInterface
+from move_hand.control.move_hand_controller import HandController
 
 # TODO: Step
 # TODO: Reset

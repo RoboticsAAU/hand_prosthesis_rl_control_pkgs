@@ -8,10 +8,10 @@ from sensor_msgs.msg import PointCloud2
 #from mia_hand_msgs.msg import FingersData
 #from mia_hand_msgs.msg import FingersStrainGauges
 from rl_env.gazebo.robot_gazebo_env import RobotGazeboEnv
-import rl_env.utilities.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
-from rl_env.utilities.tf_handler import TFHandler
-from rl_env.utilities.point_cloud_handler import PointCloudHandler, ImaginedPointCloudHandler
-from rl_env.utilities.urdf_handler import URDFHandler
+import rl_env.utils.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
+from rl_env.utils.tf_handler import TFHandler
+from rl_env.utils.point_cloud_handler import PointCloudHandler, ImaginedPointCloudHandler
+from rl_env.utils.urdf_handler import URDFHandler
 
 class MiaHandEnv(RobotGazeboEnv):
     """Superclass for all Robot environments.
