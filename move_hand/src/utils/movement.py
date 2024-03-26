@@ -2,7 +2,7 @@ from geometry_msgs.msg import Twist, Pose
 from tf.transformations import quaternion_from_euler, quaternion_multiply
 import numpy as np
 
-def next_position(velocity: Twist, current_position: Pose, dt: float) -> Pose:
+def next_pose(velocity: Twist, current_position: Pose, dt: float) -> Pose:
     """ Calculate the next position of the model given the current position, velocity and delta time. """
     # Initialize a new pose
     new_pose = Pose()
@@ -26,7 +26,7 @@ def next_position(velocity: Twist, current_position: Pose, dt: float) -> Pose:
     return new_pose
 
 
-def sample_position_in_sphere(radius: float, inner_radius: float = 0.0) -> np.ndarray[float]:
+def sample_position_in_sphere(radius: float, inner_radius: float = 0.0):
     # Sample a random position within a sphere of radius r and subtracting a sphere of inner radius r
     phi = np.random.uniform(0,2*np.pi)
     costheta = np.random.uniform(-1,1)
@@ -42,14 +42,3 @@ def sample_position_in_sphere(radius: float, inner_radius: float = 0.0) -> np.nd
     return np.array([x, y, z])
 
 
-
-
-
-'''
-import numpy as np
-
-def next_position(velocity: np.array, current_position: np.array, dt: float) -> np.array:
-    """ calculate the next position of the hand given the current position and the velocity. """
-    pass
-
-'''
