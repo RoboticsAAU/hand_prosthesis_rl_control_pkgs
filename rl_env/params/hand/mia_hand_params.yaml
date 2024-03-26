@@ -1,0 +1,23 @@
+# Topics that the Gazebo Interface will subscribe and publish to.
+subscriptions:
+  joint_state_topic: /joint_states
+  camera_points_topic: /camera/depth_registered/points
+publications:
+  thumb_velocity_topic: /j_thumb_fle_velocity_controller/command
+  index_velocity_topic: /j_index_fle_velocity_controller/command
+  mrl_velocity_topic: /j_mrl_fle_velocity_controller/command
+
+# Camera configuration
+config_cameras:
+  camera:
+    point_cloud:
+      setup: "static" # "static" or "hand"
+      ref_frame: "palm"
+      num_points: 512
+      min_range: 0.5
+      max_range: 1.5
+
+config_imagined:
+  right_hand: true
+  ref_frame: "palm"
+  num_points: 512

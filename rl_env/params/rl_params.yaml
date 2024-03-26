@@ -1,0 +1,4 @@
+# Environment parameters
+num_episodes: 10000
+step_size: 0.1 # seconds
+learning_rate: 0.005

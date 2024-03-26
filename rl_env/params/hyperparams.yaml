@@ -1,7 +1,0 @@
-# Environment parameters
-step_size: 0.1 # seconds
-camera_setup: "static" # static or hand
-approach_traj: "potential_field"
-
-# Learning parameters
-learning_rate: 0.005
