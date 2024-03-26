@@ -7,11 +7,11 @@ from sensor_msgs.msg import JointState
 from sensor_msgs.msg import PointCloud2
 #from mia_hand_msgs.msg import FingersData
 #from mia_hand_msgs.msg import FingersStrainGauges
-from gazebo.robot_gazebo_env import RobotGazeboEnv
-import utilities.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
-from utilities.tf_handler import TFHandler
-from utilities.point_cloud_handler import PointCloudHandler, ImaginedPointCloudHandler
-from utilities.urdf_handler import URDFHandler
+from rl_env.gazebo.robot_gazebo_env import RobotGazeboEnv
+import rl_env.utilities.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
+from rl_env.utilities.tf_handler import TFHandler
+from rl_env.utilities.point_cloud_handler import PointCloudHandler, ImaginedPointCloudHandler
+from rl_env.utilities.urdf_handler import URDFHandler
 
 class MiaHandEnv(RobotGazeboEnv):
     """Superclass for all Robot environments.
@@ -30,7 +30,7 @@ class MiaHandEnv(RobotGazeboEnv):
         rospack = rospkg.RosPack()
         
         # Initialise handlers
-        urdf_path = rospack.get_path("simulation_world") + "/urdf/hands/mia_hand_default.urdf"
+        urdf_path = rospack.get_path("sim_world") + "/urdf/hands/mia_hand_default.urdf"
         self.urdf_handler = URDFHandler(urdf_path)
         self.pc_cam_handler = PointCloudHandler(point_clouds=[o3d.geometry.PointCloud()])
         self.pc_imagine_handler = ImaginedPointCloudHandler()

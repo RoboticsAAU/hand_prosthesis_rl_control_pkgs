@@ -6,7 +6,7 @@ import urdfpy
 import rospkg
 
 rospack = rospkg.RosPack()
-DEFAULT_PATH = rospack.get_path("simulation_world") + "/urdf/hands/mia_hand_default.urdf"
+DEFAULT_PATH = rospack.get_path("sim_world") + "/urdf/hands/mia_hand_default.urdf"
 
 class URDFHandler():
     def __init__(self, urdf_file_path = DEFAULT_PATH):

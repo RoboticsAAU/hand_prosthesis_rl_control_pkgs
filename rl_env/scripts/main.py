@@ -1,10 +1,11 @@
-from task_envs.mia_hand_task_env import MiaHandWorldEnv
-from move_hand.move_hand_controller import HandController
-from move_hand.gazebo_interface import GazeboInterface
-from stablebaselines3 import PPO
-from config.config.hand import MiaHandConfig
-from types import SimpleNamespace
 import yaml
+from types import SimpleNamespace
+from stablebaselines3 import PPO
+
+from task_envs.mia_hand_task_env import MiaHandWorldEnv
+from move_hand.gazebo_interface import GazeboInterface
+from move_hand.move_hand_controller import HandController
+from config.config.hand import MiaHandConfig
 
 with open('hand_params.yaml', 'r') as file:
     hand_params = yaml.safe_load(file)

@@ -151,7 +151,9 @@ include_directories(
 ## Install ##
 #############
 
-catkin_install_python(PROGRAMS scripts/test.py
+catkin_install_python(PROGRAMS
+                      scripts/test.py
+                      scripts/main.py
                       DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 # all install targets should use catkin DESTINATION variables

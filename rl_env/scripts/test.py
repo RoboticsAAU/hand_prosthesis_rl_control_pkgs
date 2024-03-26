@@ -29,7 +29,7 @@ def main():
                             "num_points" : 512}
         
         config_cameras = {
-            "camera": {
+            "realsense_d435": {
                 "point_cloud": {
                     "ref_frame": "palm",
                     "num_points": 512,
@@ -66,7 +66,7 @@ def main():
             speed = -0.5
         mia_world_env.move_fingers(np.repeat(speed, 3))
         rospy.sleep(0.1)
-        mia_world_env.pc_imagine_handler.visualize()
+        #mia_world_env.pc_imagine_handler.visualize(index=0)
         mia_world_env.update_imagination()
 
 if __name__ == "__main__":

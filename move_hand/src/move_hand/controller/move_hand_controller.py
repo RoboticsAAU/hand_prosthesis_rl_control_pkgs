@@ -3,7 +3,7 @@
 import rospy
 import numpy as np
 import math
-from move_hand.gazebo_interface import GazeboInterface
+from move_hand.controller.gazebo_interface import GazeboInterface
 
 
 # TODO: Compute trajectories for the hand

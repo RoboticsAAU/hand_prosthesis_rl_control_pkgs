@@ -4,8 +4,7 @@ from pathlib import Path
 from gym import spaces
 from gym.envs.registration import register
 from functools import cached_property
-from robot_envs.mia_hand_env import MiaHandEnv
-from utilities.robot_utils import generate_free_robot_hand_info
+from rl_env.robot_envs.mia_hand_env import MiaHandEnv
 
 OBJECT_LIFT_LOWER_LIMIT = -0.03
 
@@ -32,14 +31,16 @@ class MiaHandWorldEnv(MiaHandEnv):
         self.config_cameras = config["config_cameras"]
         self.imagined_groups = {}
         
-        # Define the upper and lower bounds for velocity (Params are loaded in launch file)
+        robot_namespace = rospy.get_param('~robotNamespace', 'mia_hand_camera')
+        rospy.logdebug("ROBOT NAMESPACE==>"+str(robot_namespace))
         
-        self.index_vel_lb = rospy.get_param('/mia_hand_camera/index_vel_lb')
-        self.index_vel_ub = rospy.get_param('/mia_hand_camera/index_vel_ub')
-        self.thumb_vel_lb = rospy.get_param('/mia_hand_camera/thumb_vel_lb')
-        self.thumb_vel_ub = rospy.get_param('/mia_hand_camera/thumb_vel_ub')
-        self.mrl_vel_lb = rospy.get_param('/mia_hand_camera/mrl_vel_lb')
-        self.mrl_vel_ub = rospy.get_param('/mia_hand_camera/mrl_vel_ub')
+        # Define the upper and lower bounds for velocity (Params are loaded in launch file)
+        self.index_vel_lb = rospy.get_param(f'{robot_namespace}/index_vel_lb')
+        self.index_vel_ub = rospy.get_param(f'{robot_namespace}/index_vel_ub')
+        self.thumb_vel_lb = rospy.get_param(f'{robot_namespace}/thumb_vel_lb')
+        self.thumb_vel_ub = rospy.get_param(f'{robot_namespace}/thumb_vel_ub')
+        self.mrl_vel_lb = rospy.get_param(f'{robot_namespace}/mrl_vel_lb')
+        self.mrl_vel_ub = rospy.get_param(f'{robot_namespace}/mrl_vel_ub')
         
         # Bounds for joint velocities
         self.vel_lb = np.array([self.index_vel_lb, self.thumb_vel_lb, self.mrl_vel_lb])
@@ -47,46 +48,47 @@ class MiaHandWorldEnv(MiaHandEnv):
         
         # We set the reward range, which is not compulsory but here we do it.
         self.reward_range = (-np.inf, np.inf)
-                
-        # Initial velocities
-        self.init_index_vel = 0
-        self.init_thumb_vel = 0
-        self.init_mrl_vel = 0
         
         # Define the upper and lower bounds for positions
-        self.index_pos_lb = rospy.get_param('/mia_hand_camera/index_pos_lb')
-        self.index_pos_ub = rospy.get_param('/mia_hand_camera/index_pos_ub')
-        self.thumb_pos_lb = rospy.get_param('/mia_hand_camera/thumb_pos_lb')
-        self.thumb_pos_ub = rospy.get_param('/mia_hand_camera/thumb_pos_ub')
-        self.mrl_pos_lb = rospy.get_param('/mia_hand_camera/mrl_pos_lb')
-        self.mrl_pos_ub = rospy.get_param('/mia_hand_camera/mrl_pos_ub')
+        self.index_pos_lb = rospy.get_param(f'{robot_namespace}/index_pos_lb')
+        self.index_pos_ub = rospy.get_param(f'{robot_namespace}/index_pos_ub')
+        self.thumb_pos_lb = rospy.get_param(f'{robot_namespace}/thumb_pos_lb')
+        self.thumb_pos_ub = rospy.get_param(f'{robot_namespace}/thumb_pos_ub')
+        self.mrl_pos_lb = rospy.get_param(f'{robot_namespace}/mrl_pos_lb')
+        self.mrl_pos_ub = rospy.get_param(f'{robot_namespace}/mrl_pos_ub')
         
-        # Bounds for joint positions        
+        # Bounds for joint positions
         self.pos_lb = np.array([self.index_pos_lb, self.thumb_pos_lb, self.mrl_pos_lb])
         self.pos_ub = np.array([self.index_pos_ub, self.thumb_pos_ub, self.mrl_pos_ub])
-                
+        
         rospy.logdebug("ACTION SPACES TYPE===>"+str(self._action_space))
         rospy.logdebug("OBSERVATION SPACES TYPE===>"+str(self._obs_space))
         
         # Rewards
-        self.end_episode_points = rospy.get_param("/mia_hand_camera/end_episode_points")
-
+        self.end_episode_points = rospy.get_param(f"{robot_namespace}/end_episode_points")
         self.cumulated_steps = 0.0
+        
+        # TODO: Define these in setup
+        self._object_lift = 0.0
+        self._finger_object_dist = np.zeros(3)
     
 
-    def _set_init_pose(self):
-        """Sets the Robot in its init pose
-        """
-        
-        velocities = np.array([self.init_index_vel,
-                                self.init_thumb_vel,
-                                self.init_mrl_vel])
-        
-        self.move_fingers(velocities)
+    # def step(self, action):
+    #     self.rl_step(action)
+    #     self.update_cached_state()
+    #     self.update_imagination(reset_goal=False)
+    #     obs = self.get_observation()
+    #     reward = self.get_reward(action)
+    #     done = self.is_done()
+    #     info = self.get_info()
 
-        return True
+    #     if self.current_step >= self.horizon:
+    #         info["TimeLimit.truncated"] = not done
+    #         done = True
+    #     return obs, reward, done, info
 
-
+    
+    # Methods needed by the TrainingEnvironment
     def _init_env_variables(self):
         """
         Inits variables needs to be initialised each time we reset at the start
@@ -122,7 +124,7 @@ class MiaHandWorldEnv(MiaHandEnv):
     def _get_obs(self):
         """
         Fetch observations from the Mia Hand
-        :return:
+        :return: observation
         """
         rospy.logdebug("Start Get Observation ==>")
 
@@ -145,22 +147,39 @@ class MiaHandWorldEnv(MiaHandEnv):
         return self._episode_done
 
 
-    def _compute_reward(self, observations, done):
-
-        if not done:
-            if self.last_action == "FORWARDS":
-                reward = self.forwards_reward
-            else:
-                reward = self.turn_reward
-        else:
-            reward = -1*self.end_episode_points
-
+    def _compute_reward(self):
+        """
+        Compute the reward for the given rl step
+        :return: reward
+        """
+        # Check if episode is done
+        if self._is_done():
+            return self.end_episode_points
+        
+        # Obtain the shortest distance between finger and object
+        finger_object_dist = np.min(self._finger_object_dist)
+        finger_object_dist = np.clip(finger_object_dist, 0.03, 0.8)
+        
+        # Obtain the combined joint velocity
+        clipped_vel = np.clip(self.joints_vel, self.vel_lb, self.vel_ub)
+        combined_joint_vel = np.sum(np.abs(clipped_vel))
+        
+        # Check if at least three fingers are in contact with object
+        fingers_in_contact = np.sum(self._finger_object_dist < 0.03)
+        
+        # Reward for energy expenditure (based on distance to object)
+        reward = -(finger_object_dist * combined_joint_vel) * 0.01
+        if fingers_in_contact >= 2:
+            # Reward for contact
+            reward += 0.5 * fingers_in_contact
+            
+            # Reward for lifting object
+            lift = np.clip(self._object_lift, 0, 0.2)
+            reward += 10 * lift
 
         rospy.logdebug("reward=" + str(reward))
         self.cumulated_reward += reward
         rospy.logdebug("Cumulated_reward=" + str(self.cumulated_reward))
-        self.cumulated_steps += 1
-        rospy.logdebug("Cumulated_steps=" + str(self.cumulated_steps))
         
         return reward
 
@@ -171,7 +190,7 @@ class MiaHandWorldEnv(MiaHandEnv):
 
 
     @cached_property
-    def _obs_space(self):        
+    def _obs_space(self):
         state_space = spaces.Box(self.pos_lb, self.pos_ub, dtype = np.float32)
         obs_dict = {"state": state_space}
         
@@ -203,19 +222,21 @@ class MiaHandWorldEnv(MiaHandEnv):
         return spaces.Dict(obs_dict)
     
     def get_all_observations(self):
-        camera_obs = self.get_camera_obs()
+        all_obs = self.get_camera_obs()
         state_obs = self.get_state_obs()
-        camera_obs.update(state_obs)
-        return camera_obs
+        all_obs.update(state_obs)
+        return all_obs
     
     def get_state_obs(self):
         raise NotImplementedError()
-            
+        
     def get_camera_obs(self):
+        # Initialize the observation dictionary
         obs_dict = {}
         
+        # Get the observations from the cameras
         for cam_name, cam_config in self.config_cameras.items():
-            for modality_name in cam_config.keys():
+            for modality_name, modality_config in cam_config.items():
                 key_name = f"{cam_name}-{modality_name}"
                 
                 if modality_name == 'rgb':
@@ -226,21 +247,21 @@ class MiaHandWorldEnv(MiaHandEnv):
                 
                 elif modality_name == 'point_cloud':
                     # Remove table and enforce cardinality
-                    self.point_cloud_handler.remove_plane()
-                    self.point_cloud_handler.update_cardinality(512)
+                    self.pc_cam_handler.remove_plane()
+                    self.pc_cam_handler.update_cardinality(modality_config["num_points"])
 
-                    # Transform point cloud to palm frame
-                    transform = self.tf_handler.get_transform_matrix(cam_name, "palm")
-                    self.point_cloud_handler.transform(transform)
-                
+                    # Transform point cloud to reference frame
+                    transform = self.tf_handler.get_transform_matrix(cam_name, modality_config["ref_frame"])
+                    self.pc_cam_handler.transform(transform)
+                    obs_dict[key_name] = self.pc_cam_handler.points[0]
+                    
                 else:
                     raise RuntimeError("Modality not supported")
-                
-                obs_dict[key_name] = self.point_cloud_handler.points
-                
+        
+        # Get the observations from the imagination
         if self.config_imagined is not None:
             self.update_imagination()
-            obs_dict.update(self.imagination)
+            obs_dict["imagined"] = self.pc_imagine_handler.points[0]
         
         return obs_dict
         
@@ -307,8 +328,7 @@ class MiaHandWorldEnv(MiaHandEnv):
             group_index = index + 1
             
             # Get the transform to the reference frame and convert it to a transformation matrix
-            tf_transform = self.tf_handler.get_transform(frame, self.config_imagined["ref_frame"])            
-            transform = self.tf_handler.convert_tf_to_matrix(tf_transform)
+            transform = self.tf_handler.get_transform_matrix(frame, self.config_imagined["ref_frame"])            
             
             # Get the relative transform from the initial transform (describes relative finger movement)
             rel_transform = np.linalg.inv(self.pc_imagine_handler.initial_transforms[group_index]) @ transform

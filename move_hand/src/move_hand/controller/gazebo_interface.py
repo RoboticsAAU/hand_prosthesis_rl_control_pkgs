@@ -7,18 +7,19 @@ import numpy as np
 from typing import Union, Type
 
 # Utils
-from utils.ros_helper_functions import _is_connected
-from utils.movement import next_pose
+from move_hand.utils.ros_helper_functions import _is_connected
+from move_hand.utils.movement import next_pose
+from rl_env.config.config import HandConfig
 
 
 class GazeboInterface():
-    def __init__(self, hand_config : Type[HandConfig]):#hand_name: str = 'mia_hand'):
+    def __init__(self, hand_config : Type[HandConfig]):
         """ hand_name: str is the name of the model in the gazebo world."""
         # The node must have log_level=rospy.DEBUG to see the log_debug messages to the /rosout topic.
         rospy.init_node('gazebo_interface', log_level=rospy.ERROR)
 
+        # Save the hand_config object
         self.hand_config_obj = hand_config
-        self.hand_config_obj.hand_name
 
         # Publishers
         self._pub_state = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=10)
@@ -29,9 +30,6 @@ class GazeboInterface():
         # Set the rate of the controller.
         self.hz = 1000
         self._rate = rospy.Rate(self.hz)  # 1000hz
-
-        # Variables
-        self.hand_name = hand_name
 
 
         # Wait for the publishers and subscribers to connect before returning from the constructor.
@@ -73,7 +71,7 @@ class GazeboInterface():
         """ Reset a gazebo_model to the given pose. If no model_name is passed, the hand is used."""
 
         if model_name is None:
-            model_name = self.hand_name
+            model_name = self.hand_config_obj.hand_name
 
         # TODO: Use the model_name to reset the model to the given pose.
         self.set_pose(pose)
@@ -130,7 +128,7 @@ class GazeboInterface():
         modelstate = ModelState()
 
         # Set the metadata of the message
-        modelstate.model_name = self.hand_name
+        modelstate.model_name = self.hand_config_obj.hand_name
         modelstate.reference_frame = 'world'
 
         # Forward propagate the position of the hand in time and set the next position based on the velocity and delta time.
@@ -165,7 +163,7 @@ class GazeboInterface():
             pose = Pose(position=Point(x=pose[0], y=pose[1], z=pose[2]), orientation=Quaternion(x=pose[3], y=pose[4], z=pose[5], w=pose[6]))
 
         # Set the data of the message
-        modelstate = ModelState(model_name=self.hand_name,
+        modelstate = ModelState(model_name=self.hand_config_obj.hand_name,
                                 pose=pose,
                                 reference_frame=reference_frame)
 
@@ -184,11 +182,11 @@ class GazeboInterface():
         
         # Get the state of the hand
         for i in range(len(msg.name)):
-            if msg.name[i] == self.hand_name:
+            if msg.name[i] == self.hand_config_obj.hand_name:
                 self.current_state.pose = msg.pose[i]
                 return
 
-        rospy.logwarn("The gazebo model: '", self.hand_name, "', was not found in the list of list of model states in gazebo. Check the name of the desired model in the gazebo world")
+        rospy.logwarn("The gazebo model: '", self.hand_config_obj.hand_name, "', was not found in the list of list of model states in gazebo. Check the name of the desired model in the gazebo world")
 
 
 

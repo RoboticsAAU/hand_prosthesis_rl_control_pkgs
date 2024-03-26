@@ -21,7 +21,7 @@
 
     <!-- Load urdf as robot description -->
     <group>
-        <param name="robot_description" command="$(find xacro)/xacro '$(find simulation_world)/urdf/hands/mia_hand_camera_launch.urdf.xacro'
+        <param name="robot_description" command="$(find xacro)/xacro '$(find sim_world)/urdf/hands/mia_hand_camera_launch.urdf.xacro'
           right_hand:=$(arg right_hand)
           default_mia_model:=$(arg load_default_mia_model)
           hw_interface_thumb_fle:=$(arg hw_interface_thumb_fle)
@@ -54,7 +54,7 @@
         </node>
 
         <!-- Run rviz -->
-        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find simulation_world)/rviz/env.rviz" />
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find sim_world)/rviz/env.rviz" />
 
     </group>
 </launch>

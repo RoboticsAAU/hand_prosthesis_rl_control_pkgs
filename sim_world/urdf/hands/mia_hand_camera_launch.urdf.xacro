@@ -94,7 +94,7 @@
     </xacro:unless>
     
     <!-- realsense Gazebo Plugin -->
-    <xacro:include filename="$(find simulation_world)/urdf/cameras/_d435.gazebo.xacro"/>
+    <xacro:include filename="$(find sim_world)/urdf/cameras/_d435.gazebo.xacro"/>
     <xacro:gazebo_d435 camera_name="$(arg camera_name)" 
                     reference_link="$(arg camera_name)_link" 
                     topics_ns="$(arg camera_topic_ns)"

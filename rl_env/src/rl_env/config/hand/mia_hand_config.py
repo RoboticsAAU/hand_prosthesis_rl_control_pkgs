@@ -4,8 +4,8 @@ import numpy as np
 from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
 from sensor_msgs.msg import PointCloud2
-from config.config import HandConfig
-import utilities.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
+from rl_env.config.config import HandConfig
+import rl_env.utilities.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
 
 class MiaHandConfig(HandConfig):
     def __init__(self):

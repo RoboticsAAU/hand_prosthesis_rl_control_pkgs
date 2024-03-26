@@ -5,7 +5,7 @@ import rospkg
 import glob
 from time import time
 from pathlib import Path
-from utilities.urdf_handler import URDFHandler
+from rl_env.utilities.urdf_handler import URDFHandler
 
 class PointCloudHandler():
     def __init__(self, point_clouds : List[o3d.geometry.PointCloud] = None, transforms : List[np.ndarray] = None):
@@ -178,9 +178,10 @@ class PointCloudHandler():
     def transforms(self):
         return self._transforms
     
+    # TODO: Implement this to only return the point cloud for the specified index
     @property
     def points(self):
-        return np.asarray(self.pc.points)
+        return [np.asarray(pc.points) for pc in self._pc]
 
     @property
     def count(self):
@@ -349,6 +350,7 @@ if __name__ == "__main__":
     duration = time() - start_time
     print(f"Duration: {duration:.5f} seconds")
     
+    print(f"Number of point clouds: {len(point_cloud_handler.points[1])}")
     # Visualize the point cloud
     point_cloud_handler.visualize(index=0)
 

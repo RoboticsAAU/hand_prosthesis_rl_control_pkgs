@@ -177,7 +177,7 @@ install(DIRECTORY urdf/
 
 catkin_install_python(PROGRAMS 
                       #src/move_hand/move_hand_controller.py
-                      src/move_hand/gazebo_interface.py
+                      # src/move_hand/gazebo_interface.py
                       DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 

@@ -7,7 +7,7 @@
     <arg name="sim_world_config_file"           default="sim_world_config.yaml" />
 
     <!-- Launch Mia RL environment bringup -->
-    <include file="$(find simulation_world)/launch/hand_env_bringup.launch">
+    <include file="$(find sim_world)/launch/hand_env_bringup.launch">
         <arg name="robotNamespace"              value="$(arg robotNamespace)"/>
     </include>
     
