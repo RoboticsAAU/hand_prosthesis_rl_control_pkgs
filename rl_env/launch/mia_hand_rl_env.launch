@@ -8,7 +8,7 @@
 
     <!-- Launch Mia RL environment bringup -->
     <include file="$(find sim_world)/launch/hand_env_bringup.launch">
-        <arg name="robotNamespace"              value="$(arg robotNamespace)"/>
+        <arg name="robotNamespace"              value="$(arg robot_namespace)"/>
     </include>
     
     <!-- Launch Mia RL node -->
