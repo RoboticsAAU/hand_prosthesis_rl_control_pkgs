@@ -1,6 +1,5 @@
 # !/usr/bin/env python
 
-# General dependencies
 import rospy
 from gazebo_msgs.msg import ModelState, ModelStates
 from geometry_msgs.msg import Pose, Twist, Point, Quaternion
@@ -8,12 +7,9 @@ import numpy as np
 from typing import Union, Type
 
 # Utils
-from move_hand.src.move_hand.utils.ros_helper_functions import _is_connected
-from move_hand.src.move_hand.utils.ros_helper_functions import _is_connected
-from move_hand.src.move_hand.utils.movement import next_pose
-
-# Config
-from rl_env.src.rl_env.config.config import HandConfig
+from move_hand.utils.ros_helper_functions import _is_connected
+from move_hand.utils.movement import next_pose
+from rl_env.config.config import HandConfig
 
 
 class GazeboInterface():
@@ -195,4 +191,4 @@ class GazeboInterface():
 
 
 if __name__ == '__main__':
-    print("This cannot be run as a script")
+    print("{} should not be run as a script...".format(__file__))
