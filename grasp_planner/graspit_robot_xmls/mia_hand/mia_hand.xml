@@ -1,0 +1,148 @@
+<?xml version="1.0" ?>
+<robot type="Hand">
+	<palm>palm.xml</palm>
+	<dof type='b'>
+		<!-- dof 0 (d0) -->
+		<defaultVelocity>3.14</defaultVelocity>
+		<maxEffort>1.75</maxEffort>
+		<Kp>1e+09</Kp>
+		<Kd>1e+07</Kd>
+		<draggerScale>20</draggerScale>
+	</dof>
+
+	<dof type='r'>
+		<!-- dof 1 (d1) -->
+		<defaultVelocity>3.14</defaultVelocity>
+		<maxEffort>1.75</maxEffort>
+		<Kp>1e+09</Kp>
+		<Kd>1e+07</Kd>
+		<draggerScale>20</draggerScale>
+	</dof>
+
+	<dof type='r'>
+		<!-- dof 2 (d2) -->
+		<defaultVelocity>4</defaultVelocity>
+		<maxEffort>3.5</maxEffort>
+		<Kp>1e+09</Kp>
+		<Kd>1e+07</Kd>
+		<draggerScale>20</draggerScale>
+	</dof>
+
+	<dof type='r'>
+		<!-- dof 3 (d3) -->
+		<defaultVelocity>1.57</defaultVelocity>
+		<maxEffort>3.5</maxEffort>
+		<Kp>1e+09</Kp>
+		<Kd>1e+07</Kd>
+		<draggerScale>20</draggerScale>
+	</dof>
+
+	<chain> 
+		<transform> 
+			<translation>5.14942 113.555 -24.3453</translation>
+			<rotationMatrix>2.04014e-07 -0.0871557 -0.996195 -1.11093e-07 0.996195 -0.0871557 1 1.28451e-07 1.93555e-07 </rotationMatrix> 
+		</transform>
+		<joint type='Revolute'>
+			<theta> d0+0</theta>
+			<d>0</d>
+			<a>0</a>
+			<alpha>0</alpha>
+			<minValue>0</minValue>
+			<maxValue>80.0</maxValue>
+			<viscousFriction>5.0e+7</viscousFriction>
+			<CoulombFriction>1</CoulombFriction>
+            <springStiffness>1</springStiffness>
+		</joint>
+		<link dynamicJointType='Revolute'>middle_fle.xml</link>
+	</chain>
+
+	<chain> 
+		<transform> 
+			<translation>-12.2504 112.029 -23.9364</translation>
+			<rotationMatrix>-0.0271647 -0.106824 -0.993907 -0.171511 0.980028 -0.100645 0.984808 0.167732 -0.0449437 </rotationMatrix> 
+		</transform>
+		<joint type='Revolute'>
+			<theta> d0+0</theta>
+			<d>0</d>
+			<a>0</a>
+			<alpha>0</alpha>
+			<minValue>0</minValue>
+			<maxValue>80.0</maxValue>
+			<viscousFriction>5.0e+7</viscousFriction>
+			<CoulombFriction>1</CoulombFriction>
+            <springStiffness>1</springStiffness>
+		</joint>
+		<link dynamicJointType='Revolute'>ring_fle.xml</link>
+	</chain>
+
+	<chain> 
+		<transform> 
+			<translation>-27.86 107.325 -20.6051</translation>
+			<rotationMatrix>0.0114798 -0.203363 -0.979036 -0.34068 0.919727 -0.195038 0.940109 0.335777 -0.0587235 </rotationMatrix> 
+		</transform>
+		<joint type='Revolute'>
+			<theta> d0+0</theta>
+			<d>0</d>
+			<a>0</a>
+			<alpha>0</alpha>
+			<minValue>0</minValue>
+			<maxValue>80.0</maxValue>
+			<viscousFriction>5.0e+7</viscousFriction>
+			<CoulombFriction>1</CoulombFriction>
+            <springStiffness>1</springStiffness>
+		</joint>
+		<link dynamicJointType='Revolute'>little_fle.xml</link>
+	</chain>
+	
+	<chain> 
+		<transform> 
+			<translation>26.3055 110.217 -21.5208</translation>
+			<rotationMatrix>0.113154 -0.105373 -0.987974 0.157239 0.983729 -0.0869114 0.981057 -0.145514 0.127882 </rotationMatrix> 
+		</transform>
+		<joint type='Revolute'>
+			<theta> d1+0</theta>
+			<d>0</d>
+			<a>0</a>
+			<alpha>0</alpha>
+			<minValue>0</minValue>
+			<maxValue>80.0</maxValue>
+			<viscousFriction>5.0e+7</viscousFriction>
+			<CoulombFriction>1</CoulombFriction>
+            <springStiffness>1</springStiffness>
+		</joint>
+		<link dynamicJointType='Revolute'>index_fle.xml</link>
+	</chain>
+
+	<chain> 
+		<transform> 
+			<translation>13.074 68.1082 -1.94942</translation>
+			<rotationMatrix>0.885697 0.292127 -0.360835 0.297898 0.238522 0.924318 0.356086 -0.926158 0.124234 </rotationMatrix> 
+		</transform>
+		<joint type='Revolute'>
+			<theta> d2+89.9941</theta>
+			<d>8.09222e-06</d>
+			<a>0.0179874</a>
+			<alpha>-90.0</alpha>
+			<minValue>-36.0</minValue>
+			<maxValue>0</maxValue>
+			<viscousFriction>5.0e+7</viscousFriction>
+			<CoulombFriction>1</CoulombFriction>
+            <springStiffness>1</springStiffness>
+		</joint>
+		<joint type='Revolute'>
+			<theta> d3+0</theta>
+			<d>0</d>
+			<a>0</a>
+			<alpha>0</alpha>
+			<minValue>0</minValue>
+			<maxValue>65.0</maxValue>
+			<viscousFriction>5.0e+7</viscousFriction>
+			<CoulombFriction>1</CoulombFriction>
+            <springStiffness>1</springStiffness>
+		</joint>
+		<link dynamicJointType='Revolute'>thumb_opp.xml</link>
+		<link dynamicJointType='Revolute' collisionRule="OverlappingPair" targetChain="base">thumb_fle.xml</link>
+	</chain>
+	<eigenGrasps>eigen/eigen.xml</eigenGrasps>
+	<virtualContacts>virtual/contacts.xml</virtualContacts>
+</robot>

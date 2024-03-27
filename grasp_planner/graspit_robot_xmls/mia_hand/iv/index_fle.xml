@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<root>
+	<material>plastic</material>
+	<mass>11.13</mass>
+	<cog>0 0 0</cog>
+	<inertia_matrix>0.0014 1.58e-05 0 1.58e-05  0.000197 2.27e-07 0  2.27e-07 0.00136</inertia_matrix>
+	<geometryFile>index_fle.iv</geometryFile>
+</root>
