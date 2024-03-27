@@ -9,7 +9,7 @@
      <arg name="headless" default="false"/>
      <arg name="debug" default="false"/>
      <arg name="image_view" default="false"/>
-     <arg name="robotNamespace"         default="mia_hand_camera"/> <!-- /mia_hand_camera -->
+     <arg name="robotNamespace" default="mia_hand_camera"/> <!-- /mia_hand_camera -->
      <arg name="load_default_mia_model" default="false" />
      <arg name="right_hand" default="false" doc="True to for right hand False otherwise" /> <!-- Params to set right or left Mia hand version  -->
      <arg name="joint_limits_config_filename" default="joint_limits.yaml" doc="name of the yaml file to calibrate joints limit of URDF file" />
@@ -41,7 +41,7 @@
      </include>
 
      <!-- Load robot URDF to param server and run robot_state_publisher for rviz etc -->
-     <include file="$(find sim_world)/launch/view_hand_env.launch">
+     <include file="$(find sim_world)/launch/mia_view_hand_env.launch">
           <arg name="Rviz_on" value="$(arg Rviz_on)"/>
           <arg name="use_joint_gui" value="$(arg use_joint_gui)"/>
           <arg name="hw_interface_thumb_fle" value="$(arg hw_interface_thumb_fle)"/>

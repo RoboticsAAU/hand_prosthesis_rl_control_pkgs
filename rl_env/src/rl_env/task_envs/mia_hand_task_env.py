@@ -30,23 +30,23 @@ class MiaHandWorldEnv(MiaHandEnv):
         super(MiaHandWorldEnv, self).__init__()
         
         # Get the robot name
-        robot_namespace = self._gazebo_interface.hand_config.hand_name
+        robot_namespace = self._gazebo_interface.hand_setup.name
         rospy.logdebug("ROBOT NAMESPACE==>"+str(robot_namespace))
         
         # Get the configurations for the cameras and the imagined point cloud
-        self.config_imagined = self._gazebo_interface.hand_config["config_imagined"]
-        self.config_cameras = self._gazebo_interface.hand_config["config_cameras"]
+        self.config_imagined = self._gazebo_interface.hand_setup.config["config_imagined"]
+        self.config_cameras = self._gazebo_interface.hand_setup.config["config_cameras"]
         self.imagined_groups = {}
         
         # Bounds for joint positions
-        joint_limits = self._gazebo_interface.hand_config["joint_limits"]
+        joint_limits = self._gazebo_interface.hand_setup.config["joint_limits"]
         self.pos_lb = np.array([joint_limits[finger + "_pos_range"][0] for finger in ["thumb", "index", "mrl"]])
         self.pos_ub = np.array([joint_limits[finger + "_pos_range"][1] for finger in ["thumb", "index", "mrl"]])
         
         # Bounds for joint velocities
-        vel_limits = self._gazebo_interface.hand_config["velocity_limits"]
-        self.vel_lb = np.array([vel_limits[finger + "_pos_range"][0] for finger in ["thumb", "index", "mrl"]])
-        self.vel_ub = np.array([vel_limits[finger + "_pos_range"][1] for finger in ["thumb", "index", "mrl"]])
+        vel_limits = self._gazebo_interface.hand_setup.config["velocity_limits"]
+        self.vel_lb = np.array([vel_limits[finger + "_vel_range"][0] for finger in ["thumb", "index", "mrl"]])
+        self.vel_ub = np.array([vel_limits[finger + "_vel_range"][1] for finger in ["thumb", "index", "mrl"]])
         
         # We set the reward range (not compulsory)
         self.reward_range = (-np.inf, np.inf)
@@ -54,11 +54,9 @@ class MiaHandWorldEnv(MiaHandEnv):
         rospy.logdebug("ACTION SPACES TYPE===>"+str(self._action_space))
         rospy.logdebug("OBSERVATION SPACES TYPE===>"+str(self._obs_space))
         
-        # Rewards
-        self.end_episode_points = rospy.get_param(f"{robot_namespace}/end_episode_points")
-        self.cumulated_steps = 0.0
-        
         # TODO: Define these in setup
+        self.end_episode_points = 0.0
+        self.cumulated_steps = 0.0
         self._object_lift = 0.0
         self._finger_object_dist = np.zeros(3)
     

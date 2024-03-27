@@ -5,10 +5,10 @@
     <arg name="hand_config_file"                default="hand_config.yaml" />
     <arg name="rl_config_file"                  default="rl_config.yaml" />
     <arg name="sim_world_config_file"           default="sim_world_config.yaml" />
-
+    
     <!-- Launch Mia RL environment bringup -->
-    <include file="$(find sim_world)/launch/hand_env_bringup.launch">
-        <arg name="robotNamespace"              value="$(arg robotNamespace)"/>
+    <include file="$(find sim_world)/launch/mia_hand_env_bringup.launch">
+        <arg name="robotNamespace"              value="$(arg robot_namespace)"/>
     </include>
     
     <!-- Launch Mia RL node -->
