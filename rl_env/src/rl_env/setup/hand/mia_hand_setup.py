@@ -9,21 +9,22 @@ import rl_env.utils.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
 from typing import Dict, List, Any
 
 class MiaHandSetup(HandSetup):
-    def __init__(self):
+    def __init__(self, topics: Dict[str, Dict]):
         
         super(MiaHandSetup, self).__init__()
         
-        hand_config_file = self.rospack.get_path("rl_env") + "/params/hand/mia_hand_params.yaml"
-        with open(hand_config_file, 'r') as file:
-            self._config = yaml.safe_load(file)
+        self._topic_config = topics
+        # hand_config_file = self.rospack.get_path("rl_env") + "/params/hand/mia_hand_params.yaml"
+        # with open(hand_config_file, 'r') as file:
+        #     self._config = yaml.safe_load(file)
         
         # We Start all the ROS related Subscribers and publishers
-        rospy.Subscriber(self._name + self._config["subscriptions"]["joint_state_topic"], JointState, self._joints_callback)
-        rospy.Subscriber(self._name + self._config["subscriptions"]["camera_points_topic"], PointCloud2, self._camera_point_cloud_callback)
+        rospy.Subscriber(self._name + self._topic_config["subscriptions"]["joint_state_topic"], JointState, self._joints_callback)
+        rospy.Subscriber(self._name + self._topic_config["subscriptions"]["camera_points_topic"], PointCloud2, self._camera_point_cloud_callback)
         
-        self._thumb_vel_pub = rospy.Publisher(self._name + self._config["publications"]["thumb_velocity_topic"], Float64, queue_size=1)
-        self._index_vel_pub = rospy.Publisher(self._name + self._config["publications"]["index_velocity_topic"], Float64, queue_size=1)
-        self._mrl_vel_pub = rospy.Publisher(self._name + self._config["publications"]["mrl_velocity_topic"], Float64, queue_size=1)
+        self._thumb_vel_pub = rospy.Publisher(self._name + self._topic_config["publications"]["thumb_velocity_topic"], Float64, queue_size=1)
+        self._index_vel_pub = rospy.Publisher(self._name + self._topic_config["publications"]["index_velocity_topic"], Float64, queue_size=1)
+        self._mrl_vel_pub = rospy.Publisher(self._name + self._topic_config["publications"]["mrl_velocity_topic"], Float64, queue_size=1)
         
     
     def _joints_callback(self, data : JointState):
@@ -36,8 +37,8 @@ class MiaHandSetup(HandSetup):
     
     def _get_subscribers_info(self) -> List[Dict[str, Any]]:
         return [
-            {"topic": self._name + self._config["subscriptions"]["joint_state_topic"], "message_type": JointState},
-            {"topic": self._name + self._config["subscriptions"]["camera_points_topic"], "message_type": PointCloud2}
+            {"topic": self._name + self._topic_config["subscriptions"]["joint_state_topic"], "message_type": JointState},
+            {"topic": self._name + self._topic_config["subscriptions"]["camera_points_topic"], "message_type": PointCloud2}
         ]
     
     def _get_publishers(self) -> dict:

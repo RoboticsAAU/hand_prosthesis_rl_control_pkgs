@@ -1,14 +1,14 @@
 # Algorithm parameters
-alogrithm: "PPO"
-
-# Logging and saving parameters
-log_dir: "logs/"
-log_interval: 10
-checkpoint_dir: "checkpoints/"
+general:
+  alogrithm: "PPO"
+  log_dir: "logs/"
+  log_interval: 10
+  checkpoint_dir: "checkpoints/"
 
 # Learning parameters
-num_episodes: 1000
-max_episode_steps: 10000
-step_size: 0.1 # seconds
-learning_rate: 0.005
-end_episode_points: 50.0 # Points to add at the end of the episode
+hyper_params:
+  num_episodes: 1000
+  max_episode_steps: 10000
+  step_size: 0.1 # seconds
+  learning_rate: 0.005
+  end_episode_points: 50.0 # Points to add at the end of the episode

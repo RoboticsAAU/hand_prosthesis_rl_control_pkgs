@@ -70,6 +70,16 @@ class HandSetup(ABC):
     def name(self):
         return self._name
     
+    @name.setter
+    def name(self, value):
+        rospy.logdebug("Cannot set name directly")
+        raise ValueError("Cannot set name directly")
+    
     @property
     def config(self):
         return self._config
+    
+    @config.setter
+    def config(self, value):
+        rospy.logdebug("Cannot set config directly")
+        raise ValueError("Cannot set config directly")

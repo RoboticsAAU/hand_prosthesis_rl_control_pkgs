@@ -1,15 +1,16 @@
-# What type of path planner to use for the approach trajectory
-# Possible values are:
-# - "bezier"
-# - "navigation"
-approach_traj: "navigation"
-
-# How many objects to train on
-num_objects: 10
-
-# Starting position of the hand constraints. The hand will start in the interior of the sphere defined by the following parameters
-outer_radius: 1.5
-inner_radius: 0.5
-
 # Random seed for the environment
 seed: 0
+
+move_hand:
+  # What type of path planner to use for the approach trajectory
+  approach_traj: "nav_function" # "nav_function" or "bezier"
+
+  # Starting position of the hand constraints. The hand will start in the interior of the sphere defined by the following parameters
+  outer_radius: 1.5
+  inner_radius: 0.5
+
+objects:
+  # How many objects to train on
+  num_objects: 10
+  inter_object_dist: 2.0
+
