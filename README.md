@@ -10,6 +10,10 @@ Install [catkin tools](https://catkin-tools.readthedocs.io/en/latest/installing.
 ```sh
 sudo apt-get install python3-catkin-tools python3-vcstool python3-osrf-pycommon
 ```
+Install ros dependencies.
+```sh
+rosdep install --from-paths src --ignore-src -r -y
+```
 
 ### Clone and compile
 Create a workspace and clone the code:
@@ -25,3 +29,4 @@ Now the code can be compiled (build option is not required):
 ```sh
 catkin_make --cmake-args "-DCMAKE_EXPORT_COMPILE_COMMANDS=On"
 ```
+
