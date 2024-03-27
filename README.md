@@ -10,7 +10,7 @@ Install [catkin tools](https://catkin-tools.readthedocs.io/en/latest/installing.
 ```sh
 sudo apt-get install python3-catkin-tools python3-vcstool python3-osrf-pycommon
 ```
-Install ros dependencies.
+Install ROS dependencies.
 ```sh
 rosdep install --from-paths src --ignore-src -r -y
 ```
