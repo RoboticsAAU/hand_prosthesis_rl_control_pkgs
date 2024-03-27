@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<root>
+	<material>plastic</material>
+	<mass>274</mass>
+	<cog>0.00268 0.0671 -0.016</cog>
+	<inertia_matrix>0.301 0 0 0  0.13 0 0  0 0.343</inertia_matrix>
+	<geometryFile>palm.iv</geometryFile>
+</root>

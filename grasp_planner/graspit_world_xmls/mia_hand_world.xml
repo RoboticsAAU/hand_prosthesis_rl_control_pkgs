@@ -1,0 +1,21 @@
+<?xml version="1.0" ?>
+<world>
+	<robot>
+		<filename>models/robots/mia_hand/mia_hand.xml</filename>
+		<dofValues>0.69813 0.0 0.314159 0.56725</dofValues>
+		<transform>
+			<fullTransform>(+1 +0 +0 +0)[+100 +100 +0]</fullTransform>
+		</transform>
+	</robot>
+	<graspableBody>
+		<filename>models/objects/cube.xml</filename>
+		<transform>
+			<fullTransform>(+1 +0 +0 +0)[+0 +0 +0]</fullTransform>
+		</transform>
+	</graspableBody>
+	<camera>
+		<position>0 0 500</position>
+		<orientation>0 0 0 1</orientation>
+		<focalDistance>500</focalDistance>
+	</camera>
+</world>

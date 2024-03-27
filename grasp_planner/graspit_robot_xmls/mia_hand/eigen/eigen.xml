@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<!-- d0: j_index_fle, min=-1.4, max=1.4 -->
+<!-- d1: j_little_fle, min=0, max=1.39626 -->
+<!-- d2: j_mrl_fle, min=0, max=1.39626 -->
+<!-- d3: j_ring_fle, min=0, max=1.39626 -->
+<!-- d4: j_thumb_opp, min=-0.628319, max=0 -->
+<!-- d5: j_thumb_fle, min=0, max=1.1345 -->
+<EigenGrasps dimensions="4">
+	<EG>
+        <EigenValue value="0.500000" />
+        <DimVals d0="0.500000" d1="0.500000" d2="0.500000" d3="0.500000" />
+    </EG>
+    <ORIGIN>
+        <EigenValue value="0.500000" />
+        <DimVals d0="0.0" d1="0.0" d2="-0.628279" d3="0.0" />
+    </ORIGIN>
+</EigenGrasps>
+
+
+
+
+<!-- ORIGINALLY -->
+
+		<!-- <EigenValue value="0.5"/> 
+		<DimVals d0="0.69813" d1="0" d2="-0.314159" d3="0.56725"/>
+
+		<EigenValue value="0.5"/> 
+		<DimVals d0="0.69813" d1="0" d2="-0.314159" d3="0.56725"/> -->
