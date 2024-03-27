@@ -7,7 +7,7 @@ import numpy as np
 from typing import Union, Type
 
 # Utils
-from move_hand.utils.ros_helper_functions import _is_connected
+from move_hand.utils.ros_helper_functions import _is_connected, wait_for_connection
 from move_hand.utils.movement import next_pose
 from rl_env.setup.hand.hand_setup import HandSetup
 
@@ -30,33 +30,17 @@ class GazeboInterface():
         self._rate = rospy.Rate(self.hz)  # 1000hz
 
 
-        # Wait for the publishers and subscribers to connect before returning from the constructor.
-        self.wait_for_connection()
+        # Wait for the publishers and subscribers to connect before returning from the constructor. Supply them in a list.
+        wait_for_connection(
+            [self._pub_state,
+             self._sub_state]
+        )
 
         # Initialize the current state of the hand
         self.current_state = None
         # Wait for the first state to be received before returning from the constructor.
         while self.current_state is None:
             rospy.logdebug("No state received yet so we wait and try again")
-            try:
-                self._rate.sleep()
-            except rospy.ROSInterruptException:
-                # This is to avoid error when world is rested, time when backwards.
-                pass
-
-    # TODO: Move to the utils folder
-    def wait_for_connection(self):
-        """ Wait for the connection to the publishers and subscribers. """
-        while not _is_connected(self._pub_state) and not rospy.is_shutdown():
-            rospy.logdebug("No susbribers to _pub_state yet so we wait and try again")
-            try:
-                self._rate.sleep()
-            except rospy.ROSInterruptException:
-                # This is to avoid error when world is rested, time when backwards.
-                pass
-
-        while not _is_connected(self._sub_state) and not rospy.is_shutdown():
-            rospy.logdebug("No publishers to _sub_state yet so we wait and try again")
             try:
                 self._rate.sleep()
             except rospy.ROSInterruptException:
@@ -187,4 +171,4 @@ class GazeboInterface():
 
 
 if __name__ == '__main__':
-    print("This cannot be run as a script")
+    print("{} should not be run as a script...".format(__file__))
