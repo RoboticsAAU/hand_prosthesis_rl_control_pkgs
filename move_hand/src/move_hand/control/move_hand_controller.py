@@ -3,7 +3,7 @@
 import rospy
 import numpy as np
 import math
-from sim_world.gazebo.gazebo_interface import GazeboInterface
+from sim_world.world_interfaces.gazebo_interface import GazeboInterface
 
 
 # TODO: Compute trajectories for the hand

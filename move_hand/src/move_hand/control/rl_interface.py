@@ -2,7 +2,7 @@ import numpy as np
 from typing import Tuple
 
 # Local libraries
-from sim_world.gazebo.gazebo_interface import GazeboInterface
+from sim_world.world_interfaces.simulation_interface import GazeboInterface
 from move_hand.control.move_hand_controller import HandController
 
 # TODO: Step

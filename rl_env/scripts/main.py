@@ -7,9 +7,11 @@ from stable_baselines3 import PPO
 
 
 from rl_env.task_envs.mia_hand_task_env import MiaHandWorldEnv
-from sim_world.gazebo.gazebo_interface import GazeboInterface
+from sim_world.world_interfaces.simulation_interface import GazeboInterface
 from move_hand.control.move_hand_controller import HandController
 from rl_env.setup.hand.mia_hand_setup import MiaHandSetup
+from sim_world.world_interfaces.real_interface import RealInterface
+from sim_world.world_interfaces.simulation_interface import SimulationInterface
 
 # Load the configuration files
 rospack = rospkg.RosPack()
@@ -26,11 +28,23 @@ def main():
     gazebo_interface = GazeboInterface(MiaHandSetup())
     
     # Instantiate the hand controller with a reference to the gazebo interface
-    hand_controller = HandController(gazebo_interface)
+    hand_controller = HandController()
     # TODO: Instantiate the graspit controller
     
     # Instantiate RL env with a reference to the gazebo interface
-    rl_env = MiaHandWorldEnv(gazebo_interface)
+    rl_env = MiaHandWorldEnv()
+
+
+
+    # Coul
+    data_handler = RLInterface(rl_update, mh_update, SimulationInterface(MiaHandSetup()))
+
+
+
+
+
+
+
 
     # Run the episodes
     # for _ in range(rl_config["num_episodes"]):

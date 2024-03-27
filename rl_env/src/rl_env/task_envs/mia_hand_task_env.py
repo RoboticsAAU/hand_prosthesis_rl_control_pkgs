@@ -5,7 +5,7 @@ from gym import spaces
 from gym.envs.registration import register
 from functools import cached_property
 from rl_env.robot_envs.mia_hand_env import MiaHandEnv
-from sim_world.gazebo.gazebo_interface import GazeboInterface
+from sim_world.world_interfaces.gazebo_interface import GazeboInterface
 
 OBJECT_LIFT_LOWER_LIMIT = -0.03
 
