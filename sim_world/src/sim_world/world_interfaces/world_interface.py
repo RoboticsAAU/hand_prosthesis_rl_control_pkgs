@@ -9,6 +9,10 @@ class WorldInterface():
     def reset(self):
         pass
     
+    @abstractmethod
+    def get_subscriber_data(self):
+        pass
+    
     def check_system_ready(self):
         self.hand._check_all_sensors_ready()
         self.hand._wait_for_publishers_connection()

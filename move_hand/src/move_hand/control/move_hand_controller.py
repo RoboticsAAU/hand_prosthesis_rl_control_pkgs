@@ -3,21 +3,24 @@
 import rospy
 import numpy as np
 import math
-from sim_world.world_interfaces.gazebo_interface import GazeboInterface
-
+from typing import Dict, Any
 
 # TODO: Compute trajectories for the hand
 # TODO: The hand orientation could always point towards some point, or the hand could be oriented tangent to the trajectory
 
 
 class HandController:
-    def __init__(self, gazebo_interface : GazeboInterface):
+    def __init__(self, move_hand_config : Dict[str, Any]):
         # Create the gazebo interface
-        self._gazebo_interface = gazebo_interface
+        self._move_hand_config = move_hand_config
+        self._pose_buffer = []
+        
+        # Parameters for the state
+        self._pose = None
 
-    def move_hand(self, position):
-        # Publish the position and velocity of the hand
-        self._gazebo_interface.publish_position(position)
+    def update(self, state : Dict[str, Any]):
+        # Update the hand controller state
+        self._pose = state["pose"]
 
     def move_in_circle(self):
         # Method to move the hand in a circle 
@@ -35,7 +38,7 @@ class HandController:
             # vel.linear.y = math.cos(steps * 0.001) 
             # vel.angular.z = 3.0
 
-
+            
             vel[0] = - math.sin(steps * 0.001)
             vel[1] = math.cos(steps * 0.001)
             vel[5] = 3.0
@@ -44,7 +47,6 @@ class HandController:
             steps += 1
             self._gazebo_interface._rate.sleep()
 
-            
 
 if __name__ == '__main__':
     # Test move hand controller class

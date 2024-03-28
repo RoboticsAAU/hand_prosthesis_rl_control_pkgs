@@ -22,6 +22,13 @@ class HandSetup(ABC):
         pass
     
     @abstractmethod
+    def get_subscriber_data(self) -> Dict[str, Any]:
+        """
+        Get all the subsriber data and return it in a dictionary.
+        """
+        pass
+    
+    @abstractmethod
     def _get_subscribers_info(self) -> List[Dict[str, Any]]:
         """
         Get the subscribers information, i.e. topic and message type
@@ -70,6 +77,16 @@ class HandSetup(ABC):
     def name(self):
         return self._name
     
+    @name.setter
+    def name(self, value):
+        rospy.logdebug("Cannot set name directly")
+        raise ValueError("Cannot set name directly")
+    
     @property
     def config(self):
         return self._config
+    
+    @config.setter
+    def config(self, value):
+        rospy.logdebug("Cannot set config directly")
+        raise ValueError("Cannot set config directly")

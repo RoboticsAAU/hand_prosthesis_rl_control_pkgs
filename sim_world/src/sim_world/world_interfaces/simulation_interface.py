@@ -9,44 +9,58 @@ from typing import Union, Type
 # Utils
 from move_hand.utils.ros_helper_functions import _is_connected, wait_for_connection
 from move_hand.utils.movement import next_pose
-from rl_env.setup.hand.hand_setup import HandSetup
 from sim_world.world_interfaces.world_interface import WorldInterface
 
 class SimulationInterface(WorldInterface):
-    # Set Position
-    @staticmethod
-    def set_pose(self, pose: Union[Pose, np.ndarray], reference_frame: str = 'world'):
+    def __init__(self):
+        """ hand_name: str is the name of the model in the gazebo world."""
+        # Initialize the parent class
+        super(SimulationInterface, self).__init__()
+
+        # Model state publisher and subscriber
+        self._pub_state = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=10)
+        self._sub_state = rospy.Subscriber('/gazebo/model_states', ModelStates, self._state_callback, buff_size=1000)
+
+        # Set the rate of the controller.
+        self.hz = 1000
+        self._rate = rospy.Rate(self.hz)  # 1000hz
+        
+        # Initialize variables for saving state information
+        self.model_states = ModelStates()
+
+        # Wait for the publishers and subscribers to connect before returning from the constructor. Supply them in a list.
+        wait_for_connection([self._pub_state, self._sub_state])
+    
+    def get_subscriber_data(self):
+        """ Get all the subscriber data and return it in a dictionary. """
+        subscriber_data = self.hand.get_subscriber_data()
+        subscriber_data.update({"hand_pose": self.hand_pose})
+        
+        return subscriber_data
+    
+    def set_pose(self, model_name : str, pose: Union[Pose, np.ndarray], reference_frame: str = 'world'):
         """ Set the pose of the hand to the given position and orientation. Orientation is given in quaternions. """
         try:
-            self._publish_pose(pose, reference_frame)
+            self._publish_pose(model_name, pose, reference_frame)
         except Exception as e:
             rospy.logwarn("Failed to set position because: ", e)
 
-    # Override
-    def set_velocities():
-        # Set the velocities of the fingers. 
-        pass
-
-    # Set Velocity
-    @staticmethod
-    def set_velocity(self, velocity: Union[Twist, np.ndarray]):
+    def set_velocity(self, model_name : str, velocity: Union[Twist, np.ndarray]):
         """ Set the velocity of the hand to the given velocity. The velocity can be of type Twist or numpy.ndarray with 6 dimensions."""
         try:
-            self._publish_velocity(velocity)
+            self._publish_velocity(model_name, velocity)
         except Exception as e:
             rospy.logwarn("Failed to set velocity because: ", e)
 
+    def spawn_object(self, object: str, pose: Union[Pose, np.ndarray]):
+        """ Spawn the object in the gazebo world. """
+        raise NotImplementedError("Not implemented yet")
+
 
     # ------------------- Private methods ------------------- #
-    def _publish_velocity(self, velocity: Union[Twist, np.ndarray]):
-        """Publish the velocity of the hand to the gazebo world. Includes metadata of the controller in the message."""
-        
-        if velocity is None:
-            raise ValueError("The velocity cannot be None")
-        
-        if not _is_connected(self._pub_state):
-            raise rospy.ROSException("The publisher is not connected")
-
+    def _publish_velocity(self, model_name : str, velocity: Union[Twist, np.ndarray], ref_frame: str = 'world'):
+        """Publish a velocity to the given model in the gazebo world. Includes metadata of the controller in the message."""
+        # If velocity is a numpy array, convert it to a Twist message.
         if isinstance(velocity, np.ndarray):
             if len(velocity) != 6:
                 raise ValueError("The velocity must have 6 elements, [x, y, z, roll, pitch, yaw]")
@@ -58,38 +72,24 @@ class SimulationInterface(WorldInterface):
             twist_velocity.angular.y = velocity[4]
             twist_velocity.angular.z = velocity[5]
             velocity = twist_velocity
-
         elif not isinstance(velocity, Twist):
             raise ValueError("The velocity must be of type Twist or numpy.ndarray")
 
         # Initialize a new ModelState instance.
-        modelstate = ModelState()
-
+        model_state = ModelState()
+        
         # Set the metadata of the message
-        modelstate.model_name = self.hand_setup.name
-        modelstate.reference_frame = 'world'
+        model_state.model_name = model_name
+        model_state.reference_frame = ref_frame
 
         # Forward propagate the position of the hand in time and set the next position based on the velocity and delta time.
-        modelstate.pose = next_pose(velocity, self.current_state.pose, 1.0 / float(self.hz))
+        model_state.pose = next_pose(velocity, self.hand_pose, 1.0 / float(self.hz))
         
         # Publish the message
-        self._pub_state.publish(modelstate)
-    
+        self._pub_state.publish(model_state)
 
-    
-
-    def _publish_pose(self, pose, reference_frame: str = 'world'):
-        """ Publish the position of the hand to the gazebo world. Includes metadata of the controller in the message. Overwrites the current position of the hand in the simulation."""
-
-        # Verify that the position is not None
-        if pose is None:
-            raise ValueError("The position cannot be None")
-
-        # Final check before publishing
-        if not _is_connected(self._pub_state):
-            raise rospy.ROSException("The publisher is not connected")
-            
-        
+    def _publish_pose(self, model_name : str, pose : Union[Pose, np.ndarray], ref_frame: str = 'world'):
+        """ Publish the position of the hand to the gazebo world. Includes metadata of the controller in the message. Overwrites the current position of the hand in the simulation."""            
         # Verify that the position is of type Pose
         if not isinstance(pose, Pose) or not isinstance(pose, np.ndarray):
             raise ValueError("The position must be of type Pose or numpy.ndarray")
@@ -101,84 +101,28 @@ class SimulationInterface(WorldInterface):
             pose = Pose(position=Point(x=pose[0], y=pose[1], z=pose[2]), orientation=Quaternion(x=pose[3], y=pose[4], z=pose[5], w=pose[6]))
 
         # Set the data of the message
-        modelstate = ModelState(model_name=self.hand_setup.name,
+        model_state = ModelState(model_name=model_name,
                                 pose=pose,
-                                reference_frame=reference_frame)
+                                reference_frame=ref_frame)
 
         # Publish the message
-        self._pub_state.publish(modelstate)
+        self._pub_state.publish(model_state)
 
-
-    def _state_callback(self, msg):
+    def _state_callback(self, msg : ModelStates):
         """ Callback method for the state subscriber. """
         rospy.logdebug("Received state message")
-        
-        # Initialize a new ModelState instance.
-        self.current_state = ModelState()
-        
-        # Get the state of the hand
-        for i in range(len(msg.name)):
-            if msg.name[i] == self.hand_setup.name:
-                self.current_state.pose = msg.pose[i]
-                return
-
-        rospy.logwarn("The gazebo model: '", self.hand_setup.name, "', was not found in the list of list of model states in gazebo. Check the name of the desired model in the gazebo world")
-
-
-
-class SimulationInterface(WorldInterface):
-    def __init__(self):
-        """ hand_name: str is the name of the model in the gazebo world."""
-        
-        super(SimulationInterface, self).__init__()
-
-        # Publishers
-        self._pub_state = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=10)
-
-        # Subscribers
-        self._sub_state = rospy.Subscriber('/gazebo/model_states', ModelStates, self._state_callback, buff_size=1000)
-
-        # Set the rate of the controller.
-        self.hz = 1000
-        self._rate = rospy.Rate(self.hz)  # 1000hz
-
-
-        # Wait for the publishers and subscribers to connect before returning from the constructor. Supply them in a list.
-        wait_for_connection(
-            [self._pub_state,
-             self._sub_state]
-        )
-
-        # Initialize the current state of the hand
-        self.current_state = None
-        # Wait for the first state to be received before returning from the constructor.
-        while self.current_state is None:
-            rospy.logdebug("No state received yet so we wait and try again")
-            try:
-                self._rate.sleep()
-            except rospy.ROSInterruptException:
-                # This is to avoid error when world is rested, time when backwards.
-                pass
-
+        self.model_states = msg
 
     
-    def reset_to(self, pose: Union[Pose, np.ndarray], model_name: None):
-        """ Reset a gazebo_model to the given pose. If no model_name is passed, the hand is used."""
-
-        if model_name is None:
-            model_name = self.hand_setup.name
-
-        # TODO: Use the model_name to reset the model to the given pose.
-        Gazebo.set_pose(pose)
-        Gazebo.get_pose()
-        Gazebo.set_finger_positions()
-        Gazebo.set_finger_()
-
-    def step(self, action: ModelState) -> bool:
-        """ Step the environment by applying the given action and return if the step is done correctly."""
-        # TODO set a new position of the hand in the world.
-        pass
-
+    @property
+    def hand_pose(self) -> Pose:
+        """ Return the current state of the hand. """
+        try:
+            index = self.model_states.name.index(self.hand.name)
+            return self.model_states.pose[index]
+        except ValueError:
+            rospy.logwarn("The gazebo model: '", self.hand.name, "', was not found in the list of list of model states in gazebo")
+            return None
 
 
 if __name__ == '__main__':
