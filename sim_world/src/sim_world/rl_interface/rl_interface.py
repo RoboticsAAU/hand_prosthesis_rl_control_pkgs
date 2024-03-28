@@ -1,4 +1,5 @@
 import numpy as np
+import rospy
 from typing import Type, Dict, Callable, Any
 
 from sim_world.world_interfaces.world_interface import WorldInterface
@@ -34,7 +35,7 @@ class RLInterface():
     
     def move_hand(self, position):
         # Publish the position and velocity of the hand
-        self._world_interface.publish_pose(position)
+        self._world_interface.set_pose(self._world_interface.hand.name, position)
     
     def spawn_objects_in_grid(self):
         def find_factors(n):
@@ -62,3 +63,4 @@ class RLInterface():
             T[:3, 3] = t
             
             self._world_interface.spawn_object(object["path"], T)
+    

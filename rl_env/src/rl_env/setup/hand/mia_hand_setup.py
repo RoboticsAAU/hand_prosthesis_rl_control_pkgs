@@ -26,27 +26,11 @@ class MiaHandSetup(HandSetup):
         self._index_vel_pub = rospy.Publisher(self._name + self._topic_config["publications"]["index_velocity_topic"], Float64, queue_size=1)
         self._mrl_vel_pub = rospy.Publisher(self._name + self._topic_config["publications"]["mrl_velocity_topic"], Float64, queue_size=1)
         
-    
-    def _joints_callback(self, data : JointState):
-        self.joints = data.position
-        self.joints_vel = data.velocity
-        self.joints_effort = data.effort
-        
-    def _camera_point_cloud_callback(self, data : PointCloud2):
-        self.points = o3d_ros.convertCloudFromRosToOpen3d(data)
-    
-    def _get_subscribers_info(self) -> List[Dict[str, Any]]:
-        return [
-            {"topic": self._name + self._topic_config["subscriptions"]["joint_state_topic"], "message_type": JointState},
-            {"topic": self._name + self._topic_config["subscriptions"]["camera_points_topic"], "message_type": PointCloud2}
-        ]
-    
-    def _get_publishers(self) -> dict:
-        return [
-            self._thumb_vel_pub,
-            self._index_vel_pub,
-            self._mrl_vel_pub
-        ]
+        # Initialise the subscribed data variables
+        self.joints_pos = [Float64()]
+        self.joints_vel = [Float64()]
+        self.joints_effort = [Float64()]
+        self.point_cloud = PointCloud2()
     
     def set_finger_vel(self, vel : float, finger_id : str) -> None:
         """
@@ -73,3 +57,36 @@ class MiaHandSetup(HandSetup):
         """
         for index, finger_id in enumerate(["thumb", "index", "mrl"]):
             self.set_finger_vel(vels[index], finger_id)
+    
+    def get_subscriber_data(self) -> Dict[str, Any]:
+        """
+        Get all the subscriber data and return it in a dictionary.
+        """
+        subscriber_data = {
+            "joints_pos": self.joints_pos,
+            "joints_vel": self.joints_vel,
+            "joints_effort": self.joints_effort,
+            "point_cloud": self.point_cloud
+        }
+        return subscriber_data
+    
+    def _joints_callback(self, data : JointState):
+        self.joints_pos = data.position
+        self.joints_vel = data.velocity
+        self.joints_effort = data.effort
+        
+    def _camera_point_cloud_callback(self, data : PointCloud2):
+        self.point_cloud = o3d_ros.convertCloudFromRosToOpen3d(data)
+    
+    def _get_subscribers_info(self) -> List[Dict[str, Any]]:
+        return [
+            {"topic": self._name + self._topic_config["subscriptions"]["joint_state_topic"], "message_type": JointState},
+            {"topic": self._name + self._topic_config["subscriptions"]["camera_points_topic"], "message_type": PointCloud2}
+        ]
+    
+    def _get_publishers(self) -> dict:
+        return [
+            self._thumb_vel_pub,
+            self._index_vel_pub,
+            self._mrl_vel_pub
+        ]

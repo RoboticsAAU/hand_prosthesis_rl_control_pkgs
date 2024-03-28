@@ -31,7 +31,7 @@ def main():
     hand_controller = HandController(sim_config["move_hand"])
     # TODO: Instantiate the graspit controller
     
-
+    
     # Instantiate the RL interface to the simulation
     update_methods = {"rl_update": rl_env.update,
                       "mh_update": hand_controller.update}
