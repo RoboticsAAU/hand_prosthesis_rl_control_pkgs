@@ -1,14 +1,16 @@
 import numpy as np
 import rospy
 from typing import Type, Dict, Callable, Any
+from pathlib import Path
 
 from sim_world.world_interfaces.world_interface import WorldInterface
+from sim_world.world_interfaces.simulation_interface import SimulationInterface
 from sim_world.object_handler.object_handler import ObjectHandler
 
 
 
 class RLInterface():
-    def __init__(self, world_interface: Type[WorldInterface], update_methods: Dict[str, Callable], objects_config : Dict[str, Any]):
+    def __init__(self, world_interface: SimulationInterface, update_methods: Dict[str, Callable], objects_config : Dict[str, Any]):
         # Save the world interface and the update methods
         self._world_interface = world_interface
         self._update_methods = update_methods
@@ -25,19 +27,26 @@ class RLInterface():
         
         # Extract all the values from the interface and put them in a dictionary
         # Some values may be set to none depending on the interface, need to make sure the update methods can handle this using checks. 
-        output_values = self._world_interface.update()
+        subscriber_data = self._world_interface.get_subscriber_data()
         for method in self._update_methods.values():
-            method(output_values)
+            method(subscriber_data)
     
     def set_action(self, action):
-        # Set the action of the hand
+        """ 
+        Set the action for the hand.
+        """
         self._world_interface.hand.set_action(action)
     
     def move_hand(self, position):
-        # Publish the position and velocity of the hand
+        """
+        Publish the position of the hand to the world interface.
+        """
         self._world_interface.set_pose(self._world_interface.hand.name, position)
     
     def spawn_objects_in_grid(self):
+        """
+        Spawn the objects in a grid in the gazebo world.
+        """
         def find_factors(n):
             factors = []
             for i in range(1, int(n**0.5) + 1):
@@ -62,5 +71,6 @@ class RLInterface():
             T[:3, :3] = R
             T[:3, 3] = t
             
-            self._world_interface.spawn_object(object["path"], T)
+            # Spawn the object
+            self._world_interface.spawn_object(object["name"], object["sdf"], T)
     

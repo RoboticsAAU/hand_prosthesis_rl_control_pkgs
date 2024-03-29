@@ -1,10 +1,10 @@
 from typing import Dict, Any
 
 class ObjectHandler():
-    def __init__(self):
-        self._objects = self.load_objects()
+    def __init__(self, folder_path : str):
+        self._objects = self.load_objects(folder_path)
     
-    def load_objects(self):
+    def load_objects(self, folder_path : str):
         # Load the objects into the objects variable
         pass
     
