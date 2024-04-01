@@ -36,7 +36,13 @@ def main():
     update_methods = {"rl_update": rl_env.update,
                       "mh_update": hand_controller.update}
     rl_interface = RLInterface(SimulationInterface(MiaHandSetup(hand_config["topics"])), update_methods, sim_config["objects"])
-
+    
+    # Test step of the RL interface
+    input_values = {"action": np.ones((3,1)), 
+                    "hand_pose": np.concatenate(np.ones(3), np.zeros(4))}
+    while not rospy.is_shutdown():
+        rl_interface.step(input_values)
+    
     # Run the episodes
     # for _ in range(rl_config["num_episodes"]):
     #     for _ in range(rl_config["max_episode_steps"]):

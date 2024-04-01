@@ -23,7 +23,7 @@ register(
         #timestep_limit=timestep_limit_per_episode,
     )
 
-class MiaHandWorldEnv(gym.env):
+class MiaHandWorldEnv(gym.Env):
     def __init__(self, visual_sensor_config : Dict[str, Any], limits_config : Dict[str, Any]):
         """
         This Task Env is designed for having the Mia hand in the hand grasping world.
@@ -79,18 +79,15 @@ class MiaHandWorldEnv(gym.env):
     
     def reset(self):
         pass
-
-    def update(self, state : Dict[str: Any], observation : Dict[str: Any]):
+    
+    def update(self, hand_data : Dict[str, Any]):
         """
-        Update the values of the state and observation
+        Update the values of the hand data (state and observation)
         """
-        # Update the state
-        self._joints = state["joints"]
-        self._joints_vel = state["joints_vel"]
-        
-        # Update the observation
-        self._pc_cam_handler.pc[0] = observation["point_cloud"]
-        
+        # Update the hand data
+        self._joints = hand_data["joints_pos"]
+        self._joints_vel = hand_data["joints_vel"]
+        self._pc_cam_handler.pc[0] = hand_data["point_cloud"]
     
     # Methods needed by the TrainingEnvironment
     def init_env_variables(self):

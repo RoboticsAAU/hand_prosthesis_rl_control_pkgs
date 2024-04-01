@@ -32,6 +32,20 @@ class MiaHandSetup(HandSetup):
         self.joints_effort = [Float64()]
         self.point_cloud = PointCloud2()
     
+    def get_subscriber_data(self) -> Dict[str, Any]:
+        """
+        Get all the subscriber data and return it in a dictionary.
+        """
+        subscriber_data = {
+            "rl_data": {
+                "joints_pos": self.joints_pos,
+                "joints_vel": self.joints_vel,
+                "joints_effort": self.joints_effort,
+                "point_cloud": self.point_cloud
+            }
+        }
+        return subscriber_data
+    
     def set_finger_vel(self, vel : float, finger_id : str) -> None:
         """
         It will move the finger based on the velocity given.
@@ -57,18 +71,6 @@ class MiaHandSetup(HandSetup):
         """
         for index, finger_id in enumerate(["thumb", "index", "mrl"]):
             self.set_finger_vel(vels[index], finger_id)
-    
-    def get_subscriber_data(self) -> Dict[str, Any]:
-        """
-        Get all the subscriber data and return it in a dictionary.
-        """
-        subscriber_data = {
-            "joints_pos": self.joints_pos,
-            "joints_vel": self.joints_vel,
-            "joints_effort": self.joints_effort,
-            "point_cloud": self.point_cloud
-        }
-        return subscriber_data
     
     def _joints_callback(self, data : JointState):
         self.joints_pos = data.position

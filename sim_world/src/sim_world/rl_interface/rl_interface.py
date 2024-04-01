@@ -22,26 +22,31 @@ class RLInterface():
 
     def step(self, input_values : Dict[str, Any]):
         # Update the world interface with the input values
-        self.move_hand(input_values["hand_pose"])
         self.set_action(input_values["action"])
+        self.move_hand(input_values["hand_pose"])
         
         # Extract all the values from the interface and put them in a dictionary
         # Some values may be set to none depending on the interface, need to make sure the update methods can handle this using checks. 
         subscriber_data = self._world_interface.get_subscriber_data()
-        for method in self._update_methods.values():
-            method(subscriber_data)
+        for name, update_method in self._update_methods.items():
+            if name == "rl_update":
+                update_method(subscriber_data["rl_data"])
+            elif name == "mh_update":
+                update_method(subscriber_data["mh_data"])
+            else:
+                rospy.logwarn("The update method name is not valid.")
     
     def set_action(self, action):
-        """ 
+        """
         Set the action for the hand.
         """
         self._world_interface.hand.set_action(action)
     
-    def move_hand(self, position):
+    def move_hand(self, pose):
         """
         Publish the position of the hand to the world interface.
         """
-        self._world_interface.set_pose(self._world_interface.hand.name, position)
+        self._world_interface.set_pose(self._world_interface.hand.name, pose)
     
     def spawn_objects_in_grid(self):
         """

@@ -2,7 +2,7 @@
 
 import rospy
 from gazebo_msgs.msg import ModelState, ModelStates
-from geometry_msgs.msg import Pose, Twist, Point, Quaternion
+from geometry_msgs.msg import Pose, Twist, Point, Quaternion, Vector3
 from gazebo_msgs.srv import SpawnModel, DeleteModel
 import numpy as np
 from typing import Union, Type
@@ -11,12 +11,13 @@ from typing import Union, Type
 from move_hand.utils.ros_helper_functions import _is_connected, wait_for_connection
 from move_hand.utils.movement import next_pose
 from sim_world.world_interfaces.world_interface import WorldInterface
+from rl_env.setup.hand.hand_setup import HandSetup
 
 class SimulationInterface(WorldInterface):
-    def __init__(self):
+    def __init__(self, hand_setup: HandSetup):
         """ hand_name: str is the name of the model in the gazebo world."""
         # Initialize the parent class
-        super(SimulationInterface, self).__init__()
+        super(SimulationInterface, self).__init__(hand_setup)
 
         # Model state publisher and subscriber
         self._pub_state = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=10)
@@ -42,7 +43,7 @@ class SimulationInterface(WorldInterface):
     def get_subscriber_data(self):
         """ Get all the subscriber data and return it in a dictionary. """
         subscriber_data = self.hand.get_subscriber_data()
-        subscriber_data.update({"hand_pose": self.hand_pose})
+        subscriber_data.update({"mh_data" : {"hand_pose": self.hand_pose}})
         
         return subscriber_data
     
@@ -80,21 +81,16 @@ class SimulationInterface(WorldInterface):
     # ------------------- Private methods ------------------- #
     def _publish_velocity(self, model_name : str, velocity: Union[Twist, np.ndarray], ref_frame: str = 'world'):
         """Publish a velocity to the given model in the gazebo world. Includes metadata of the controller in the message."""
-        # If velocity is a numpy array, convert it to a Twist message.
+        # Verify that the position is of type Velocity
+        if not isinstance(velocity, Twist) or not isinstance(velocity, np.ndarray):
+            raise ValueError("The velocity must be of type Twist or numpy.ndarray")
+
+        # If the velocity is a numpy array, convert it to a Twist message
         if isinstance(velocity, np.ndarray):
             if len(velocity) != 6:
                 raise ValueError("The velocity must have 6 elements, [x, y, z, roll, pitch, yaw]")
-            twist_velocity = Twist()
-            twist_velocity.linear.x = velocity[0]
-            twist_velocity.linear.y = velocity[1]
-            twist_velocity.linear.z = velocity[2]
-            twist_velocity.angular.x = velocity[3]
-            twist_velocity.angular.y = velocity[4]
-            twist_velocity.angular.z = velocity[5]
-            velocity = twist_velocity
-        elif not isinstance(velocity, Twist):
-            raise ValueError("The velocity must be of type Twist or numpy.ndarray")
-
+            velocity = Twist(linear=Vector3(x=velocity[0], y=velocity[1], z=velocity[2]), angular=Vector3(x=velocity[3], y=velocity[4], z=velocity[5]))
+        
         # Initialize a new ModelState instance.
         model_state = ModelState()
         
@@ -114,10 +110,10 @@ class SimulationInterface(WorldInterface):
         if not isinstance(pose, Pose) or not isinstance(pose, np.ndarray):
             raise ValueError("The position must be of type Pose or numpy.ndarray")
 
+        # If the pose is a numpy array, convert it to a Pose message
         if isinstance(pose, np.ndarray):
             if len(pose) != 7:
                 raise ValueError("The pose must have define both position and orientation as a 7 element array")
-            # Convert the numpy array to a Pose message
             pose = Pose(position=Point(x=pose[0], y=pose[1], z=pose[2]), orientation=Quaternion(x=pose[3], y=pose[4], z=pose[5], w=pose[6]))
 
         # Set the data of the message
