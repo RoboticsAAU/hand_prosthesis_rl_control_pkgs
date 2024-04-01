@@ -7,9 +7,17 @@
 <!-- d5: j_thumb_fle, min=0, max=1.1345 -->
 <EigenGrasps dimensions="4">
 	<EG>
-        <EigenValue value="0.500000" />
-        <DimVals d0="0.500000" d1="0.500000" d2="0.500000" d3="0.500000" />
+        <EigenValue value="1.000000" />
+        <DimVals d0="0.500000" d1="0.500000" d2="-0.628319" d3="0.500000" />
     </EG>
+	<EG>
+        <EigenValue value="0.500000" />
+        <DimVals d0="0.0" d1="0.0" d2="0" d3="1.0000" />
+    </EG>
+    <!-- <EG>
+        <EigenValue value="0.75" />
+        <DimVals d0="0.0" d1="1.0" d2="1.0" d3="0.5" />
+    </EG> -->
     <ORIGIN>
         <EigenValue value="0.500000" />
         <DimVals d0="0.0" d1="0.0" d2="-0.628279" d3="0.0" />
