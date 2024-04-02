@@ -21,7 +21,7 @@ class SimulationInterface(WorldInterface):
 
         # Model state publisher and subscriber
         self._pub_state = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=10)
-        self._sub_state = rospy.Subscriber('/gazebo/_model_states', ModelStates, self._state_callback, buff_size=1000)
+        self._sub_state = rospy.Subscriber('/gazebo/model_states', ModelStates, self._state_callback, buff_size=1000)
 
         # Set the rate of the controller.
         self.hz = 1000
@@ -43,7 +43,7 @@ class SimulationInterface(WorldInterface):
     def get_subscriber_data(self):
         """ Get all the subscriber data and return it in a dictionary. """
         subscriber_data = self.hand.get_subscriber_data()
-        subscriber_data.update({"mh_data" : {"hand_pose": self.hand_pose}})
+        subscriber_data.update({"mh_data" : {"pose": self.hand_pose}})
         
         return subscriber_data
     
@@ -82,8 +82,8 @@ class SimulationInterface(WorldInterface):
     def _publish_velocity(self, model_name : str, velocity: Union[Twist, np.ndarray], ref_frame: str = 'world'):
         """Publish a velocity to the given model in the gazebo world. Includes metadata of the controller in the message."""
         # Verify that the position is of type Velocity
-        if not isinstance(velocity, Twist) or not isinstance(velocity, np.ndarray):
-            raise ValueError("The velocity must be of type Twist or numpy.ndarray")
+        if not isinstance(velocity, Twist) and not isinstance(velocity, np.ndarray):
+            raise ValueError(f"The velocity must be of type Twist or numpy.ndarray. Input given is of type {type(velocity)}.")
 
         # If the velocity is a numpy array, convert it to a Twist message
         if isinstance(velocity, np.ndarray):
@@ -107,8 +107,8 @@ class SimulationInterface(WorldInterface):
     def _publish_pose(self, model_name : str, pose : Union[Pose, np.ndarray], ref_frame: str = 'world'):
         """ Publish the position of the hand to the gazebo world. Includes metadata of the controller in the message. Overwrites the current position of the hand in the simulation."""            
         # Verify that the position is of type Pose
-        if not isinstance(pose, Pose) or not isinstance(pose, np.ndarray):
-            raise ValueError("The position must be of type Pose or numpy.ndarray")
+        if not isinstance(pose, Pose) and not isinstance(pose, np.ndarray):
+            raise ValueError(f"The position must be of type Pose or numpy.ndarray. Input given is of type {type(pose)}.")
 
         # If the pose is a numpy array, convert it to a Pose message
         if isinstance(pose, np.ndarray):

@@ -17,7 +17,7 @@ class RLInterface():
         
         # Save the object handler
         self._objects_config = objects_config
-        self._object_handler = ObjectHandler()
+        self._object_handler = ObjectHandler(folder_path="")
 
 
     def step(self, input_values : Dict[str, Any]):

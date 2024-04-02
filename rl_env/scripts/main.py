@@ -38,10 +38,11 @@ def main():
     rl_interface = RLInterface(SimulationInterface(MiaHandSetup(hand_config["topics"])), update_methods, sim_config["objects"])
     
     # Test step of the RL interface
-    input_values = {"action": np.ones((3,1)), 
-                    "hand_pose": np.concatenate(np.ones(3), np.zeros(4))}
+    input_values = {"action": np.ones(3), 
+                    "hand_pose": np.concatenate([np.ones(3), np.zeros(4)])}
     while not rospy.is_shutdown():
         rl_interface.step(input_values)
+        rospy.sleep(0.1)
     
     # Run the episodes
     # for _ in range(rl_config["num_episodes"]):
@@ -63,7 +64,7 @@ def main():
         
 
 if __name__ == "__main__":
-    rospy.init_node("rl_env", log_level=rospy.INFO)
+    rospy.init_node("rl_env", log_level=rospy.DEBUG)
     
     try:
         main()
