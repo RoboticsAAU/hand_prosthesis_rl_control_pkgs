@@ -1,5 +1,5 @@
 from graspit_commander.graspit_commander import GraspitCommander
-from geometry_msgs.msg import Pose 
+from geometry_msgs.msg import Pose, Quaternion, Point
 from typing import Dict, Union, Optional
 from pathlib import Path
 from tqdm import tqdm
@@ -17,7 +17,7 @@ class GraspHandler():
         Parameters:
         - config (Optional[Dict[str, Union[int, str]]]): A dictionary containing configuration options.
           It should include the following keys:
-            * robot_file: (str) The path to the xml robot file.
+            * world_file: (str) The path to the xml robot file.
             * obj_dir: (str) The directory that contains all objects. 
             * search_energy: (int) The search energy to use for planning grasps.
             * num_obj_grasps: (int) The number of grasps to plan for each object.
@@ -27,7 +27,7 @@ class GraspHandler():
         - debug (bool): If True, debug messages will be printed. Default is False.
         """
         
-        self.expected_keys = ["robot_file", "obj_dir", "save_dir", "search_energy", "num_obj_grasps", "num_steps"]
+        self.expected_keys = ["world_file", "obj_dir", "save_dir", "search_energy", "num_obj_grasps", "num_steps"]
         
         # Check if the configuration dictionary is valid
         self._config = config
@@ -66,7 +66,7 @@ class GraspHandler():
         return grasps
         
     
-    def plan_all_grasps(self, hand_pose : Optional[Pose] = Pose(), obj_pose : Optional[Pose] = Pose()):
+    def plan_all_grasps(self, obj_pose : Optional[Pose] = None):
         '''
         Function to plan grasps for all objects for the current set configuration. Assumes objects and world files are are in same folder and have same name.
         
@@ -74,8 +74,11 @@ class GraspHandler():
         - obj_pose (Optional[Pose]): The pose of the object. Default is zero pose.
         
         '''
-        
+        # Set default object pose if not provided
+        obj_pose = obj_pose if obj_pose else Pose(position=Point(0, 0, 0), orientation=Quaternion(0, 0, 0, 1))
+        # Ensure that config is valid (in case it was set after object creation)
         self._check_config()
+        
         num_grasps = 0
         
         # Get recursively the path of all object files
@@ -95,11 +98,13 @@ class GraspHandler():
             
             rel_obj_files.append(relative_path)
         
-        for rel_obj_file in tqdm(rel_obj_files):
-            GraspitCommander.importRobot(self.config["robot_file"], hand_pose)
-            GraspitCommander.importGraspableBody(os.path.splitext(rel_obj_file)[0], obj_pose)
-            grasps = self._plan_object_grasps(feedback_num_steps=-1)
-            num_grasps += len(grasps.grasps)
+        for idx, rel_obj_file in tqdm(enumerate(sorted(rel_obj_files))):
+            GraspitCommander.clearWorld()
+            GraspitCommander.loadWorld(self.config["world_file"])
+            path = str(Path(rel_obj_file).with_suffix(""))
+            GraspitCommander.importGraspableBody(path, obj_pose)
+            # grasps = self._plan_object_grasps(feedback_num_steps=-1)
+            # num_grasps += len(grasps.grasps)
             
             # Store grasps in a JSON file
             # self._store_grasps(grasps)
