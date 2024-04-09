@@ -10,22 +10,22 @@
   <license>APACHE 2.0</license>
 
   <buildtool_depend>catkin</buildtool_depend>
-  
+
   <build_depend>rospy</build_depend>
   <build_depend>std_msgs</build_depend>
-
   <build_depend>python-catkin-pkg</build_depend>
   <build_depend>urdf</build_depend>
   <build_depend>xacro</build_depend>
   <build_depend>mia_hand_description</build_depend>
   <build_depend>realsense2_description</build_depend>
+  <build_depend>gazebo_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
 
   <build_export_depend>rospy</build_export_depend>
   <build_export_depend>urdf</build_export_depend>
   <build_export_depend>xacro</build_export_depend>
-  
-  <exec_depend>rospy</exec_depend>
 
+  <exec_depend>rospy</exec_depend>
   <exec_depend>image_pipeline</exec_depend>
   <exec_depend>gazebo_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>

@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(sim_world)
 
+# Set policy CMP0048 to manage version variables
+cmake_policy(SET CMP0048 NEW)
+
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
@@ -11,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   message_generation
+  gazebo_msgs
+  geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
