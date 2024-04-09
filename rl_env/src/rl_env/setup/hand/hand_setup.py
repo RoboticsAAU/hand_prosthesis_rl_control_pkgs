@@ -22,6 +22,13 @@ class HandSetup(ABC):
         pass
     
     @abstractmethod
+    def get_subscriber_data(self) -> Dict[str, Any]:
+        """
+        Get all the subsriber data and return it in a dictionary.
+        """
+        pass
+    
+    @abstractmethod
     def _get_subscribers_info(self) -> List[Dict[str, Any]]:
         """
         Get the subscribers information, i.e. topic and message type

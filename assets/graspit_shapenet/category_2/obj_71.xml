@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='us-ascii'?>
+<root>
+	<material>plastic</material>
+	<mass>500</mass>
+    <geometryScaling>150</geometryScaling>
+	<geometryFile type="Inventor">obj_71.wrl</geometryFile>
+</root>

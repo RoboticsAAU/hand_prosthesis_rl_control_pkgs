@@ -13,6 +13,7 @@ class HandController:
     def __init__(self, move_hand_config : Dict[str, Any]):
         # Create the gazebo interface
         self._move_hand_config = move_hand_config
+        self._pose_buffer = []
         
         # Parameters for the state
         self._pose = None
@@ -37,16 +38,15 @@ class HandController:
             # vel.linear.y = math.cos(steps * 0.001) 
             # vel.angular.z = 3.0
 
-
+            
             vel[0] = - math.sin(steps * 0.001)
             vel[1] = math.cos(steps * 0.001)
             vel[5] = 3.0
-        
+
             self._gazebo_interface.set_velocity(vel)
             steps += 1
             self._gazebo_interface._rate.sleep()
 
-            
 
 if __name__ == '__main__':
     # Test move hand controller class
