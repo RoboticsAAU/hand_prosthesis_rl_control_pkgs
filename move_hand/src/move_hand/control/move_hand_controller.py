@@ -47,6 +47,8 @@ class HandController:
             steps += 1
             self._gazebo_interface._rate.sleep()
 
+    def reset(self):
+        pass
 
 if __name__ == '__main__':
     # Test move hand controller class

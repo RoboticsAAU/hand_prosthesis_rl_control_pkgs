@@ -80,14 +80,15 @@ class MiaHandWorldEnv(gym.Env):
     def reset(self):
         pass
     
-    def update(self, hand_data : Dict[str, Any]):
+    def update(self, rl_data : Dict[str, Any]):
         """
         Update the values of the hand data (state and observation)
         """
         # Update the hand data
-        self._joints = hand_data["joints_pos"]
-        self._joints_vel = hand_data["joints_vel"]
-        self._pc_cam_handler.pc[0] = hand_data["point_cloud"]
+        self._joints = rl_data["hand_data"]["joints_pos"]
+        self._joints_vel = rl_data["hand_data"]["joints_vel"]
+        self._pc_cam_handler.pc[0] = rl_data["hand_data"]["point_cloud"]
+        self._object_lift = rl_data["obj_data"].position.z
     
     # Methods needed by the TrainingEnvironment
     def init_env_variables(self):
@@ -141,7 +142,7 @@ class MiaHandWorldEnv(gym.Env):
         
 
     def is_done(self):
-        # Now we check if it has crashed based on the imu
+        # We check if it has crashed based on the imu
         if self._object_lift > OBJECT_LIFT_LOWER_LIMIT:
             self._episode_done = True
 

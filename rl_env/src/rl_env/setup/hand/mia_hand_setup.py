@@ -37,7 +37,7 @@ class MiaHandSetup(HandSetup):
         Get all the subscriber data and return it in a dictionary.
         """
         subscriber_data = {
-            "rl_data": {
+            "hand_data": {
                 "joints_pos": self.joints_pos,
                 "joints_vel": self.joints_vel,
                 "joints_effort": self.joints_effort,
@@ -86,7 +86,7 @@ class MiaHandSetup(HandSetup):
             {"topic": self._name + self._topic_config["subscriptions"]["camera_points_topic"], "message_type": PointCloud2}
         ]
     
-    def _get_publishers(self) -> dict:
+    def _get_publishers(self) -> List:
         return [
             self._thumb_vel_pub,
             self._index_vel_pub,
