@@ -4,7 +4,7 @@ import numpy.random as random
 from geometry_msgs.msg import Pose
 from typing import Dict, Any
 from scipy.spatial.transform import Rotation as R
-from move_hand.path_planners import bezier_paths, navigation_function
+from move_hand.path_planners import bezier_paths, navigation_function, path_planner
 
 # TODO: Compute trajectories for the hand
 # TODO: The hand orientation could always point towards some point, or the hand could be oriented tangent to the trajectory
@@ -27,6 +27,7 @@ class HandController:
         except ValueError as e:
             rospy.logwarn("Failed to set path planner: ", e)
             rospy.logwarn("Defaulting to straight line path planner")
+            self._path_planner = path_planner.PathPlanner()
         
         # Parameters for the state
         self._pose = None
