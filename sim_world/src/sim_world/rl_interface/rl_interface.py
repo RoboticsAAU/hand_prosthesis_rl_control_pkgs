@@ -95,11 +95,12 @@ class RLInterface():
         mode: str
             The mode to update the context. Can be either "random" or "sequential".
         """
+        # Update the current object
         self._object_handler.update_current_object()
-        # self.subscriber_data["rl_data"]["obj_data"][self._object_handler.curr_obj]
         
-        # select new object (either random or sequential)
-        # move hand to given start pose
-        # choose destination point
-        # calculate hand trajectory
-
+        # Update the hand controller trajectory
+        object_pose = self.subscriber_data["rl_data"]["obj_data"][self._object_handler.curr_obj]
+        obj_center = np.array([object_pose.position.x, object_pose.position.y, object_pose.position.z])
+        self._hand_controller.plan_trajectory(obj_center)
+        
+        
