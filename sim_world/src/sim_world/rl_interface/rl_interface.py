@@ -10,16 +10,22 @@ from move_hand.control.move_hand_controller import HandController
 
 
 class RLInterface():
-    def __init__(self, world_interface: SimulationInterface, update_methods: Dict[str, Callable], sim_config : Dict[str, Any]):
+    def __init__(self, world_interface: SimulationInterface, rl_env_update : Callable, sim_config : Dict[str, Any]):
         # Save the world interface and the update methods
         self._world_interface = world_interface
-        self._update_methods = update_methods
+        self._rl_env_update = rl_env_update
         
         # Save the object handler
         self._object_handler = ObjectHandler(sim_config["objects"])
         
         # Instantiate the hand controller
         self._hand_controller = HandController(sim_config["move_hand"])
+        
+        # Spawn objects in the gazebo world
+        self.spawn_objects_in_grid()
+        
+        # Initialise subscriber data container
+        self.subscriber_data = {}
         
 
     def step(self, input_values : Dict[str, Any]):
@@ -29,17 +35,16 @@ class RLInterface():
         
         # Extract all the values from the interface and put them in a dictionary
         # Some values may be set to none depending on the interface, need to make sure the update methods can handle this using checks. 
-        subscriber_data = self._world_interface.get_subscriber_data()
-        for name, update_method in self._update_methods.items():
-            if name == "rl_update":
-                rl_data = {
-                    "hand_data": subscriber_data["rl_data"]["hand_data"], 
-                    "obj_data": subscriber_data["rl_data"]["obj_data"][self._object_handler.curr_obj]
-                }
-                update_method(rl_data)
-            else:
-                rospy.logwarn("The update method name is not valid.")
-    
+        self.subscriber_data = self._world_interface.get_subscriber_data()
+        rl_data = {
+            "hand_data": self.subscriber_data["rl_data"]["hand_data"], 
+            "obj_data": self.subscriber_data["rl_data"]["obj_data"][self._object_handler.curr_obj]
+        }
+        # Update the rl environment
+        self._rl_env_update(rl_data)
+        # Update move_hand_controller with new pose
+        self._hand_controller.update(self.subscriber_data["move_hand_data"])
+        
     def set_action(self, action):
         """
         Set the action for the hand.
@@ -90,9 +95,8 @@ class RLInterface():
         mode: str
             The mode to update the context. Can be either "random" or "sequential".
         """
-        self.spawn_objects_in_grid()
-    
-      
+        self._object_handler.update_current_object()
+        # self.subscriber_data["rl_data"]["obj_data"][self._object_handler.curr_obj]
         
         # select new object (either random or sequential)
         # move hand to given start pose

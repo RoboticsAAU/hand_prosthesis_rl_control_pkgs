@@ -3,6 +3,7 @@
 import rospy
 import numpy as np
 import math
+from geometry_msgs.msg import Pose
 from typing import Dict, Any
 
 # TODO: Compute trajectories for the hand
@@ -12,40 +13,38 @@ from typing import Dict, Any
 class HandController:
     def __init__(self, move_hand_config : Dict[str, Any]):
         # Create the gazebo interface
-        self._move_hand_config = move_hand_config
+        self._config = move_hand_config
         self._pose_buffer = []
         
         # Parameters for the state
         self._pose = None
 
-    def update(self, state : Dict[str, Any]):
+    def update(self, hand_state : Dict[str, Any]):
         # Update the hand controller state
-        self._pose = state["pose"]
+        self._pose = hand_state["pose"]
 
-    def move_in_circle(self):
-        # Method to move the hand in a circle 
-        # Move the hand in a circle
-        # Angular resolution:
-        # Test move hand controller class
-        # pose = Pose(position=Point(x=1.0, y=1.0, z=1.0), orientation=Quaternion(x=0.0, y=0.0, z=0.0, w=0.0))
-        # vel = Twist(linear=Point(x=0.0, y=0.0, z=0.0), angular=Point(x=0.0, y=0.0, z=0.0))
-        vel = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        steps = 0
-        while not rospy.is_shutdown():
-            # pose.position.z += 0.001
-            
-            # vel.linear.x = - math.sin(steps * 0.001) 
-            # vel.linear.y = math.cos(steps * 0.001) 
-            # vel.angular.z = 3.0
+    def step(self) -> None:
+        pass
+    
+    
+    def plan_trajectory(self, obj_center : np.array) -> None:
+        
+        # Sample starting point on outer sphere
+        def sample_spherical() -> np.array:
+            vec = np.random.rand(3)
+            vec /= np.linalg.norm(vec, axis=0)
+            vec *= self._config["outer_radius"]
+            return vec
+        
+        # Compute start pose
+        rel_pos = sample_spherical()
+        start_position = obj_center + rel_pos
+        start_orientation = 
+        
+        # choose start pose
+        # chose goal pose
+        # plan trajectory
 
-            
-            vel[0] = - math.sin(steps * 0.001)
-            vel[1] = math.cos(steps * 0.001)
-            vel[5] = 3.0
-
-            self._gazebo_interface.set_velocity(vel)
-            steps += 1
-            self._gazebo_interface._rate.sleep()
 
     def reset(self):
         pass

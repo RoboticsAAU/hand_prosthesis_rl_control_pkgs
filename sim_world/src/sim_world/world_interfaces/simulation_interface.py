@@ -51,14 +51,14 @@ class SimulationInterface(WorldInterface):
         
         # Instantiate subscriber data
         subscriber_data = {"rl_data": {},
-                           "mh_data": {}}
+                           "move_hand_data": {}}
 
         # Update rl data with hand and object data
         subscriber_data["rl_data"].update(hand_data)
         subscriber_data["rl_data"].update({"obj_data": self.obj_poses})
         
         # Update move hand (mh) data
-        subscriber_data.update({"mh_data" : {"pose": self.hand_pose}})
+        subscriber_data.update({"move_hand_data" : {"pose": self.hand_pose}})
         
         return subscriber_data
     
