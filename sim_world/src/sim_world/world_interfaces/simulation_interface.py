@@ -9,7 +9,7 @@ from typing import Union, Dict, List, Type
 
 # Utils
 from move_hand.utils.ros_helper_functions import _is_connected, wait_for_connection
-from move_hand.utils.movement import next_pose
+from move_hand.utils.move_helper_functions import next_pose, convert_pose, convert_velocity
 from sim_world.world_interfaces.world_interface import WorldInterface
 from rl_env.setup.hand.hand_setup import HandSetup
 
@@ -80,10 +80,13 @@ class SimulationInterface(WorldInterface):
         """ Spawn the object in the gazebo world. """
         # Call the service to spawn the object
         try:
+            pose = convert_pose(pose)
+            
+            rospy.logwarn(f"Simulation Interface pose: {pose}")
             self._spawn_model(model_name, model_sdf, "", pose, "world")
             self._spawned_obj_names.add(model_name)
             rospy.loginfo(f"Model {model_name} spawned successfully.")
-        except rospy.ServiceException as e:
+        except Exception as e:
             rospy.logerr("Failed to spawn object because: ", e)
         
     def delete_object(self, model_name: str):
@@ -98,15 +101,8 @@ class SimulationInterface(WorldInterface):
     # ------------------- Private methods ------------------- #
     def _publish_velocity(self, model_name : str, velocity: Union[Twist, np.ndarray], ref_frame: str = 'world'):
         """Publish a velocity to the given model in the gazebo world. Includes metadata of the controller in the message."""
-        # Verify that the position is of type Velocity
-        if not isinstance(velocity, Twist) and not isinstance(velocity, np.ndarray):
-            raise ValueError(f"The velocity must be of type Twist or numpy.ndarray. Input given is of type {type(velocity)}.")
-
-        # If the velocity is a numpy array, convert it to a Twist message
-        if isinstance(velocity, np.ndarray):
-            if len(velocity) != 6:
-                raise ValueError("The velocity must have 6 elements, [x, y, z, roll, pitch, yaw]")
-            velocity = Twist(linear=Vector3(x=velocity[0], y=velocity[1], z=velocity[2]), angular=Vector3(x=velocity[3], y=velocity[4], z=velocity[5]))
+        
+        velocity = convert_velocity(velocity)
         
         # Initialize a new ModelState instance.
         model_state = ModelState()
@@ -123,15 +119,8 @@ class SimulationInterface(WorldInterface):
 
     def _publish_pose(self, model_name : str, pose : Union[Pose, np.ndarray], ref_frame: str = 'world'):
         """ Publish the position of the hand to the gazebo world. Includes metadata of the controller in the message. Overwrites the current position of the hand in the simulation."""            
-        # Verify that the position is of type Pose
-        if not isinstance(pose, Pose) and not isinstance(pose, np.ndarray):
-            raise ValueError(f"The position must be of type Pose or numpy.ndarray. Input given is of type {type(pose)}.")
 
-        # If the pose is a numpy array, convert it to a Pose message
-        if isinstance(pose, np.ndarray):
-            if len(pose) != 7:
-                raise ValueError("The pose must have define both position and orientation as a 7 element array")
-            pose = Pose(position=Point(x=pose[0], y=pose[1], z=pose[2]), orientation=Quaternion(x=pose[3], y=pose[4], z=pose[5], w=pose[6]))
+        pose = convert_pose(pose)
 
         # Set the data of the message
         model_state = ModelState(model_name=model_name,
@@ -160,7 +149,7 @@ class SimulationInterface(WorldInterface):
     def obj_poses(self) -> Dict[str, Pose]:
         """ Return poses of objects in the environment. """
         try:                 
-            obj_tuples = [tuple(obj_name, self._model_states.name.index(obj_name)) for obj_name in self._spawned_obj_names]
+            obj_tuples = [(obj_name, self._model_states.name.index(obj_name)) for obj_name in self._spawned_obj_names]
             return {name : self._model_states.pose[index] for name, index in obj_tuples}
         except ValueError as e:
             rospy.logwarn(f"An index exception has occurred when indexing objects: {e}")

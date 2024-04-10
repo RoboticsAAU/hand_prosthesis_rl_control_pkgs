@@ -1,12 +1,14 @@
 import numpy as np
+import rospy
 
 from geometry_msgs.msg import Pose
 from typing import Dict, Callable, Any, Union
+from scipy.spatial.transform import Rotation as R
 
 from sim_world.world_interfaces.simulation_interface import SimulationInterface
 from sim_world.object_handler.object_handler import ObjectHandler
 from move_hand.control.move_hand_controller import HandController
-
+from move_hand.utils.move_helper_functions import convert_pose
 
 class RLInterface():
     def __init__(self, world_interface: SimulationInterface, rl_env_update : Callable, sim_config : Dict[str, Any]):
@@ -27,9 +29,14 @@ class RLInterface():
         self.subscriber_data = {}
         
 
-    def step(self, input_values : Dict[str, Any]):
+    def step(self, action : np.array) -> bool:
+        """
+        Function to step the RL interface.
+        Returns True if the episode is done.
+        """
+        
         # Update the world interface with the input values
-        self.set_action(input_values["action"])
+        self.set_action(action)
         self.move_hand(self._hand_controller.step())
         
         # Extract all the values from the interface and put them in a dictionary
@@ -43,6 +50,9 @@ class RLInterface():
         self._rl_env_update(rl_data)
         # Update move_hand_controller with new pose
         self._hand_controller.update(self.subscriber_data["move_hand_data"])
+        
+        # Check if episode is done
+        return len(self._hand_controller._pose_buffer) == 0
         
     def set_action(self, action : np.array):
         """
@@ -101,6 +111,7 @@ class RLInterface():
         self._object_handler.update_current_object()
         
         # Update the hand controller trajectory
+        self.subscriber_data = self._world_interface.get_subscriber_data()
         object_pose = self.subscriber_data["rl_data"]["obj_data"][self._object_handler.curr_obj]
         obj_center = np.array([object_pose.position.x, object_pose.position.y, object_pose.position.z])
         self._hand_controller.plan_trajectory(obj_center)

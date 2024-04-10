@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 from tqdm import tqdm
-from path_visualiser import animate_path
+from move_hand.path_planners.path_visualiser import animate_path
 from move_hand.path_planners.path_planner import PathPlanner
 from typing import Dict, Any
 

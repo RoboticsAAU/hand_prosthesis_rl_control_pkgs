@@ -15,7 +15,7 @@ class HandController:
         # Create the gazebo interface
         self._config = move_hand_config
         # To store the planned path
-        self._pose_buffer = [] 
+        self._pose_buffer = np.array([])
         
         # Assign the path planner
         try:
@@ -42,12 +42,13 @@ class HandController:
         self._pose = hand_state["pose"]
 
 
-    def step(self) -> Union[Pose, np.array]:
+    def step(self) -> np.array:
         
         if len(self._pose_buffer) == 0:
             raise IndexError("Empty pose buffer")
         
-        return self._pose_buffer.pop(0)
+        first_pose, self._pose_buffer = self._pose_buffer[:,0], self._pose_buffer[:,1:]
+        return first_pose
     
     
     def plan_trajectory(self, obj_center : np.array) -> None:
@@ -70,8 +71,12 @@ class HandController:
                 "step_size": 0.1,
             }
         
+        #TODO: Implement orientation in the path planner
         self._pose_buffer = self._path_planner.plan_path(start_pose[:3], goal_pose[:3], path_params)
-
+        to_append = np.vstack([np.array([0,0,0,1])] * self._pose_buffer.shape[1]).T
+        self._pose_buffer = np.append(self._pose_buffer, to_append, axis=0)
+        rospy.logwarn("Planned trajectory shape: " + str(self._pose_buffer.shape))
+        
 
     def reset(self):
         self._pose_buffer = []

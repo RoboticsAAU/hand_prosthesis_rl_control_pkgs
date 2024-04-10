@@ -1,6 +1,6 @@
 import numpy as np
 import bezier
-from path_visualiser import animate_path
+from move_hand.path_planners.path_visualiser import animate_path
 from move_hand.path_planners.path_planner import PathPlanner
 from typing import Dict, Any
 
@@ -24,6 +24,7 @@ class BezierPlanner(PathPlanner):
         
         return path
     
+    
     def generate_bezier_curve(self, control_points: np.ndarray):
         """
         Generate a bezier curve from start to end
@@ -34,6 +35,7 @@ class BezierPlanner(PathPlanner):
         nodes = np.asfortranarray(control_points)
         # Append the curve to the list of curves
         self._curves.append(bezier.Curve(nodes, degree=control_points.shape[1]-1))
+    
     
     def generate_bezier_curves_random(self, start_point : np.ndarray, end_point : np.ndarray, num_way_points : int, num_curves : int = 1, seed : int = None):
         """
@@ -57,6 +59,7 @@ class BezierPlanner(PathPlanner):
 
             self.generate_bezier_curve(control_points)
     
+    
     def sample_bezier_curve_constant(self, num_points : float, index : int = 0) -> np.ndarray:
         """
         Sample the curve based on the number of points
@@ -64,6 +67,7 @@ class BezierPlanner(PathPlanner):
         :return: Sampled points on the curve
         """
         return self._curves[index].evaluate_multi(np.linspace(0, 1, num_points))
+    
     
     def sample_bezier_curve_velocity(self, velocity_profile : np.ndarray, index : int = 0) -> np.ndarray:
         """
@@ -82,6 +86,7 @@ class BezierPlanner(PathPlanner):
         
         return self._curves[index].evaluate_multi(distance_profile)
     
+    
     def _reset(self):
         """
         Reset the planner
@@ -89,10 +94,12 @@ class BezierPlanner(PathPlanner):
         """
         self._curves = []
     
+    
     @property
     def curves(self):
         return self._curves
 
+    
 if __name__ == "__main__":
     # Test
     bp = BezierPlanner()
