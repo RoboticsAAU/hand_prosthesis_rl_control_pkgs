@@ -5,7 +5,7 @@ from gazebo_msgs.msg import ModelState, ModelStates
 from geometry_msgs.msg import Pose, Twist, Point, Quaternion, Vector3
 from gazebo_msgs.srv import SpawnModel, DeleteModel
 import numpy as np
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Type
 
 # Utils
 from move_hand.utils.ros_helper_functions import _is_connected, wait_for_connection
@@ -14,7 +14,7 @@ from sim_world.world_interfaces.world_interface import WorldInterface
 from rl_env.setup.hand.hand_setup import HandSetup
 
 class SimulationInterface(WorldInterface):
-    def __init__(self, hand_setup: HandSetup):
+    def __init__(self, hand_setup : Type[HandSetup]):
         """ hand_name: str is the name of the model in the gazebo world."""
         # Initialize the parent class
         super(SimulationInterface, self).__init__(hand_setup)
