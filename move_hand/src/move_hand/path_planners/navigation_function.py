@@ -4,21 +4,29 @@ import matplotlib.pyplot as plt
 import warnings
 from tqdm import tqdm
 from path_visualiser import animate_path
+from move_hand.path_planners.path_planner import PathPlanner
+from typing import Dict, Any
 
 
 # TODO: Check if goal/tart collide with obstacle. If so, raise error
-class NavFuncPlanner():
+class NavFuncPlanner(PathPlanner):
     
-    def __init__(self, world_dim : int, world_sphere_rad : float, num_rand_obs : int, obs_rad : float, goal_pos : np.array, kappa : float) -> None:
+    def __init__(self, world_dim : int, world_sphere_rad : float) -> None:
         
         sp.init_printing()
         
-        self.world = self.NavFuncWorld(world_dim, world_sphere_rad, num_rand_obs, obs_rad)        
+        self.world = self.NavFuncWorld(world_dim, world_sphere_rad)        
         self.tmp_curr_pos = np.zeros((self.world.dimension,1), dtype=np.float64)
+
+        self.path = np.empty((self.world.dimension,0), dtype=np.float64)
+    
+    
+    def setup(self, num_rand_obs : int, obs_rad : float, goal_pos : np.array, kappa : float):
+        # Set the parameters for the planner
+        self.world.setup(num_rand_obs, obs_rad)
         self.goal_pos = goal_pos
         self.kappa = kappa
-        self.path = np.empty((self.world.dimension,0), dtype=np.float64)
-        
+    
         # Sympy definitions
         self.nav_func = sp.Function('f')
         self.nabla_nav_func = sp.Function('df') # Gradient of nav function
@@ -26,6 +34,19 @@ class NavFuncPlanner():
         self.q = sp.zeros(self.world.dimension, 1) # Current agent position (for symbolic use)
         
         self._express_nav_func()
+    
+    
+    def plan_path(self, start_pos : np.array, goal_pos : np.array, parameters : Dict[str, Any]) -> np.ndarray:
+        # Reset the planner
+        self._reset()
+        
+        # Setup the planner
+        self.setup(parameters["num_rand_obs"], parameters["obs_rad"], goal_pos, parameters["kappa"])
+
+        # Compute the path
+        self.compute_path(start_pos, parameters["step_size"], plot=False)
+        
+        return self.path.copy()
     
     
     def compute_path(self, start_pos : np.array, step_size : float, plot : bool = True) -> None:
@@ -108,7 +129,6 @@ class NavFuncPlanner():
         # print("Computed gradient:")
         # sp.pprint(self.nabla_nav_func)
         
-        
     
     def _compute_nav_grad(self, curr_pos : np.array, lambda_ : int = 1) -> np.array:
         
@@ -168,6 +188,7 @@ class NavFuncPlanner():
         # Show the plot
         plt.show()
     
+    
     def plot_3d(self, start_pos : np.array, goal_pos : np.array) -> None:
         if self.world.dimension == 2:
             return
@@ -196,27 +217,33 @@ class NavFuncPlanner():
         plt.show()
     
     
+    def _reset(self):
+        self.tmp_curr_pos = np.zeros((self.world.dimension,1), dtype=np.float64)
+        self.path = np.empty((self.world.dimension,0), dtype=np.float64)
+    
     # TODO: implement unique obstacle radii
     class NavFuncWorld():
         
-        def __init__(self, world_dim : int = 3, world_sphere_rad : float = 5, num_rand_obs : int = 0, obs_rad : float = 0.5):
-            
+        def __init__(self, world_dim : int = 3, world_sphere_rad : float = 5):
             if world_dim not in [2, 3]:
                 raise ValueError("Specified world dimension not implemented! Must be 2 or 3.")
             
             # Set users configuration
             self.radius = world_sphere_rad # World radius
             self.dimension = world_dim # Dimension of world (e.g. 2D or 3D)
-            self.obstacle_num = num_rand_obs # Number of random obstacles
-            self.obstacle_rad = obs_rad# Radius of obstacles
             
             # Other variables
             self.obstacles = np.empty((0, self.dimension), dtype=np.float64)
+        
+        
+        def setup(self, num_rand_obs : int = 0, obs_rad : float = 0.5) -> None:
+            self.obstacle_num = num_rand_obs
+            self.obstacle_rad = obs_rad
             
             # Generate random obstacles if specified
             if num_rand_obs > 0:
                 self._gen_rand_obs()
-                
+
 
         def _gen_rand_obs(self) -> None:
             
@@ -242,7 +269,8 @@ class NavFuncPlanner():
 if __name__ == "__main__":
     # For testing
     np.random.seed(1)
-    planner = NavFuncPlanner(world_dim=3, world_sphere_rad=10, num_rand_obs=5, obs_rad=0.2, goal_pos=np.array([0.0,7.5,3.0]), kappa=7)
+    planner = NavFuncPlanner(world_dim=3, world_sphere_rad=10)
+    planner.setup(num_rand_obs=5, obs_rad=0.2, goal_pos=np.array([0.0,7.5,3.0]), kappa=7)
     # planner.compute_path(start_pos=np.array([-1.0,-3.0, -3.0]), step_size=0.2, plot = True)
     planner.compute_path(start_pos=np.array([-1.0,-3.0,0.0]), step_size=0.3, plot=True)
     

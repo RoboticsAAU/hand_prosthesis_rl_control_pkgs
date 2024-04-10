@@ -1,16 +1,19 @@
 # Random seed for the environment
 seed: 0
 
+
 move_hand:
   # What type of path planner to use for the approach trajectory
-  approach_traj: "nav_function" # "nav_function" or "bezier"
+  approach_traj: "bezier" # "nav_function" or "bezier"
 
   # Starting position of the hand constraints. The hand will start in the interior of the sphere defined by the following parameters
   outer_radius: 1.5
   inner_radius: 0.5
 
 objects:
+  folder_path: ""
+  # Mode in which objects are selected each episode
+  selection_mode: "random"
   # How many objects to train on
   num_objects: 10
   inter_object_dist: 2.0
-

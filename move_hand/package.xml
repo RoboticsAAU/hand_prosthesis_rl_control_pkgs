@@ -9,24 +9,27 @@
   <maintainer email="cwitha23@student.aau.dk">Withanage Chathushka Jayashan</maintainer>
   <license>APACHE 2.0</license>
 
+  <!-- Specify the dependencies that are needed during the build process for e.g. linking and compilation and not needed during runtime. Examples: 'catkin', 'cmake', 'pkg-config' -->
   <buildtool_depend>catkin</buildtool_depend>
-  
+
+  <!-- Dependencies that are needed during both build and runtime. Examples: other ros packages, softwer components and libraries. -->
   <build_depend>rospy</build_depend>
   <build_depend>std_msgs</build_depend>
-
+  <build_depend>gazebo_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>controller_manager_msgs</build_depend>
   <build_depend>python-catkin-pkg</build_depend>
-  <build_depend>message_generation</build_depend> 
-  
-  <build_export_depend>rospy</build_export_depend>
-  
-  <exec_depend>rospy</exec_depend>
-  <exec_depend>message_runtime</exec_depend>
+  <build_depend>message_generation</build_depend>
 
+  <!-- Specifies dependencies that are required to build other packages that depend on the current package. This is used when the current package provides e.g. headerfiles or libraries that other packages use. -->
+  <build_export_depend>rospy</build_export_depend>
+
+  <!-- Dependencies only needed during runtime execution of the package. These can also be other ros packages, software components and libraries, that are not needed during the build process. -->
+  <exec_depend>message_runtime</exec_depend>
   <exec_depend>gazebo_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>controller_manager_msgs</exec_depend>
-
   <exec_depend>python-numpy</exec_depend>
   <exec_depend>python-matplotlib</exec_depend>
 

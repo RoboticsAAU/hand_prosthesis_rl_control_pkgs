@@ -9,11 +9,12 @@ import rl_env.utils.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
 from typing import Dict, List, Any
 
 class MiaHandSetup(HandSetup):
-    def __init__(self, topics: Dict[str, Dict]):
+    def __init__(self, topics: Dict[str, Dict], general: Dict[str, Any]):
         
         super(MiaHandSetup, self).__init__()
         
         self._topic_config = topics
+        self._general_config = general
         # hand_config_file = self.rospack.get_path("rl_env") + "/params/hand/mia_hand_params.yaml"
         # with open(hand_config_file, 'r') as file:
         #     self._config = yaml.safe_load(file)
@@ -31,13 +32,24 @@ class MiaHandSetup(HandSetup):
         self.joints_vel = [Float64()]
         self.joints_effort = [Float64()]
         self.point_cloud = PointCloud2()
-    
+        
+        # Specifying the rotation of the hand frame "palm" w.r.t. the frame orientation assumed for starting position in move_hand_controller
+        # z-axis points along the hand (points along middle finger) and x-axis points out of the palm (for both right and left hand). 
+        if self._general_config["right_hand"] == True:
+            self._hand_rotation = np.array([[0, 0, 1],
+                                           [1, 0, 0],
+                                           [0, 1, 0]], dtype=np.float32)
+        else:
+            self._hand_rotation = np.array([[0, 0, 1],
+                                           [-1, 0, 0],
+                                           [0, -1, 0]], dtype=np.float32)
+        
     def get_subscriber_data(self) -> Dict[str, Any]:
         """
         Get all the subscriber data and return it in a dictionary.
         """
         subscriber_data = {
-            "rl_data": {
+            "hand_data": {
                 "joints_pos": self.joints_pos,
                 "joints_vel": self.joints_vel,
                 "joints_effort": self.joints_effort,
@@ -86,7 +98,7 @@ class MiaHandSetup(HandSetup):
             {"topic": self._name + self._topic_config["subscriptions"]["camera_points_topic"], "message_type": PointCloud2}
         ]
     
-    def _get_publishers(self) -> dict:
+    def _get_publishers(self) -> List:
         return [
             self._thumb_vel_pub,
             self._index_vel_pub,

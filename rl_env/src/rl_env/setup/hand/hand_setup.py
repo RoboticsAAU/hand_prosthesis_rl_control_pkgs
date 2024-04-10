@@ -11,7 +11,7 @@ class HandSetup(ABC):
         assert self._name is not None, rospy.logerr("Could not get robot namespace")
         
         self._config = {}
-        
+        self._hand_rotation = None
         self.rospack = rospkg.RosPack()
     
     @abstractmethod
@@ -90,3 +90,7 @@ class HandSetup(ABC):
     def config(self, value):
         rospy.logdebug("Cannot set config directly")
         raise ValueError("Cannot set config directly")
+    
+    @property
+    def hand_rotation(self):
+        return self._hand_rotation

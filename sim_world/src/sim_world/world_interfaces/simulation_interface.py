@@ -5,7 +5,7 @@ from gazebo_msgs.msg import ModelState, ModelStates
 from geometry_msgs.msg import Pose, Twist, Point, Quaternion, Vector3
 from gazebo_msgs.srv import SpawnModel, DeleteModel
 import numpy as np
-from typing import Union, Type
+from typing import Union, Dict, List, Type
 
 # Utils
 from move_hand.utils.ros_helper_functions import _is_connected, wait_for_connection
@@ -14,10 +14,13 @@ from sim_world.world_interfaces.world_interface import WorldInterface
 from rl_env.setup.hand.hand_setup import HandSetup
 
 class SimulationInterface(WorldInterface):
-    def __init__(self, hand_setup: HandSetup):
+    def __init__(self, hand_setup : Type[HandSetup]):
         """ hand_name: str is the name of the model in the gazebo world."""
         # Initialize the parent class
         super(SimulationInterface, self).__init__(hand_setup)
+        
+        # Initialise empty set fpr object names
+        self._spawned_obj_names = set()
 
         # Model state publisher and subscriber
         self._pub_state = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=10)
@@ -40,10 +43,22 @@ class SimulationInterface(WorldInterface):
         self._model_states = ModelStates()
 
     
-    def get_subscriber_data(self):
+    def get_subscriber_data(self) -> List[list]:
         """ Get all the subscriber data and return it in a dictionary. """
-        subscriber_data = self.hand.get_subscriber_data()
-        subscriber_data.update({"mh_data" : {"pose": self.hand_pose}})
+        
+        # Update the rl_data from mia_hand_setup s.t. it contains object data
+        hand_data = self.hand.get_subscriber_data()
+        
+        # Instantiate subscriber data
+        subscriber_data = {"rl_data": {},
+                           "move_hand_data": {}}
+
+        # Update rl data with hand and object data
+        subscriber_data["rl_data"].update(hand_data)
+        subscriber_data["rl_data"].update({"obj_data": self.obj_poses})
+        
+        # Update move hand (mh) data
+        subscriber_data.update({"move_hand_data" : {"pose": self.hand_pose}})
         
         return subscriber_data
     
@@ -64,8 +79,9 @@ class SimulationInterface(WorldInterface):
     def spawn_object(self, model_name : str, model_sdf: str, pose: Union[Pose, np.ndarray]):
         """ Spawn the object in the gazebo world. """
         # Call the service to spawn the object
-        try :
+        try:
             self._spawn_model(model_name, model_sdf, "", pose, "world")
+            self._spawned_obj_names.add(model_name)
             rospy.loginfo(f"Model {model_name} spawned successfully.")
         except rospy.ServiceException as e:
             rospy.logerr("Failed to spawn object because: ", e)
@@ -74,6 +90,7 @@ class SimulationInterface(WorldInterface):
         """ Delete the object from the gazebo world. """
         try:
             self._delete_model(model_name)
+            self._spawned_obj_names.remove(model_name)
             rospy.loginfo(f"Model {model_name} deleted successfully.")
         except rospy.ServiceException as e:
             rospy.logerr("Failed to delete object because: ", e)
@@ -129,7 +146,6 @@ class SimulationInterface(WorldInterface):
         rospy.logdebug("Received state message")
         self._model_states = msg
 
-    
     @property
     def hand_pose(self) -> Pose:
         """ Return the current state of the hand. """
@@ -140,6 +156,15 @@ class SimulationInterface(WorldInterface):
             rospy.logwarn("The gazebo model: '", self.hand.name, "', was not found in the list of list of model states in gazebo")
             return None
 
+    @property
+    def obj_poses(self) -> Dict[str, Pose]:
+        """ Return poses of objects in the environment. """
+        try:                 
+            obj_tuples = [tuple(obj_name, self._model_states.name.index(obj_name)) for obj_name in self._spawned_obj_names]
+            return {name : self._model_states.pose[index] for name, index in obj_tuples}
+        except ValueError as e:
+            rospy.logwarn(f"An index exception has occurred when indexing objects: {e}")
+            return None
 
 if __name__ == '__main__':
     print("{} should not be run as a script...".format(__file__))
