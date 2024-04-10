@@ -14,9 +14,9 @@
     <arg name="remap_MIA_th_opp" default='false' doc="True to remap the thumb opp joint position following the indef fle position" />
 
     <!-- Arguments to upload hardware interfaces of each finger -->
-    <arg name="hw_interface_thumb_fle" default="PositionJointInterface"/>
-    <arg name="hw_interface_index_fle" default="PositionJointInterface"/>
-    <arg name="hw_interface_mrl_fle"   default="PositionJointInterface"/>
+    <arg name="hw_interface_thumb_fle" default="EffortJointInterface"/>
+    <arg name="hw_interface_index_fle" default="EffortJointInterface"/>
+    <arg name="hw_interface_mrl_fle"   default="EffortJointInterface"/>
     <arg name="robotNamespace"         default="mia_hand_camera"/> <!-- /mia_hand_camera -->
 
     <!-- Load urdf as robot description -->
