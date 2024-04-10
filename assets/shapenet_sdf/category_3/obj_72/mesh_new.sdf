@@ -54,7 +54,7 @@
 
                 <geometry> 
                     <mesh> 
-                        <uri>mesh.stl</uri> 
+                        <uri>model:///assets/shapenet_sdf/category_3/obj_72/mesh.stl</uri> 
                         <!-- <uri>model://mymodel/meshes/model.stl</uri> --> 
                         <!-- Scaling factor applied to the mesh --> 
                         <scale>0.15 0.15 0.15</scale> 
@@ -112,7 +112,7 @@
 
                 <geometry> 
                     <mesh> 
-                        <uri>mesh.stl</uri> 
+                        <uri>model:///assets/shapenet_sdf/category_3/obj_72/mesh.stl</uri> 
                         <!-- <uri>model://mymodel/meshes/model.stl</uri> --> 
                         <!-- Scaling factor applied to the mesh --> 
                         <scale>0.15 0.15 0.15</scale> 

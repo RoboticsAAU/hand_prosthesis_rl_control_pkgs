@@ -50,8 +50,9 @@ def extract_sdf_details(sdf_file):
     # Extract the mesh stl path
     link_element = root.find(".//uri")
     if link_element is not None:
-        relative_path = Path(link_element.text.strip()).name
-        details["mesh_stl_path"] = relative_path
+        path = Path(link_element.text.strip())
+        relative_path = path.relative_to(main_folder)
+        details["mesh_stl_path"] = "model:///assets/shapenet_sdf/" + str(relative_path)
 
     return details
 
