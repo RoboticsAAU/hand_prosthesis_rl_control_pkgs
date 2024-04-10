@@ -2,7 +2,7 @@ import rospy
 import numpy as np
 import numpy.random as random
 from geometry_msgs.msg import Pose
-from typing import Dict, Any
+from typing import Dict, Any, Union
 from scipy.spatial.transform import Rotation as R
 from move_hand.path_planners import bezier_paths, navigation_function, path_planner
 
@@ -11,17 +11,18 @@ from move_hand.path_planners import bezier_paths, navigation_function, path_plan
 
 
 class HandController:
-    def __init__(self, move_hand_config : Dict[str, Any]):
+    def __init__(self, move_hand_config : Dict[str, Any], hand_rotation : np.array):
         # Create the gazebo interface
         self._config = move_hand_config
-        self._pose_buffer = []
+        # To store the planned path
+        self._pose_buffer = [] 
         
         # Assign the path planner
         try:
             if self._config["path_planner"] == "bezier":
                 self._path_planner = bezier_paths.BezierPlanner()
             elif self._config["path_planner"] == "navigation_function":
-                self._path_planner = navigation_function.NavFuncPlanner()
+                self._path_planner = navigation_function.NavFuncPlanner(world_dim=3, world_sphere_rad=self._config["outer_radius"]+0.5)
             else:
                 raise ValueError("Path planner not recognized")
         except ValueError as e:
@@ -29,15 +30,24 @@ class HandController:
             rospy.logwarn("Defaulting to straight line path planner")
             self._path_planner = path_planner.PathPlanner()
         
-        # Parameters for the state
-        self._pose = None
+        # Variable to store the pose of the hand's palm frame
+        self._pose = Pose()
+        
+        # Store hand rotation
+        self._hand_rotation = hand_rotation
 
-    def update(self, hand_state : Dict[str, Any]):
+
+    def update(self, hand_state : Dict[str, Any]) -> None:
         # Update the hand controller state
         self._pose = hand_state["pose"]
 
-    def step(self) -> None:
-        pass
+
+    def step(self) -> Union[Pose, np.array]:
+        
+        if len(self._pose_buffer) == 0:
+            raise IndexError("Empty pose buffer")
+        
+        return self._pose_buffer.pop(0)
     
     
     def plan_trajectory(self, obj_center : np.array) -> None:
@@ -60,11 +70,12 @@ class HandController:
                 "step_size": 0.1,
             }
         
-        self._path_planner.plan_path(start_pose[:3], goal_pose[:3], path_params)
+        self._pose_buffer = self._path_planner.plan_path(start_pose[:3], goal_pose[:3], path_params)
 
 
     def reset(self):
-        pass
+        self._pose_buffer = []
+    
     
     def _sample_start_pose(self, obj_center : np.array) -> np.array:
                 # Sample starting point on outer sphere
@@ -82,7 +93,7 @@ class HandController:
         auxiliary_vec = np.array([0, 0, 1.])
         z_axis = -rel_pos
 
-        y_axis = np.cross(z_axis, auxiliary_vec)
+        y_axis = np.cross(auxiliary_vec, z_axis)
         y_axis /= np.linalg.norm(y_axis)
 
         x_axis = np.cross(y_axis, z_axis)
@@ -92,17 +103,20 @@ class HandController:
         if x_axis[2] > 0:
             x_axis, y_axis = -x_axis, -y_axis
 
-        # Create the rotation matrix and convert it to quaternion
-        rotation_matrix = np.array([x_axis, y_axis, z_axis]).T
+        # Create the rotation matrix and account for hand frame rotation  
+        rotation_matrix = np.array([x_axis, y_axis, z_axis]).T @ self._hand_rotation
+        # Convert it to quaternion
         start_orientation = R.from_matrix(rotation_matrix).as_quat()
 
         # Obtain the start pose as the combined position and orientation
         return np.concatenate([start_position, start_orientation])
 
     def _sample_goal_pose(self, obj_center : np.array, start_pose : np.array) -> np.array:
-        raise NotImplementedError("Sampling goal pose is not implemented yet")
+        rospy.logwarn_once("Goal set for testing purposes. Should be implemented in future")
+        #TODO: Implement correct goal sampling
+        return np.concatenate([(obj_center + np.array([0,0,0.1])), start_pose[3:]])
+
 
 if __name__ == '__main__':
     # Test move hand controller class
     hand_controller = HandController()
-    hand_controller.move_in_circle()

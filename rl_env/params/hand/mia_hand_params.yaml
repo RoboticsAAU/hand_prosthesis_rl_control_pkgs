@@ -20,7 +20,6 @@ visual_sensors:
         max_range: 1.5
 
   config_imagined:
-    right_hand: true
     ref_frame: "palm"
     num_points: 512
 
@@ -35,3 +34,7 @@ limits:
     thumb_vel_range: [-1.0, 1.0]
     index_vel_range: [-1.0, 1.0]
     mrl_vel_range: [-1.0, 1.0]
+
+# General parameters
+general: 
+  right_hand: true

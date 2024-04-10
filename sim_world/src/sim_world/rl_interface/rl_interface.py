@@ -1,9 +1,8 @@
 import numpy as np
-import rospy
-from typing import Type, Dict, Callable, Any
-from pathlib import Path
 
-from sim_world.world_interfaces.world_interface import WorldInterface
+from geometry_msgs.msg import Pose
+from typing import Dict, Callable, Any, Union
+
 from sim_world.world_interfaces.simulation_interface import SimulationInterface
 from sim_world.object_handler.object_handler import ObjectHandler
 from move_hand.control.move_hand_controller import HandController
@@ -19,7 +18,7 @@ class RLInterface():
         self._object_handler = ObjectHandler(sim_config["objects"])
         
         # Instantiate the hand controller
-        self._hand_controller = HandController(sim_config["move_hand"])
+        self._hand_controller = HandController(sim_config["move_hand"], self._world_interface.hand.hand_rotation)
         
         # Spawn objects in the gazebo world
         self.spawn_objects_in_grid()
@@ -31,7 +30,7 @@ class RLInterface():
     def step(self, input_values : Dict[str, Any]):
         # Update the world interface with the input values
         self.set_action(input_values["action"])
-        self.move_hand(input_values["hand_pose"])
+        self.move_hand(self._hand_controller.step())
         
         # Extract all the values from the interface and put them in a dictionary
         # Some values may be set to none depending on the interface, need to make sure the update methods can handle this using checks. 
@@ -45,13 +44,13 @@ class RLInterface():
         # Update move_hand_controller with new pose
         self._hand_controller.update(self.subscriber_data["move_hand_data"])
         
-    def set_action(self, action):
+    def set_action(self, action : np.array):
         """
         Set the action for the hand.
         """
         self._world_interface.hand.set_action(action)
     
-    def move_hand(self, pose):
+    def move_hand(self, pose : Union[Pose, np.array]):
         """
         Publish the position of the hand to the world interface.
         """

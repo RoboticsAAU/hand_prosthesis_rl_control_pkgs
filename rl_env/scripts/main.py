@@ -28,36 +28,43 @@ def main():
     rl_env = MiaHandWorldEnv(hand_config["visual_sensors"], hand_config["limits"])  
     
     # Instantiate the RL interface to the simulation
-    update_methods = {"rl_update": rl_env.update}
-    rl_interface = RLInterface(SimulationInterface(MiaHandSetup(hand_config["topics"])), update_methods, sim_config)
+    rl_interface = RLInterface(
+        SimulationInterface(
+            MiaHandSetup(hand_config["topics"], hand_config["general"])
+        ),
+        rl_env.update,
+        sim_config
+    )
     
     # Test step of the RL interface
-    input_values = {"action": np.ones(3), 
-                    "hand_pose": np.concatenate([np.ones(3), np.zeros(4)])}
-    while not rospy.is_shutdown():
-        rl_interface.step(input_values)
-        rospy.sleep(0.1)
+    # input_values = {"action": np.ones(3), 
+    #                 "hand_pose": np.concatenate([np.ones(3), np.zeros(4)])}
+    # while not rospy.is_shutdown():
+    #     rl_interface.step(input_values)
+    #     rospy.sleep(0.1)
+    
+    rl_interface.update_context()
     
     # Run the episodes
-    for _ in range(rl_config["num_episodes"]):
+    # for _ in range(rl_config["num_episodes"]):
         
-        rl_interface.update_context()
+    #     rl_interface.update_context()
         
-        # Reset the rl env
-        rl_env.reset()
+    #     # Reset the rl env
+    #     rl_env.reset()
         
         
-        for _ in range(rl_config["max_episode_steps"]):
-            if rl_env.is_done():
-                break
+    #     for _ in range(rl_config["max_episode_steps"]):
+    #         if rl_env.is_done():
+    #             break
             
-            # TODO: Get the correct action prediction from the RL model
-            action = np.zeros(rl_env._action_space.shape)
+    #         # TODO: Get the correct action prediction from the RL model
+    #         action = np.zeros(rl_env._action_space.shape)
             
-            # Step the environment
-            obs, reward, done, info = rl_env.step(action)
+    #         # Step the environment
+    #         obs, reward, done, info = rl_env.step(action)
 
-            hand_controller.step(action)
+    #         rl_interface.step(action)
         
         
 
