@@ -7,6 +7,7 @@ from gym.envs.registration import register
 from pathlib import Path
 from functools import cached_property
 from typing import Dict, List, Any
+from geometry_msgs.msg import Pose
 
 from rl_env.utils.tf_handler import TFHandler
 from rl_env.utils.point_cloud_handler import PointCloudHandler, ImaginedPointCloudHandler
@@ -62,6 +63,7 @@ class MiaHandWorldEnv(gym.Env):
         self._joints = None
         self._joints_vel = None
         self._pc_cam_handler.pc.append(o3d.geometry.PointCloud())
+        self._object_pose = Pose()
         
         # Print the spaces
         rospy.logdebug("ACTION SPACES TYPE===>"+str(self._action_space))
@@ -70,7 +72,6 @@ class MiaHandWorldEnv(gym.Env):
         # TODO: Define these in setup
         self._end_episode_points = 0.0
         self._cumulated_steps = 0.0
-        self._object_lift = 0.0
         self._finger_object_dist = np.zeros(3)
     
 
@@ -88,7 +89,8 @@ class MiaHandWorldEnv(gym.Env):
         self._joints = rl_data["hand_data"]["joints_pos"]
         self._joints_vel = rl_data["hand_data"]["joints_vel"]
         self._pc_cam_handler.pc[0] = rl_data["hand_data"]["point_cloud"]
-        self._object_lift = rl_data["obj_data"].position.z
+        self._object_pose = rl_data["obj_data"]
+        # self._object_pose = Pose()
     
     # Methods needed by the TrainingEnvironment
     def init_env_variables(self):
@@ -143,7 +145,7 @@ class MiaHandWorldEnv(gym.Env):
 
     def is_done(self):
         # We check if it has crashed based on the imu
-        if self._object_lift > OBJECT_LIFT_LOWER_LIMIT:
+        if self._object_pose.position.z > OBJECT_LIFT_LOWER_LIMIT:
             self._episode_done = True
 
         return self._episode_done
@@ -176,7 +178,7 @@ class MiaHandWorldEnv(gym.Env):
             reward += 0.5 * fingers_in_contact
             
             # Reward for lifting object
-            lift = np.clip(self._object_lift, 0, 0.2)
+            lift = np.clip(self._object_pose.position.z, 0, 0.2)
             reward += 10 * lift
 
         rospy.logdebug("reward=" + str(reward))
