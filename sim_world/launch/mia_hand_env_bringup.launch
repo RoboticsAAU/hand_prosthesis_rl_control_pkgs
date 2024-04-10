@@ -17,18 +17,18 @@
 
 
      <!-- Arguments to upload hardware interface and controllers of each finger -->
-     <arg name="hw_interface_thumb_fle" default="VelocityJointInterface"
+     <arg name="hw_interface_thumb_fle" default="EffortJointInterface"
           doc="type of hardware interface for thumb flexion. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
-     <arg name="hw_interface_index_fle" default="VelocityJointInterface"
+     <arg name="hw_interface_index_fle" default="EffortJointInterface"
           doc="type of hardware interface for index flexion. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
-     <arg name="hw_interface_mrl_fle" default="VelocityJointInterface"
+     <arg name="hw_interface_mrl_fle" default="EffortJointInterface"
           doc="type of hardware interface for mrl flexion. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
 
-     <arg name="controller_thumb_fle" default="velocity"
+     <arg name="controller_thumb_fle" default="eff"
           doc="type of controller for thumb flexion. Values: position, velocity, eff, eff_position, (eff_velocity has not been tuned)"/>
-     <arg name="controller_index_fle" default="velocity"
+     <arg name="controller_index_fle" default="eff"
           doc="type of controller for index flexion + thumb abd. Values: position,velocity,eff, eff_position, (eff_velocity has not been tuned)"/>
-     <arg name="controller_mrl_fle"   default="velocity"
+     <arg name="controller_mrl_fle"   default="eff"
           doc="type of controller for mrl fingers flexion. Values: position, velocity, eff, eff_position,(eff_velocity has not been tuned)"/>
 
      <!-- Gazebo empty_world.launch -->
@@ -61,7 +61,10 @@
                default_mia_model:=$(arg load_default_mia_model)
                right_hand:=$(arg right_hand)
                robotNamespace:=$(arg robotNamespace)
-               joint_limits_config_filename:=$(arg joint_limits_config_filename)"
+               joint_limits_config_filename:=$(arg joint_limits_config_filename)
+               hw_interface_thumb_fle:=$(arg hw_interface_thumb_fle)
+               hw_interface_index_fle:=$(arg hw_interface_index_fle)
+               hw_interface_mrl_fle:=$(arg hw_interface_mrl_fle)"
           />
 
           <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
