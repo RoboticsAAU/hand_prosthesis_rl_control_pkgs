@@ -13,7 +13,7 @@ from rl_env.utils.tf_handler import TFHandler
 from rl_env.utils.point_cloud_handler import PointCloudHandler, ImaginedPointCloudHandler
 from rl_env.utils.urdf_handler import URDFHandler
 
-OBJECT_LIFT_LOWER_LIMIT = -0.03
+OBJECT_LIFT_LOWER_LIMIT = 0.03
 
 # The path is __init__.py of openai_ros, where we import the TurtleBot2MazeEnv directly
 timestep_limit_per_episode = 10000 # Can be any Value

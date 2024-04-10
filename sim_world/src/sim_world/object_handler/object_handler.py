@@ -15,50 +15,53 @@ class ObjectHandler():
     
     
     def _load_objects(self) -> Dict[str, str]:
+        """
+        Function to load objects as a dict, where key is the object name (e.g. category_1/obj_1) and value is the .sdf as a string.
+        """
+        
         objects = {}
         
-        try:
-            if not Path(self._config["object_path"]).is_dir():
-                raise ValueError("The object path is not a valid directory.")
-            
-            # Load the objects into the objects variable
-            for category_folder in glob.glob(self._config["object_path"] ):
-                for object_folder in glob.glob(category_folder):
-                    path = glob.glob(object_folder + '/*.xml')[0]
-                    tree = ET.parse(path)
-                    xml_string = ET.tostring(tree.getroot(), encoding='utf8', method='xml')
-                    
-                    objects[Path(category_folder).name + "/" + Path(object_folder).name] = xml_string
-            
-            self._config["num_objects"] = self.config["num_objects"] if self.config["num_objects"] != -1 else len(objects)
+        if not Path(self._config["objects_path"]).is_dir():
+            raise ValueError("The object path is not a valid directory.")
         
-            if len(objects) < self._config["num_objects"]:
-                raise ValueError("The number of objects is less than the number of objects requested.")
-            
-            random_keys = random.sample(list(objects.keys()), k=self._config["num_objects"])
-            return OrderedDict((key, objects[key]) for key in random_keys)
+        # Load the objects into the objects variable
+        for category_folder in glob.glob(self._config["objects_path"] + "/*"):
+            for object_folder in glob.glob(category_folder + "/*"):
+                path = glob.glob(object_folder + '/mesh_new.sdf')[0]
+                tree = ET.parse(path)
+                xml_string = ET.tostring(tree.getroot(), encoding='utf8', method='xml').decode('utf-8')
+                rospy.logwarn_once(type(xml_string))
+                rospy.logwarn_once(xml_string)
+                
+                objects[Path(category_folder).name + "/" + Path(object_folder).name] = xml_string
         
-        except ValueError as e:
-            rospy.logerr("Could not load the objects from the object path: ", e)
-
-            
+        self._config["num_objects"] = self.config["num_objects"] if self.config["num_objects"] != -1 else len(objects)
+    
+        if len(objects) < self._config["num_objects"]:
+            raise ValueError("The number of objects is less than the number of objects requested.")
+        
+        random_keys = random.choice(list(objects.keys()), size=self._config["num_objects"], replace=False)
+        rospy.loginfo("Loaded objects: " + str(random_keys))
+        return OrderedDict((key, objects[key]) for key in random_keys)
+    
     
     def update_current_object(self) -> None:
         try:
-            if self._config["mode"] == "random":
+            if self._config["selection_mode"] == "random":
                 self._curr_obj = random.choice(list(self._objects.keys()))
                 self._obj_idx = list(self._objects.keys()).index(self._curr_obj)
                 
-            elif self._config["mode"] == "sequential":
+            elif self._config["selection_mode"] == "sequential":
                 self._curr_obj = list(self.objects.keys())[self._obj_idx]
                 self._obj_idx = (self._obj_idx + 1) % self._config["num_objects"]
             
             else:
-                raise ValueError("The object handler mode is not valid.")
+                raise ValueError("The object handler selection_mode is not valid.")
             
-        except ValueError as e:
+        except (ValueError, IndexError) as e:
             rospy.logwarn("Could not update current object: ", e)
     
+        rospy.logwarn("Current object: " + self._curr_obj)
     
     @property
     def curr_obj(self):

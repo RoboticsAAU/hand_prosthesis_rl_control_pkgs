@@ -75,19 +75,22 @@ class RLInterface():
         y_vals = np.linspace(0, (grid_dims[1] - 1) * self._object_handler.config["inter_object_dist"], grid_dims[1])
         grid = np.meshgrid(x_vals, y_vals)
         
-        for index, object in enumerate(self._object_handler.objects):
+        for index, (obj_name, obj_sdf) in enumerate(self._object_handler.objects.items()):
             # Get rotation and translation
-            R = np.eye(3)
-            t = np.array(grid[0].flatten()[index], grid[1].flatten()[index], object["height"])
+            rotation_matrix = np.array([[1, 0, 0], 
+                                        [0, 0, -1],
+                                        [0, 1, 0]])
+            #TODO: Add object spawn height. Currently hardcoded to 0.1
+            position = np.array([grid[0].flatten()[index], grid[1].flatten()[index], 0.08])
             
-            # Create the pose
-            T = np.eye(4)
-            T[:3, :3] = R
-            T[:3, 3] = t
+            orientation = R.from_matrix(rotation_matrix).as_quat()
             
+            pose = np.concatenate([position, orientation])
+            rospy.logwarn_once("Spawning object: " + obj_name + " at pose: " + str(pose))
             # Spawn the object
-            self._world_interface.spawn_object(object["name"], object["sdf"], T)
-            
+            self._world_interface.spawn_object(obj_name, obj_sdf, pose)
+    
+    
     def update_context(self):
         """
         Updates the current object context. This includes spawning hand and computing approach trajectory.

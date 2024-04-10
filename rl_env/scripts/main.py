@@ -42,34 +42,33 @@ def main():
     # while not rospy.is_shutdown():
     #     rl_interface.step(input_values)
     #     rospy.sleep(0.1)
-    
-    rl_interface.update_context()
-    
+        
     # Run the episodes
-    # for _ in range(rl_config["num_episodes"]):
+    for _ in range(rl_config["hyper_params"]["num_episodes"]):
         
-    #     rl_interface.update_context()
+        rl_interface.update_context()
         
-    #     # Reset the rl env
-    #     rl_env.reset()
+        # Reset the rl env
+        rl_env.reset()
         
         
-    #     for _ in range(rl_config["max_episode_steps"]):
-    #         if rl_env.is_done():
-    #             break
+        for _ in range(rl_config["hyper_params"]["max_episode_steps"]):
+            # if rl_env.is_done():
+            #     break
             
-    #         # TODO: Get the correct action prediction from the RL model
-    #         action = np.zeros(rl_env._action_space.shape)
+            # TODO: Get the correct action prediction from the RL model
+            action = np.zeros(rl_env._action_space.shape)
             
-    #         # Step the environment
-    #         obs, reward, done, info = rl_env.step(action)
+            # Step the environment
+            # obs, reward, done, info = rl_env.step(action)
 
-    #         rl_interface.step(action)
+            if rl_interface.step(action) == True:
+                break
         
         
 
 if __name__ == "__main__":
-    rospy.init_node("rl_env", log_level=rospy.DEBUG)
+    rospy.init_node("rl_env", log_level=rospy.INFO)
     
     try:
         main()
