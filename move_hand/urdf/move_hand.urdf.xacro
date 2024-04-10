@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 
-  <!-- URDF TO BE LOADED ON THE PARAMETER SERVER -->
+<!-- URDF TO BE LOADED ON THE PARAMETER SERVER -->
 
-  <robot xmlns:xacro="http://wiki.ros.org/xacro" name="mia_hand">
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="mia_hand">
 
     <!-- true it loads robot model with default config provided by default yaml file
     False it loads calibrated robot model configuaration yaml file.
@@ -17,10 +17,11 @@
     ////////////////////////////////////////////////////////////////////////////////////-->
 
 
-    <xacro:arg name="hw_interface_thumb_fle" default="VelocityJointInterface"/>
-    <xacro:arg name="hw_interface_index_fle" default="VelocityJointInterface"/>
-    <xacro:arg name="hw_interface_mrl_fle" default="VelocityJointInterface"/>
-    <xacro:arg name="robotNamespace" default="/mia_hand"/> <!-- /mia_hand -->
+    <xacro:arg name="hw_interface_thumb_fle" default="EffortJointInterface"/>
+    <xacro:arg name="hw_interface_index_fle" default="EffortJointInterface"/>
+    <xacro:arg name="hw_interface_mrl_fle" default="EffortJointInterface"/>
+    <xacro:arg name="robotNamespace" default="/mia_hand"/>
+    <!-- /mia_hand -->
 
 
 
@@ -51,24 +52,24 @@
 
     <xacro:if value="$(arg default_mia_model)">
         <xacro:if value="$(arg right_hand)">
-        <xacro:mia_hand_robot />
+            <xacro:mia_hand_robot />
         </xacro:if>
         <xacro:unless value="$(arg right_hand)">
-        <xacro:mia_hand_robot_left />
+            <xacro:mia_hand_robot_left />
         </xacro:unless>
     </xacro:if>
 
     <xacro:unless value="$(arg default_mia_model)">
 
         <xacro:if value="$(arg right_hand)">
-        <xacro:mia_hand_robot joint_limits_parameters_file= '$(find mia_hand_description)/calibration/$(arg joint_limits_config_filename)' />
+            <xacro:mia_hand_robot joint_limits_parameters_file= '$(find mia_hand_description)/calibration/$(arg joint_limits_config_filename)' />
         </xacro:if>
 
         <xacro:unless value="$(arg right_hand)">
             <xacro:mia_hand_robot_left joint_limits_parameters_file= '$(find mia_hand_description)/calibration/$(arg joint_limits_config_filename)' />
         </xacro:unless>
     </xacro:unless>
-    
+
 
     <!-- base_link to palm transform-->
     <link name="base_link"/>
@@ -76,16 +77,16 @@
     <xacro:if value="$(arg right_hand)">
         <joint name="j_palm" type="fixed">
         <origin xyz="0 0 0" rpy="1.57 0 0"/> <!-- origin xyz="0 0 0.2" rpy="1.57 3.14 0""/ -->
-        <parent link="base_link"/>
-        <child link="palm"/>
+            <parent link="base_link"/>
+            <child link="palm"/>
         </joint>
     </xacro:if>
     <xacro:unless value="$(arg right_hand)">
         <joint name="j_palm" type="fixed">
         <origin xyz="0 0 0" rpy="1.57 3.14 0"/> <!-- origin xyz="0 0 0.2" rpy="1.57 3.14 0""/ -->
-        <parent link="base_link"/>
-        <child link="palm"/>
-        </joint> 
+            <parent link="base_link"/>
+            <child link="palm"/>
+        </joint>
     </xacro:unless>
 
 </robot>
