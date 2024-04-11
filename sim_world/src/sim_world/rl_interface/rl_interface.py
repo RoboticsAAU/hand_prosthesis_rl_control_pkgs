@@ -106,8 +106,6 @@ class RLInterface():
     def update_context(self):
         """
         Updates the current object context. This includes spawning hand and computing approach trajectory.
-        mode: str
-            The mode to update the context. Can be either "random" or "sequential".
         """
         # Update the current object
         self._object_handler.update_current_object()

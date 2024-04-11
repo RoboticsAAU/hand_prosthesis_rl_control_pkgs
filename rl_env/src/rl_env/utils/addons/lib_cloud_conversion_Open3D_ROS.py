@@ -74,6 +74,8 @@ def convertCloudFromRosToOpen3d(ros_cloud : PointCloud2) -> open3d.geometry.Poin
     # Get cloud data from ros_cloud
     field_names=[field.name for field in ros_cloud.fields]
     cloud_data = list(pc2.read_points(ros_cloud, skip_nans=True, field_names = field_names))
+    #rospy.logwarn_once(field_names)
+    #rospy.logwarn_once(cloud_data)
 
     # Check empty
     open3d_cloud = open3d.geometry.PointCloud()
@@ -81,6 +83,8 @@ def convertCloudFromRosToOpen3d(ros_cloud : PointCloud2) -> open3d.geometry.Poin
         print("Converting an empty cloud")
         return None
 
+    #rospy.logwarn("Pointcloud NOT empty")
+    
     # Set open3d_cloud
     if "rgb" in field_names:
         IDX_RGB_IN_FIELD=3 # x, y, z, rgb

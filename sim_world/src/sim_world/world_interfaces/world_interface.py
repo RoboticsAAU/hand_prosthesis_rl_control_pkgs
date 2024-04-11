@@ -1,10 +1,12 @@
 from rl_env.setup.hand.hand_setup import HandSetup
 from abc import ABC, abstractmethod
+from typing import Type
 
 class WorldInterface():
-    def __init__(self, hand_setup: HandSetup):
+    def __init__(self, hand_setup: Type[HandSetup]):
         self.hand = hand_setup
-    
+        self.check_system_ready()
+        
     @abstractmethod
     def reset(self):
         pass

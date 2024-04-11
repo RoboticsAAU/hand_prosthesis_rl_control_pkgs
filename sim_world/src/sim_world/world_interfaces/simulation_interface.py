@@ -16,6 +16,7 @@ from rl_env.setup.hand.hand_setup import HandSetup
 class SimulationInterface(WorldInterface):
     def __init__(self, hand_setup : Type[HandSetup]):
         """ hand_name: str is the name of the model in the gazebo world."""
+        
         # Initialize the parent class
         super(SimulationInterface, self).__init__(hand_setup)
         
@@ -82,7 +83,6 @@ class SimulationInterface(WorldInterface):
         try:
             pose = convert_pose(pose)
             
-            rospy.logwarn(f"Simulation Interface pose: {pose}")
             self._spawn_model(model_name, model_sdf, "", pose, "world")
             self._spawned_obj_names.add(model_name)
             rospy.loginfo(f"Model {model_name} spawned successfully.")

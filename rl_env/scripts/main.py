@@ -42,7 +42,9 @@ def main():
     # while not rospy.is_shutdown():
     #     rl_interface.step(input_values)
     #     rospy.sleep(0.1)
-        
+    
+    # r = rl_interface._world_interface._rate
+    
     # Run the episodes
     for _ in range(rl_config["hyper_params"]["num_episodes"]):
         
@@ -56,6 +58,7 @@ def main():
             # if rl_env.is_done():
             #     break
             
+            # rl_env._pc_cam_handler.visualize()
             # TODO: Get the correct action prediction from the RL model
             action = np.zeros(rl_env._action_space.shape)
             
@@ -64,6 +67,8 @@ def main():
 
             if rl_interface.step(action) == True:
                 break
+            
+            # r.sleep()
         
         
 

@@ -30,8 +30,6 @@ class ObjectHandler():
                 path = glob.glob(object_folder + '/mesh_new.sdf')[0]
                 tree = ET.parse(path)
                 xml_string = ET.tostring(tree.getroot(), encoding='utf8', method='xml').decode('utf-8')
-                rospy.logwarn_once(type(xml_string))
-                rospy.logwarn_once(xml_string)
                 
                 objects[Path(category_folder).name + "/" + Path(object_folder).name] = xml_string
         
@@ -61,7 +59,6 @@ class ObjectHandler():
         except (ValueError, IndexError) as e:
             rospy.logwarn("Could not update current object: ", e)
     
-        rospy.logwarn("Current object: " + self._curr_obj)
     
     @property
     def curr_obj(self):

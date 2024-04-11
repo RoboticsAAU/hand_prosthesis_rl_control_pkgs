@@ -42,9 +42,11 @@ class PointCloudHandler():
         """
         assert self.count > 0, "The point cloud is not set."
         
+        if self._pc[index] is None or len(self.points[index]) == 0:
+            return
+        
         # Get the point cloud for the specified index or combined
         pc = self._pc[index] if not combined else self.get_combined()
-        
         # Create a mesh representing the global coordinate frame axes
         axis_mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.020)
         
