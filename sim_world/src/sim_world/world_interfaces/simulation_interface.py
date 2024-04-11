@@ -86,6 +86,7 @@ class SimulationInterface(WorldInterface):
             self._spawn_model(model_name, model_sdf, "", pose, "world")
             self._spawned_obj_names.add(model_name)
             rospy.loginfo(f"Model {model_name} spawned successfully.")
+            rospy.sleep(0.1)
         except Exception as e:
             rospy.logerr("Failed to spawn object because: ", e)
         
@@ -95,6 +96,7 @@ class SimulationInterface(WorldInterface):
             self._delete_model(model_name)
             self._spawned_obj_names.remove(model_name)
             rospy.loginfo(f"Model {model_name} deleted successfully.")
+            rospy.sleep(0.1)
         except rospy.ServiceException as e:
             rospy.logerr("Failed to delete object because: ", e)
 
