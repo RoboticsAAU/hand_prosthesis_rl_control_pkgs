@@ -1,4 +1,3 @@
-numpy
 gym
 open3d
 tf2_ros
