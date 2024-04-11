@@ -80,7 +80,7 @@ def convertCloudFromRosToOpen3d(ros_cloud : PointCloud2) -> open3d.geometry.Poin
     # Check empty
     open3d_cloud = open3d.geometry.PointCloud()
     if len(cloud_data)==0:
-        print("Converting an empty cloud")
+        rospy.logwarn_throttle(1, "Converting an empty cloud")
         return None
 
     #rospy.logwarn("Pointcloud NOT empty")
