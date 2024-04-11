@@ -4,9 +4,9 @@ topics:
     joint_state_topic: /joint_states
     camera_points_topic: /camera/depth_registered/points
   publications:
-    thumb_velocity_topic: /j_thumb_fle_velocity_controller/command
-    index_velocity_topic: /j_index_fle_velocity_controller/command
-    mrl_velocity_topic: /j_mrl_fle_velocity_controller/command
+    thumb_controller_topic: /j_thumb_fle_eff_controller/command
+    index_controller_topic: /j_index_fle_eff_controller/command
+    mrl_controller_topic: /j_mrl_fle_eff_controller/command
 
 # Camera configuration
 visual_sensors:
