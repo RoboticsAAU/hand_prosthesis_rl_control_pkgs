@@ -69,6 +69,7 @@ def main():
 
 if __name__ == "__main__":
     rospy.init_node("rl_env", log_level=rospy.INFO)
+    np.random.seed(sim_config["seed"])
     
     try:
         main()

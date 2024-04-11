@@ -1,6 +1,7 @@
 import rospy
 import numpy as np
 import numpy.random as random
+import matplotlib.pyplot as plt
 from geometry_msgs.msg import Pose
 from typing import Dict, Any, Union
 from scipy.spatial.transform import Rotation as R
@@ -44,7 +45,7 @@ class HandController:
 
     def step(self) -> np.array:
         
-        if len(self._pose_buffer) == 0:
+        if self._pose_buffer.shape[1] == 0:
             raise IndexError("Empty pose buffer")
         
         first_pose, self._pose_buffer = self._pose_buffer[:,0], self._pose_buffer[:,1:]
@@ -53,9 +54,10 @@ class HandController:
     
     def plan_trajectory(self, obj_center : np.array) -> None:
         # Obtain the start and goal pose
-        start_pose = self._sample_start_pose(obj_center)
+        #TODO: z-offset should be a parameter in yaml
+        start_pose = self._sample_start_pose(obj_center, 0.1)
         goal_pose = self._sample_goal_pose(obj_center, start_pose)
-        
+                
         # Plan trajectory with the given path planner and parameters
         if self._config["path_planner"] == "bezier":
             path_params = {
@@ -73,26 +75,36 @@ class HandController:
         
         #TODO: Implement orientation in the path planner
         self._pose_buffer = self._path_planner.plan_path(start_pose[:3], goal_pose[:3], path_params)
-        to_append = np.vstack([np.array([0,0,0,1])] * self._pose_buffer.shape[1]).T
+        to_append = np.vstack([start_pose[3:].copy()] * self._pose_buffer.shape[1]).T
         self._pose_buffer = np.append(self._pose_buffer, to_append, axis=0)
-        rospy.logwarn("Planned trajectory shape: " + str(self._pose_buffer.shape))
         
 
     def reset(self):
         self._pose_buffer = []
     
     
-    def _sample_start_pose(self, obj_center : np.array) -> np.array:
-                # Sample starting point on outer sphere
+    def _sample_start_pose(self, obj_center : np.array, z_offset : float) -> np.array:
+        """
+        Sample a start pose for the hand. The start pose is sampled on the upper hemisphere.
+        obj_center : np.array, The center of the object
+        z_offset : float, Hemisphere offset from the object center in the z-direction
+        """
+        
+        # Sample starting point on upper-half of unit sphere (i.e., z>0)
         def sample_spherical() -> np.array:
-            vec = np.random.rand(3)
+            vec = np.random.uniform(-1, 1, (3,))
+            # Convert the point to upper hemisphere
+            vec[2] = abs(vec[2])
+            # Add offset
             vec /= np.linalg.norm(vec, axis=0)
-            vec *= self._config["outer_radius"]
             return vec
         
         # Compute the start position
-        rel_pos = sample_spherical()
-        start_position = rel_pos + obj_center
+        rel_pos = np.array([0.0, 0.0, 0.0], dtype=np.float32)
+        while rel_pos[2] < z_offset/self._config["outer_radius"]:
+            rel_pos = sample_spherical()
+        
+        start_position = rel_pos*self._config["outer_radius"] + obj_center
 
         # Compute the start orientation
         auxiliary_vec = np.array([0, 0, 1.])
@@ -110,6 +122,7 @@ class HandController:
 
         # Create the rotation matrix and account for hand frame rotation  
         rotation_matrix = np.array([x_axis, y_axis, z_axis]).T @ self._hand_rotation
+
         # Convert it to quaternion
         start_orientation = R.from_matrix(rotation_matrix).as_quat()
 
@@ -117,9 +130,16 @@ class HandController:
         return np.concatenate([start_position, start_orientation])
 
     def _sample_goal_pose(self, obj_center : np.array, start_pose : np.array) -> np.array:
-        rospy.logwarn_once("Goal set for testing purposes. Should be implemented in future")
-        #TODO: Implement correct goal sampling
-        return np.concatenate([(obj_center + np.array([0,0,0.1])), start_pose[3:]])
+        #TODO: Implement correct goal sampling. E.g. using graspit, bounding bo, or minkowski
+        # Compute relative vector
+        rel_pos = start_pose[:3] - obj_center
+        # Normalise relative vector
+        rel_pos /= np.linalg.norm(rel_pos)
+        # Multiply by inner radius
+        rel_pos *= self._config["inner_radius"]
+        # Convert back to world frame
+        pos = rel_pos + obj_center         
+        return np.concatenate([pos, start_pose[3:]])
 
 
 if __name__ == '__main__':

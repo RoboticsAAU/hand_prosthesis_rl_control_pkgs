@@ -52,7 +52,7 @@ class RLInterface():
         self._hand_controller.update(self.subscriber_data["move_hand_data"])
         
         # Check if episode is done
-        return len(self._hand_controller._pose_buffer) == 0
+        return self._hand_controller._pose_buffer.shape[1] == 0
         
     def set_action(self, action : np.array):
         """
@@ -64,6 +64,8 @@ class RLInterface():
         """
         Publish the position of the hand to the world interface.
         """
+        # TODO: Quick fix. Should be solved correctly later
+        pose[2] += 1.0
         self._world_interface.set_pose(self._world_interface.hand.name, pose)
     
     
