@@ -5,6 +5,7 @@ import glob
 from collections import OrderedDict
 from pathlib import Path
 from typing import Dict, List, Any
+import rospkg
 
 class ObjectHandler():
     def __init__(self, object_config : Dict[str, Any]):
@@ -21,11 +22,14 @@ class ObjectHandler():
         
         objects = {}
         
-        if not Path(self._config["objects_path"]).is_dir():
-            raise ValueError("The object path is not a valid directory.")
+        # Get objects path
+        rospack = rospkg.RosPack()
+        object_dataset_path = rospack.get_path("assets") + "/" + self._config["object_dataset"]
+        if not Path(object_dataset_path).is_dir():
+            raise ValueError("The object path is not a valid directory: "+str(object_dataset_path))
         
         # Load the objects into the objects variable
-        for category_folder in glob.glob(self._config["objects_path"] + "/*"):
+        for category_folder in glob.glob(object_dataset_path + "/*"):
             for object_folder in glob.glob(category_folder + "/*"):
                 path = glob.glob(object_folder + '/mesh_new.sdf')[0]
                 tree = ET.parse(path)
