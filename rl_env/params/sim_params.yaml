@@ -11,7 +11,8 @@ move_hand:
   inner_radius: 0.5
 
 objects:
-  objects_path: "/Development/hand_rl_ws/src/hand_prosthesis_rl_control_pkgs/assets/shapenet_sdf"
+  # The selected object dataset folder from the assets package
+  object_dataset: "shapenet_sdf"
   # Mode in which objects are selected each episode
   selection_mode: "random"
   # How many objects to train on
