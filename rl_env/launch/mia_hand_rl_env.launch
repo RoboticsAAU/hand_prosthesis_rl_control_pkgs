@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
     <!-- Arguments -->
-    <arg name="robot_namespace"                 default="mia_hand_camera"/>
+    <arg name="robot_namespace"                 default="mia_hand"/>
     <arg name="hand_config_file"                default="hand_config.yaml" />
     <arg name="rl_config_file"                  default="rl_config.yaml" />
     <arg name="sim_world_config_file"           default="sim_world_config.yaml" />
