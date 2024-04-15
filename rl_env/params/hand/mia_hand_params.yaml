@@ -23,6 +23,9 @@ visual_sensors:
   config_imagined:
     ref_frame: "palm"
     num_points: 512
+    stl_package: "mia_hand_description" # Package where the STL files are located. Assumes they are under the folder /meshes/stl of this package
+    stl_ignores: ["1.001.stl", "UR_flange.stl"] # List of STL files to ignore
+
 
 # Joint and velocity limits
 limits:

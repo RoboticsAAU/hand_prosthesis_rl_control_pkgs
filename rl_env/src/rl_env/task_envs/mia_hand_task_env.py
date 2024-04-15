@@ -3,6 +3,7 @@ import numpy as np
 import rospkg
 import open3d as o3d
 import gym
+import glob
 from gym.envs.registration import register
 from pathlib import Path
 from functools import cached_property
@@ -260,7 +261,7 @@ class MiaHandWorldEnv(MiaHandEnv):
 
                     # Transform point cloud to reference frame
                     transform = self._tf_handler.get_transform_matrix(modality_config["optical_frame"], modality_config["ref_frame"])
-                    obs_dict[key_name] = self._pc_cam_handler.transform(self._pc_cam_handler.pc[0], transform)
+                    obs_dict[key_name] = self._pc_cam_handler.transform(self._pc_cam_handler.pc[0], transform).points
                     
                 else:
                     raise RuntimeError("Modality not supported")
@@ -272,7 +273,17 @@ class MiaHandWorldEnv(MiaHandEnv):
         
         return obs_dict
         
-    def setup_imagination(self):
+    def setup_imagination(self, right_hand : bool):
+        # Get an instance of RosPack with the default search paths
+        rospack = rospkg.RosPack()
+        
+        # Get the stl files from the mia description package
+        stl_folder = rospack.get_path(self._config_imagined["stl_package"]) + "/meshes/stl"
+        stl_files = [file for file in glob.glob(stl_folder + "/*") if (Path(file).name not in self._config_imagined["stl_ignores"])]
+        
+        # Extract stl files for the correct hand
+        filtered_stl_files = [file for file in stl_files if (("mirrored" in file) != right_hand)]
+        
         # config has: "stl_files", "ref_frame", "groups", "num_points"
         # Define the imagined groups where each group corresponds to a movable joint in the hand (along with base palm)
         free_joints = self._urdf_handler.get_free_joints()
@@ -280,7 +291,7 @@ class MiaHandWorldEnv(MiaHandEnv):
         self._imagined_groups["j_" + self._config_imagined["ref_frame"]] = self._urdf_handler.get_link_group(self._config_imagined["ref_frame"])
         
         mesh_dict = {}  # Initialize an empty dictionary
-        for stl_file in self._config_imagined["stl_files"]:
+        for stl_file in filtered_stl_files:
             # Get the origin and scale for the mesh
             visual_origin, scale = self._urdf_handler.get_visual_origin_and_scale(Path(stl_file).stem)
             

@@ -26,6 +26,9 @@ def main():
     # Instantiate RL env
     rl_env = MiaHandWorldEnv(hand_config["visual_sensors"], hand_config["limits"])  
     
+    # Setup camera and imagination
+    rl_env.setup_imagination(hand_config["general"]["right_hand"])
+    
     # Instantiate the RL interface to the simulation
     rl_interface = RLInterface(
         SimulationInterface(
@@ -47,6 +50,9 @@ def main():
 
         # Reset the rl env
         obs = rl_env.reset()
+        
+        rospy.logwarn("Reset Observation: " + str(obs) + "\n")
+        rospy.logwarn("General Observation Shape: " + str(rl_env.observation_space))
         
         for _ in range(rl_config["hyper_params"]["max_episode_steps"]):
             # Select an action
