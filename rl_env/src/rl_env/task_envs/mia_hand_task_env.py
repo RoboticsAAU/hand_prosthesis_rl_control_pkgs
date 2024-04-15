@@ -227,7 +227,7 @@ class MiaHandWorldEnv(MiaHandEnv):
             
         if self._config_imagined is not None:
             self.update_imagination()
-            obs_dict["imagination"] = gym.spaces.Box(low=-np.inf, high=np.inf, shape=((self._config_imagined["num_points"],) + (3,)))
+            obs_dict["imagined"] = gym.spaces.Box(low=-np.inf, high=np.inf, shape=((self._config_imagined["num_points"],) + (3,)))
             
         return gym.spaces.Dict(obs_dict)
     

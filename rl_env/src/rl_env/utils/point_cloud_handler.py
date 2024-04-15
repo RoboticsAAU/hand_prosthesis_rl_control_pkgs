@@ -79,7 +79,8 @@ class PointCloudHandler():
         :param index: The index of the point cloud
         """
         
-        if len(self._pc[index].points) == 0:
+        # Early return if the point cloud is empty
+        if not self._pc[index].has_points():
             raise ValueError("The point cloud is empty.")
         
         # Downsample using voxel grid to get a uniform distribution of points in space
