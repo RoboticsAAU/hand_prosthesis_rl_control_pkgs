@@ -16,5 +16,5 @@ objects:
   # Mode in which objects are selected each episode
   selection_mode: "sequential" # "random" or "sequential"
   # How many objects to train on
-  num_objects: 100
+  num_objects: 4
   inter_object_dist: 2.0

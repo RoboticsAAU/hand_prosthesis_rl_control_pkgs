@@ -4,7 +4,6 @@ import numpy as np
 import yaml
 from stable_baselines3 import PPO
 
-
 from rl_env.task_envs.mia_hand_task_env import MiaHandWorldEnv
 from move_hand.control.move_hand_controller import HandController
 from rl_env.setup.hand.mia_hand_setup import MiaHandSetup
@@ -36,40 +35,29 @@ def main():
         sim_config
     )
     
-    # Test step of the RL interface
-    # input_values = {"action": np.ones(3), 
-    #                 "hand_pose": np.concatenate([np.ones(3), np.zeros(4)])}
-    # while not rospy.is_shutdown():
-    #     rl_interface.step(input_values)
-    #     rospy.sleep(0.1)
+    model = PPO("MultiInputPolicy", rl_env, verbose=1)
     
-    # r = rl_interface._world_interface._rate
+    r = rl_interface._world_interface._rate
     
     # Run the episodes
     for _ in range(rl_config["hyper_params"]["num_episodes"]):
         
         rl_interface.update_context()
-        
+        rl_interface.step(np.zeros(rl_env.action_space.shape))
+
         # Reset the rl env
-        rl_env.reset()
-        
+        obs = rl_env.reset()
         
         for _ in range(rl_config["hyper_params"]["max_episode_steps"]):
-            # if rl_env.is_done():
-            #     break
-            
-            # rl_env._pc_cam_handler.visualize()
-            # TODO: Get the correct action prediction from the RL model
-            action = np.zeros(rl_env._action_space.shape)
-            
+            # Select an action
+            action = model.predict(obs)
             # Step the environment
-            # obs, reward, done, info = rl_env.step(action)
+            obs, reward, done, info = rl_env.step(action)
 
             if rl_interface.step(action) == True:
                 break
             
-            # r.sleep()
-        
+            r.sleep()
         
 
 if __name__ == "__main__":
