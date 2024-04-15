@@ -9,6 +9,7 @@ from functools import cached_property
 from typing import Dict, List, Any
 from geometry_msgs.msg import Pose
 
+from rl_env.robot_envs.mia_hand_env import MiaHandEnv
 from rl_env.utils.tf_handler import TFHandler
 from rl_env.utils.point_cloud_handler import PointCloudHandler, ImaginedPointCloudHandler
 from rl_env.utils.urdf_handler import URDFHandler
@@ -24,7 +25,7 @@ register(
         #timestep_limit=timestep_limit_per_episode,
     )
 
-class MiaHandWorldEnv(gym.Env):
+class MiaHandWorldEnv(MiaHandEnv):
     def __init__(self, visual_sensor_config : Dict[str, Any], limits_config : Dict[str, Any]):
         """
         This Task Env is designed for having the Mia hand in the hand grasping world.
