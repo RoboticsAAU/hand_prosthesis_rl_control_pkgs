@@ -256,9 +256,8 @@ class MiaHandWorldEnv(MiaHandEnv):
                     self._pc_cam_handler.update_cardinality(modality_config["num_points"])
 
                     # Transform point cloud to reference frame
-                    transform = self._tf_handler.get_transform_matrix(cam_name, modality_config["ref_frame"])
-                    self._pc_cam_handler.transform(transform)
-                    obs_dict[key_name] = self._pc_cam_handler.points[0]
+                    transform = self._tf_handler.get_transform_matrix(modality_config["optical_frame"], modality_config["ref_frame"])
+                    obs_dict[key_name] = self._pc_cam_handler.transform(self._pc_cam_handler.pc[0], transform)
                     
                 else:
                     raise RuntimeError("Modality not supported")
