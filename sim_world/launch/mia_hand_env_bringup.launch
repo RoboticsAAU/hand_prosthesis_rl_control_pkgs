@@ -9,7 +9,7 @@
      <arg name="headless" default="false"/>
      <arg name="debug" default="false"/>
      <arg name="image_view" default="false"/>
-     <arg name="robotNamespace" default="mia_hand_camera"/> <!-- /mia_hand_camera -->
+     <arg name="robotNamespace" default="mia_hand"/> <!-- /mia_hand_camera -->
      <arg name="load_default_mia_model" default="false" />
      <arg name="right_hand" default="true" doc="True to for right hand False otherwise" /> <!-- Params to set right or left Mia hand version  -->
      <arg name="joint_limits_config_filename" default="joint_limits.yaml" doc="name of the yaml file to calibrate joints limit of URDF file" />
@@ -17,6 +17,7 @@
 
 
      <!-- Arguments to upload hardware interface and controllers of each finger -->
+     <arg name="tc_type" default="eff" doc="type of trajectory controller to launch. Values: vel, pos, eff"/>
      <arg name="hw_interface_thumb_fle" default="EffortJointInterface"
           doc="type of hardware interface for thumb flexion. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
      <arg name="hw_interface_index_fle" default="EffortJointInterface"
