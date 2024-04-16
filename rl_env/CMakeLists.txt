@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(rl_env)
+# Set policy CMP0048 to manage version variables
+cmake_policy(SET CMP0048 NEW)
+project(rl_env VERSION 1.0.0)
+
+
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)

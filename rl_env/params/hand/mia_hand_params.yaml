@@ -27,7 +27,7 @@ visual_sensors:
 
 # Joint and velocity limits
 limits:
-  obs_joint_limits: # Joint limits for the observation space
+  obs_joint_limits: # Joint limits for the observation space. Defines the number degrees of freedom
     index_pos_range: [-1.177, 1.188]
     little_pos_range: [-0.120, 1.303]
     mrl_pos_range: [-0.120, 1.303]
