@@ -90,7 +90,7 @@ class RLInterface():
         y_vals = np.linspace(0, (grid_dims[1] - 1) * self._object_handler.config["inter_object_dist"], grid_dims[1])
         grid = np.meshgrid(x_vals, y_vals)
         
-        for index, (obj_name, obj_sdf) in enumerate(self._object_handler.objects.items()):
+        for index, (obj_name, obj) in enumerate(self._object_handler.objects.items()):
             # Get rotation and translation
             rotation_matrix = np.array([[1, 0, 0], 
                                         [0, 0, -1],
@@ -106,7 +106,7 @@ class RLInterface():
             self._object_poses[obj_name] = pose
 
             # Spawn the object
-            self._world_interface.spawn_object(obj_name, obj_sdf, pose)
+            self._world_interface.spawn_object(obj_name, obj["sdf"], pose)
     
     
     def reset_object(self, obj_name : str):
@@ -130,6 +130,6 @@ class RLInterface():
         self._subscriber_data = self._world_interface.get_subscriber_data()
         object_pose = self._subscriber_data["rl_data"]["obj_data"][self._object_handler.curr_obj]
         obj_center = np.array([object_pose.position.x, object_pose.position.y, object_pose.position.z])
-        self._hand_controller.plan_trajectory(obj_center)
+        self._hand_controller.plan_trajectory(obj_center, self._object_handler.objects[self._object_handler.curr_obj]["mesh"])
         
         

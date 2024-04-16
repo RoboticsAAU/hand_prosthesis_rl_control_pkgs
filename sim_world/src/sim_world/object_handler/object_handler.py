@@ -1,6 +1,8 @@
 import rospy
+import numpy as np
 import numpy.random as random
 import xml.etree.ElementTree as ET
+from stl import mesh
 import glob
 from collections import OrderedDict
 from pathlib import Path
@@ -31,11 +33,21 @@ class ObjectHandler():
         # Load the objects into the objects variable
         for category_folder in glob.glob(object_dataset_path + "/*"):
             for object_folder in glob.glob(category_folder + "/*"):
-                path = glob.glob(object_folder + '/mesh_new.sdf')[0]
-                tree = ET.parse(path)
+                # Load sdf string
+                path_sdf = glob.glob(object_folder + '/mesh_new.sdf')[0]
+                tree = ET.parse(path_sdf)
                 xml_string = ET.tostring(tree.getroot(), encoding='utf8', method='xml').decode('utf-8')
                 
-                objects[Path(category_folder).name + "/" + Path(object_folder).name] = xml_string
+                # Load mesh object
+                path_mesh = glob.glob(object_folder + '/mesh.stl')[0]
+                cuboid = mesh.Mesh.from_file(path_mesh)
+                # TODO: Hardcoded scale. Should be read from the sdf file.
+                cuboid.vectors *= 0.15
+                
+                objects[Path(category_folder).name + "/" + Path(object_folder).name] = {
+                    "sdf": xml_string,
+                    "mesh": cuboid
+                }
         
         self._config["num_objects"] = self.config["num_objects"] if self.config["num_objects"] != -1 else len(objects)
     

@@ -52,11 +52,11 @@ class HandController:
         return first_pose
     
     
-    def plan_trajectory(self, obj_center : np.array) -> None:
+    def plan_trajectory(self, obj_center : np.array, obj_mesh) -> None:
         # Obtain the start and goal pose
         #TODO: z-offset should be a parameter in yaml
         start_pose = self._sample_start_pose(obj_center, 0.1)
-        goal_pose = self._sample_goal_pose(obj_center, start_pose)
+        goal_pose = self._sample_goal_pose(obj_center, start_pose, obj_mesh)
                 
         # Plan trajectory with the given path planner and parameters
         if self._config["path_planner"] == "bezier":
@@ -86,8 +86,9 @@ class HandController:
     def _sample_start_pose(self, obj_center : np.array, z_offset : float) -> np.array:
         """
         Sample a start pose for the hand. The start pose is sampled on the upper hemisphere.
-        obj_center : np.array, The center of the object
-        z_offset : float, Hemisphere offset from the object center in the z-direction
+        obj_center: The center of the object
+        z_offset: Hemisphere offset from the object center in the z-direction
+        :return: The start pose for the hand
         """
         
         # Sample starting point on upper-half of unit sphere (i.e., z>0)
@@ -129,111 +130,18 @@ class HandController:
         # Obtain the start pose as the combined position and orientation
         return np.concatenate([start_position, start_orientation])
 
-    # def _sample_goal_pose(self, obj_center : np.array, start_pose : np.array) -> np.array:
-    #     import rospkg
-    #     rospack = rospkg.RosPack()
-    #     stl_file = rospack.get_path('assets') + '/shapenet_sdf/category_1/obj_1/mesh.stl'
-    #     cuboid = mesh.Mesh.from_file(stl_file)
-    #     points = np.around(np.unique(cuboid.vectors.reshape([cuboid.vectors.size//3, 3]), axis=0), 4)
-    #     # print("Points are", points.tolist())
+    def _sample_goal_pose(self, obj_center : np.array, start_pose : np.array, obj_mesh : mesh.Mesh, normal_dist : float = 0.05) -> np.array:
+        """ Sample a goal pose for the hand. The goal pose is sampled on the as some orthogonal distance to the object surface
+        in the intersection point between the start pose and object center.
+        obj_center: The center of the object
+        start_pose: The start pose of the hand
+        obj_mesh: The mesh of the object
+        normal_dist: The orthogonal distance from the object surface
+        :return: The goal pose for the hand
+        """
         
-    #     def closest_point_on_line(point, line_point1, line_point2):
-    #         line_vector = line_point2 - line_point1
-    #         line_length_squared = np.dot(line_vector, line_vector)
-            
-    #         if line_length_squared == 0:
-    #             return line_point1, np.linalg.norm(point - line_point1)  # Return distance to the only point
-            
-    #         # Vector from line_point1 to the given point
-    #         point_vector = point - line_point1
-
-    #         # Projection factor
-    #         t = np.dot(point_vector, line_vector) / line_length_squared
-            
-    #         # Clamp t to the range [0, 1]
-    #         t = np.clip(t, 0, 1)
-            
-    #         # Closest point on the line
-    #         closest_point = line_point1 + t * line_vector
-            
-    #         # Distance between original point and closest point
-    #         distance = np.linalg.norm((point - closest_point))
-            
-    #         return closest_point, distance
-
-    #     closest_point, distance_to_closest_point = min(
-    #         ((closest_point_on_line(point, start_pose[:3], obj_center)) 
-    #         for point in points),
-    #         key=lambda x: x[1]
-    #     )
-    #     print("Closest point is", closest_point, "and closest distance is", distance_to_closest_point)
-        
-    #     # Calculate distances to the closest point
-    #     distances_to_closest_point = np.linalg.norm(points - closest_point, axis=1)
-        
-    #     # Get the indices of the 3 closest points
-    #     closest_points_idx = np.argpartition(distances_to_closest_point, 3)
-    #     closest_points = points[closest_points_idx[:3]]
-        
-    #     def surface_normal(points):
-    #         # Calculate vectors between points
-    #         vectors = points[1:] - points[0]
-            
-    #         # Calculate cross product of two vectors to find the normal vector
-    #         normal_vector = np.cross(vectors[0], vectors[1])
-            
-    #         # Normalize the normal vector
-    #         normal_vector /= np.linalg.norm(normal_vector)
-            
-    #         return normal_vector
-        
-    #     surface_normal_vector = surface_normal(closest_points)
-    #     # Ensure the direction is correct
-    #     if np.dot(surface_normal_vector, start_pose[:3] - obj_center) < 0:
-    #         surface_normal_vector = -surface_normal_vector
-        
-    #     goal_position = closest_point + 0.05 * surface_normal_vector
-        
-
-    #     def visualize_points(points, closest_points, goal_position, surface_normal_vector):
-    #         import matplotlib.pyplot as plt
-    #         from mpl_toolkits.mplot3d import Axes3D
-    #         fig = plt.figure()
-    #         ax = fig.add_subplot(111, projection='3d')
-            
-    #         # Plot all points
-    #         ax.scatter(points[:, 0], points[:, 1], points[:, 2], c='b', marker='o', label='Points')
-            
-    #         # Plot closest points
-    #         ax.scatter(closest_points[:, 0], closest_points[:, 1], closest_points[:, 2], c='r', marker='o', label='Closest Points')
-            
-    #         # Plot goal position
-    #         ax.scatter(goal_position[0], goal_position[1], goal_position[2], c='g', marker='o', label='Goal Position')
-            
-    #         ax.quiver(closest_point[0], closest_point[1], closest_point[2],
-    #           surface_normal_vector[0], surface_normal_vector[1], surface_normal_vector[2],
-    #           length=0.05, color='k', normalize=True, label='Surface Normal')
-            
-    #         ax.set_xlabel('X')
-    #         ax.set_ylabel('Y')
-    #         ax.set_zlabel('Z')
-    #         ax.legend()
-            
-    #         plt.show()
-        
-    #     visualize_points(points, closest_points, goal_position, surface_normal_vector)
-        
-    #     return np.concatenate([goal_position, start_pose[3:]])
-
-    def _sample_goal_pose(self, obj_center : np.array, start_pose : np.array) -> np.array:
-        import rospkg
-        from time import time
-        start = time()
-        rospack = rospkg.RosPack()
-        stl_file = rospack.get_path('assets') + '/shapenet_sdf/category_1/obj_1/mesh.stl'
-        cuboid = mesh.Mesh.from_file(stl_file)
-        triangles = cuboid.vectors * 0.15
-        
+        # Function to check if a line intersects a triangle and returns the intersection point 
+        # and surface normal if it does
         def intersect_line_triangle(line_point1, line_point2, triangle):
             # Define the line as a vector and a point on the line
             line_vector = line_point2 - line_point1
@@ -261,13 +169,18 @@ class HandController:
             else:
                 return False, None, None
         
+        # Find all the triangles that the line between start position and object center intersects with 
         intersections = []
-        for triangle in triangles:
+        for triangle in obj_mesh.vectors:
             intersection, intersection_point, triangle_normal = intersect_line_triangle(obj_center, start_pose[:3], triangle)
             if intersection:
                 intersections.append((intersection_point, triangle_normal))
 
+        # Find the intersection point that is closest to the start position
         intersection_point, triangle_normal = min(intersections, key=lambda x: np.linalg.norm(x[0] - start_pose[:3]))
+        
+        # Compute the goal position as some orthogonal offset to the intersection point
+        goal_position = intersection_point + normal_dist * triangle_normal
         
         def visualize(triangles, intersection_point, goal_position, surface_normal_vector):
             import matplotlib.pyplot as plt
@@ -309,9 +222,6 @@ class HandController:
             ax.set_ylabel('Y')
             ax.set_zlabel('Z')
             plt.show()
-        
-        goal_position = intersection_point + 0.05 * triangle_normal
-        print(f"Duration: {time() - start:.2f} s")
         
         #visualize(triangles, intersection_point, goal_position, triangle_normal)
         
