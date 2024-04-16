@@ -48,18 +48,20 @@ class MiaHandWorldEnv(MiaHandEnv):
         self._config_cameras = visual_sensor_config["config_cameras"]
         self._imagined_groups = {}
         
-        # Bounds for joint positions
-        self._joint_limits = limits_config["joint_limits"]
-        self._pos_lb = np.array([self._joint_limits[finger + "_pos_range"][0] for finger in ["thumb", "index", "mrl"]])
-        self._pos_ub = np.array([self._joint_limits[finger + "_pos_range"][1] for finger in ["thumb", "index", "mrl"]])
+        # Bounds for joint positions in observation space
+        self._obs_pos_lb = np.array([limit[0] for limit in limits_config["obs_joint_limits"].values()])
+        self._obs_pos_ub = np.array([limit[1] for limit in limits_config["obs_joint_limits"].values()])
         
-        # Bounds for joint velocities
-        self._vel_limits = limits_config["velocity_limits"]
-        self._vel_lb = np.array([self._vel_limits[finger + "_vel_range"][0] for finger in ["thumb", "index", "mrl"]])
-        self._vel_ub = np.array([self._vel_limits[finger + "_vel_range"][1] for finger in ["thumb", "index", "mrl"]])
+        # Bounds for joint velocities in observation space
+        self._obs_vel_lb = np.array([limit[0] for limit in limits_config["obs_velocity_limits"].values()])
+        self._obs_vel_ub = np.array([limit[1] for limit in limits_config["obs_velocity_limits"].values()])
         
-        # Save number of _joints
-        self._dof = len(self._joint_limits)
+        # Bounds for joint velocities in action space
+        self._act_vel_lb = np.array([limit[0] for limit in limits_config["act_velocity_limits"].values()])
+        self._act_vel_ub = np.array([limit[1] for limit in limits_config["act_velocity_limits"].values()])
+        
+        # Save number of joints
+        self._dof = len(limits_config["obs_joint_limits"])
         
         # Parameters for the state and observation space
         self._joints = None
@@ -119,18 +121,7 @@ class MiaHandWorldEnv(MiaHandEnv):
         :param action: The action integer that set s what movement to do next.
         """
         
-        rospy.logdebug("Start Set Action ==>"+str(action))
-        
-        # Get the action
-        action = np.array([action[0], action[1], action[2]])
-        
-        # Get the new joint velocities
-        velocities = self._joints_vel + action
-        velocities.clip(self._as_low, self._as_high)
-        
-        self.move_fingers(velocities)
-        
-        rospy.logdebug("END Set Action ==>"+str(action))
+        raise NotImplementedError() 
 
 
     def _get_state_obs(self):
@@ -164,7 +155,7 @@ class MiaHandWorldEnv(MiaHandEnv):
         :return: reward
         """
         # Check if episode is done
-        if self.is_done():
+        if done:
             return self._end_episode_points
         
         # Obtain the shortest distance between finger and object
@@ -172,7 +163,7 @@ class MiaHandWorldEnv(MiaHandEnv):
         finger_object_dist = np.clip(finger_object_dist, 0.03, 0.8)
         
         # Obtain the combined joint velocity
-        clipped_vel = np.clip(self._joints_vel, self._vel_lb, self._vel_ub)
+        clipped_vel = np.clip(self._joints_vel, self._act_vel_lb, self._act_vel_ub)
         combined_joint_vel = np.sum(np.abs(clipped_vel))
         
         # Check if at least three fingers are in contact with object
@@ -197,13 +188,14 @@ class MiaHandWorldEnv(MiaHandEnv):
 
     @cached_property
     def action_space(self):
-        return gym.spaces.Box(self._vel_lb, self._vel_ub, dtype = np.float32)
+        return gym.spaces.Box(self._act_vel_lb, self._act_vel_ub, dtype = np.float32)
 
 
     @cached_property
     def observation_space(self):
-        state_space = gym.spaces.Box(self._pos_lb, self._pos_ub, dtype = np.float32)
-        obs_dict = {"state": state_space}
+        pos_space = gym.spaces.Box(self._obs_pos_lb, self._obs_pos_ub, dtype = np.float32)
+        vel_space = gym.spaces.Box(self._obs_vel_lb, self._obs_vel_ub, dtype = np.float32)
+        obs_dict = {"joints": pos_space, "joints_vel": vel_space}
         
         for cam_name, cam_config in self._config_cameras.items():
             for modality_name in cam_config.keys():
@@ -227,7 +219,6 @@ class MiaHandWorldEnv(MiaHandEnv):
             obs_dict[key_name] = spec
             
         if self._config_imagined is not None:
-            self.update_imagination()
             obs_dict["imagined"] = gym.spaces.Box(low=-np.inf, high=np.inf, shape=((self._config_imagined["num_points"],) + (3,)))
             
         return gym.spaces.Dict(obs_dict)
