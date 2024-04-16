@@ -3,4 +3,5 @@ matplotlib
 sympy
 tqdm
 bezier
+numpy-quaternion
 numpy-stl

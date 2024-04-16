@@ -17,6 +17,5 @@ class PathPlanner(ABC):
         
         return path
     
-    @abstractmethod
     def _reset(self) -> None:
         pass
