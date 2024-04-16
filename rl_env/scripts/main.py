@@ -24,10 +24,7 @@ with open(package_path + "/params/hand/mia_hand_params.yaml", 'r') as file:
 
 def main():
     # Instantiate RL env
-    rl_env = MiaHandWorldEnv(hand_config["visual_sensors"], hand_config["limits"])  
-    
-    # Setup camera and imagination
-    rl_env.setup_imagination(hand_config["general"]["right_hand"])
+    rl_env = MiaHandWorldEnv(hand_config["visual_sensors"], hand_config["limits"], hand_config["general"])  
     
     # Instantiate the RL interface to the simulation
     rl_interface = RLInterface(

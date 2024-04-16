@@ -7,7 +7,7 @@ import glob
 from gym.envs.registration import register
 from pathlib import Path
 from functools import cached_property
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from geometry_msgs.msg import Pose
 
 from rl_env.robot_envs.mia_hand_env import MiaHandEnv
@@ -27,7 +27,7 @@ register(
     )
 
 class MiaHandWorldEnv(MiaHandEnv):
-    def __init__(self, visual_sensor_config : Dict[str, Any], limits_config : Dict[str, Any]):
+    def __init__(self, visual_sensor_config : Dict[str, Any], limits_config : Dict[str, Any], general_config : Dict[str, Any]):
         """
         This Task Env is designed for having the Mia hand in the hand grasping world.
         It will learn how to move around without crashing.
@@ -46,6 +46,7 @@ class MiaHandWorldEnv(MiaHandEnv):
         # Get the configurations for the cameras and the imagined point clouds
         self._config_imagined = visual_sensor_config["config_imagined"]
         self._config_cameras = visual_sensor_config["config_cameras"]
+        self._config_general = general_config
         self._imagined_groups = {}
         
         # Bounds for joint positions in observation space
@@ -68,6 +69,8 @@ class MiaHandWorldEnv(MiaHandEnv):
         self._joints_vel = None
         self._pc_cam_handler.pc.append(o3d.geometry.PointCloud())
         self._object_pose = Pose()
+        
+        self.setup_imagination(["1.001.stl", "UR_flange.stl"])
         
         # Print the spaces
         rospy.logdebug("ACTION SPACES TYPE===>"+str(self.action_space))
@@ -149,7 +152,7 @@ class MiaHandWorldEnv(MiaHandEnv):
         return self._episode_done
 
 
-    def _compute_reward(self):
+    def _compute_reward(self, observation, done):
         """
         Compute the reward for the given rl step
         :return: reward
@@ -264,16 +267,16 @@ class MiaHandWorldEnv(MiaHandEnv):
         
         return obs_dict
         
-    def setup_imagination(self, right_hand : bool):
+    def setup_imagination(self, stl_ignores : Optional[List[str]] = None):
         # Get an instance of RosPack with the default search paths
         rospack = rospkg.RosPack()
         
         # Get the stl files from the mia description package
         stl_folder = rospack.get_path(self._config_imagined["stl_package"]) + "/meshes/stl"
-        stl_files = [file for file in glob.glob(stl_folder + "/*") if (Path(file).name not in self._config_imagined["stl_ignores"])]
+        stl_files = [file for file in glob.glob(stl_folder + "/*") if (Path(file).name not in stl_ignores)]
         
         # Extract stl files for the correct hand
-        filtered_stl_files = [file for file in stl_files if (("mirrored" in file) != right_hand)]
+        filtered_stl_files = [file for file in stl_files if (("mirrored" in file) != self._config_general["right_hand"])]
         
         # config has: "stl_files", "ref_frame", "groups", "num_points"
         # Define the imagined groups where each group corresponds to a movable joint in the hand (along with base palm)
@@ -350,4 +353,4 @@ class MiaHandWorldEnv(MiaHandEnv):
             # rospy.logdebug(f"Relative transform:\n {rel_transform}")
 
         # Update the overall hand point cloud based on the updated group point clouds
-        self._pc_imagine_handler.update_hand()
+        self._pc_imagine_handler.update_hand(self._config_imagined["num_points"])
