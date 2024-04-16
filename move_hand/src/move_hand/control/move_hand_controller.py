@@ -75,10 +75,11 @@ class HandController:
                 "dt" : 0.01,
             }
         
-        #TODO: Implement orientation in the path planner
-        self._pose_buffer = self._path_planner.plan_path(start_pose[:3], goal_pose[:3], path_params)
-        to_append = np.vstack([start_pose[3:].copy()] * self._pose_buffer.shape[1]).T
-        self._pose_buffer = np.append(self._pose_buffer, to_append, axis=0)
+        self._pose_buffer = self._path_planner.plan_path(start_pose, goal_pose, path_params)
+        
+        
+        # to_append = np.vstack([start_pose[3:].copy()] * self._pose_buffer.shape[1]).T
+        # self._pose_buffer = np.append(self._pose_buffer, to_append, axis=0)
         
 
     def reset(self):

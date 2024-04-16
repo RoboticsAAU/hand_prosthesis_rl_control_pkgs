@@ -3,24 +3,29 @@ import bezier
 from move_hand.path_planners.path_visualiser import animate_path
 from move_hand.path_planners.path_planner import PathPlanner
 from typing import Dict, Any
+from move_hand.path_planners.orientation_planners.interpolation import interpolate_rotation
 
 class BezierPlanner(PathPlanner):
     def __init__(self):
         self._curves = []
     
     
-    def plan_path(self, start_pos : np.array, goal_pos : np.array, parameters : Dict[str, Any]) -> np.ndarray:
+    def plan_path(self, start_pose : np.array, goal_pose : np.array, parameters : Dict[str, Any]) -> np.ndarray:
         # Reset the planner
         self._reset()
         
         # Generate the bezier curve
-        self.generate_bezier_curves_random(start_pos, goal_pos, parameters["num_way_points"])
+        self.generate_bezier_curves_random(start_pose[:3], goal_pose[:3], parameters["num_way_points"])
         
         # Sample the bezier curve
         if parameters["sample_type"] == "constant":
             path = self.sample_bezier_curve_constant(parameters["num_points"])
         elif parameters["sample_type"] == "velocity":
             raise NotImplementedError
+        
+        # Combine the rotation into the path
+        rotation = interpolate_rotation(start_pose[3:], goal_pose[3:], parameters["num_points"])
+        path = np.concatenate((path, rotation), axis=1)
         
         return path
     
