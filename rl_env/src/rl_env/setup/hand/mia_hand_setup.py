@@ -23,9 +23,9 @@ class MiaHandSetup(HandSetup):
         rospy.Subscriber(self._name + self._topic_config["subscriptions"]["joint_state_topic"], JointState, self._joints_callback)
         rospy.Subscriber(self._name + self._topic_config["subscriptions"]["camera_points_topic"], PointCloud2, self._camera_point_cloud_callback)
         
-        self._thumb_vel_pub = rospy.Publisher(self._name + self._topic_config["publications"]["thumb_velocity_topic"], Float64, queue_size=1)
-        self._index_vel_pub = rospy.Publisher(self._name + self._topic_config["publications"]["index_velocity_topic"], Float64, queue_size=1)
-        self._mrl_vel_pub = rospy.Publisher(self._name + self._topic_config["publications"]["mrl_velocity_topic"], Float64, queue_size=1)
+        self._thumb_controller_pub = rospy.Publisher(self._name + self._topic_config["publications"]["thumb_controller_topic"], Float64, queue_size=1)
+        self._index_controller_pub = rospy.Publisher(self._name + self._topic_config["publications"]["index_controller_topic"], Float64, queue_size=1)
+        self._mrl_controller_pub = rospy.Publisher(self._name + self._topic_config["publications"]["mrl_controller_topic"], Float64, queue_size=1)
         
         # Initialise the subscribed data variables
         self.joints_pos = [Float64()]
@@ -67,11 +67,11 @@ class MiaHandSetup(HandSetup):
         vel_value = Float64(data=vel)
         rospy.logdebug("MiaHand Float64 Cmd>>" + str(vel_value))
         if finger_id == "thumb":
-            self._thumb_vel_pub.publish(vel_value)
+            self._thumb_controller_pub.publish(vel_value)
         elif finger_id == "index":
-            self._index_vel_pub.publish(vel_value)
+            self._index_controller_pub.publish(vel_value)
         elif finger_id == "mrl":
-            self._mrl_vel_pub.publish(vel_value)
+            self._mrl_controller_pub.publish(vel_value)
         else:
             raise ValueError("The finger_id specified is not valid")
     
@@ -100,7 +100,7 @@ class MiaHandSetup(HandSetup):
     
     def _get_publishers(self) -> List:
         return [
-            self._thumb_vel_pub,
-            self._index_vel_pub,
-            self._mrl_vel_pub
+            self._thumb_controller_pub,
+            self._index_controller_pub,
+            self._mrl_controller_pub
         ]

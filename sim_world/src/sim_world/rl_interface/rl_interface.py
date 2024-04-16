@@ -23,10 +23,11 @@ class RLInterface():
         self._hand_controller = HandController(sim_config["move_hand"], self._world_interface.hand.hand_rotation)
         
         # Spawn objects in the gazebo world
+        self._object_poses = {}
         self.spawn_objects_in_grid()
         
         # Initialise subscriber data container
-        self.subscriber_data = {}
+        self._subscriber_data = {}
         
 
     def step(self, action : np.array) -> bool:
@@ -41,29 +42,33 @@ class RLInterface():
         
         # Extract all the values from the interface and put them in a dictionary
         # Some values may be set to none depending on the interface, need to make sure the update methods can handle this using checks. 
-        self.subscriber_data = self._world_interface.get_subscriber_data()
+        self._subscriber_data = self._world_interface.get_subscriber_data()
         rl_data = {
-            "hand_data": self.subscriber_data["rl_data"]["hand_data"], 
-            "obj_data": self.subscriber_data["rl_data"]["obj_data"][self._object_handler.curr_obj]
+            "hand_data": self._subscriber_data["rl_data"]["hand_data"], 
+            "obj_data": self._subscriber_data["rl_data"]["obj_data"][self._object_handler.curr_obj]
         }
         # Update the rl environment
         self._rl_env_update(rl_data)
         # Update move_hand_controller with new pose
-        self._hand_controller.update(self.subscriber_data["move_hand_data"])
+        self._hand_controller.update(self._subscriber_data["move_hand_data"])
         
         # Check if episode is done
-        return len(self._hand_controller._pose_buffer) == 0
+        return self._hand_controller._pose_buffer.shape[1] == 0
         
+    
     def set_action(self, action : np.array):
         """
         Set the action for the hand.
         """
         self._world_interface.hand.set_action(action)
     
+    
     def move_hand(self, pose : Union[Pose, np.array]):
         """
         Publish the position of the hand to the world interface.
         """
+        # TODO: Quick fix. Should be solved correctly later
+        pose[2] += 1.0
         self._world_interface.set_pose(self._world_interface.hand.name, pose)
     
     
@@ -85,7 +90,7 @@ class RLInterface():
         y_vals = np.linspace(0, (grid_dims[1] - 1) * self._object_handler.config["inter_object_dist"], grid_dims[1])
         grid = np.meshgrid(x_vals, y_vals)
         
-        for index, (obj_name, obj_sdf) in enumerate(self._object_handler.objects.items()):
+        for index, (obj_name, obj) in enumerate(self._object_handler.objects.items()):
             # Get rotation and translation
             rotation_matrix = np.array([[1, 0, 0], 
                                         [0, 0, -1],
@@ -96,24 +101,35 @@ class RLInterface():
             orientation = R.from_matrix(rotation_matrix).as_quat()
             
             pose = np.concatenate([position, orientation])
-            rospy.logwarn_once("Spawning object: " + obj_name + " at pose: " + str(pose))
+
+            # Append pose to dict
+            self._object_poses[obj_name] = pose
+
             # Spawn the object
-            self._world_interface.spawn_object(obj_name, obj_sdf, pose)
+            self._world_interface.spawn_object(obj_name, obj["sdf"], pose)
+    
+    
+    def reset_object(self, obj_name : str):
+        """
+        Reset the pose of the current object.
+        """
+        self._world_interface.set_pose(obj_name, self._object_poses[obj_name])
     
     
     def update_context(self):
         """
         Updates the current object context. This includes spawning hand and computing approach trajectory.
-        mode: str
-            The mode to update the context. Can be either "random" or "sequential".
         """
+        
         # Update the current object
+        if self._object_handler.curr_obj is not None:
+            self.reset_object(self._object_handler.curr_obj)
         self._object_handler.update_current_object()
         
         # Update the hand controller trajectory
-        self.subscriber_data = self._world_interface.get_subscriber_data()
-        object_pose = self.subscriber_data["rl_data"]["obj_data"][self._object_handler.curr_obj]
+        self._subscriber_data = self._world_interface.get_subscriber_data()
+        object_pose = self._subscriber_data["rl_data"]["obj_data"][self._object_handler.curr_obj]
         obj_center = np.array([object_pose.position.x, object_pose.position.y, object_pose.position.z])
-        self._hand_controller.plan_trajectory(obj_center)
+        self._hand_controller.plan_trajectory(obj_center, self._object_handler.objects[self._object_handler.curr_obj]["mesh"])
         
         
