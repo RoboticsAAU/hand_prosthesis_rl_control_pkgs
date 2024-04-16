@@ -41,7 +41,7 @@ class MiaHandEnv(gym.Env):
         """
         rospy.logdebug("START STEP OpenAIROS")
 
-        self._set_action(action)
+        # self._set_action(action)
         obs = self._get_obs()
         done = self._is_done(obs)
         info = {}

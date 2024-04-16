@@ -81,7 +81,7 @@ class MiaHandSetup(HandSetup):
         :param vels: Velocities in the positive axis of the fingers
         :return:
         """
-        for index, finger_id in enumerate(["thumb", "index", "mrl"]):
+        for index, finger_id in enumerate(["index", "mrl", "thumb"]):
             self.set_finger_vel(vels[index], finger_id)
     
     def _joints_callback(self, data : JointState):

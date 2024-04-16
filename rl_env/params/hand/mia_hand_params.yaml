@@ -24,20 +24,29 @@ visual_sensors:
     ref_frame: "palm"
     num_points: 512
     stl_package: "mia_hand_description" # Package where the STL files are located. Assumes they are under the folder /meshes/stl of this package
-    stl_ignores: ["1.001.stl", "UR_flange.stl"] # List of STL files to ignore
-
 
 # Joint and velocity limits
 limits:
-  joint_limits: # Defines the number degrees of freedom
-    thumb_pos_range: [0.029, 1.313]
+  obs_joint_limits: # Joint limits for the observation space. Defines the number degrees of freedom
     index_pos_range: [-1.177, 1.188]
+    little_pos_range: [-0.120, 1.303]
     mrl_pos_range: [-0.120, 1.303]
+    ring_pos_range: [-0.120, 1.303]
+    thumb_fle_pos_range: [0.029, 1.313]
+    thumb_opp_pos_range: [-0.628, 0.000]
 
-  velocity_limits:
-    thumb_vel_range: [-1.0, 1.0]
+  obs_velocity_limits: # Velocity limits for the observation space
+    index_vel_range: [-1.0, 1.0]
+    little_vel_range: [-1.0, 1.0]
+    mrl_vel_range: [-1.0, 1.0]
+    ring_vel_range: [-1.0, 1.0]
+    thumb_fle_vel_range: [-1.0, 1.0]
+    thumb_opp_vel_range: [-1.0, 1.0]
+
+  act_velocity_limits: # Velocity limits for the action space
     index_vel_range: [-1.0, 1.0]
     mrl_vel_range: [-1.0, 1.0]
+    thumb_vel_range: [-1.0, 1.0]
 
 # General parameters
 general: 

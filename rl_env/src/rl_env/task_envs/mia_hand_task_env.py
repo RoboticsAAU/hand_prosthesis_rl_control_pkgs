@@ -7,7 +7,7 @@ import glob
 from gym.envs.registration import register
 from pathlib import Path
 from functools import cached_property
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from geometry_msgs.msg import Pose
 
 from rl_env.robot_envs.mia_hand_env import MiaHandEnv
@@ -27,7 +27,7 @@ register(
     )
 
 class MiaHandWorldEnv(MiaHandEnv):
-    def __init__(self, visual_sensor_config : Dict[str, Any], limits_config : Dict[str, Any]):
+    def __init__(self, visual_sensor_config : Dict[str, Any], limits_config : Dict[str, Any], general_config : Dict[str, Any]):
         """
         This Task Env is designed for having the Mia hand in the hand grasping world.
         It will learn how to move around without crashing.
@@ -46,26 +46,31 @@ class MiaHandWorldEnv(MiaHandEnv):
         # Get the configurations for the cameras and the imagined point clouds
         self._config_imagined = visual_sensor_config["config_imagined"]
         self._config_cameras = visual_sensor_config["config_cameras"]
+        self._config_general = general_config
         self._imagined_groups = {}
         
-        # Bounds for joint positions
-        self._joint_limits = limits_config["joint_limits"]
-        self._pos_lb = np.array([self._joint_limits[finger + "_pos_range"][0] for finger in ["thumb", "index", "mrl"]])
-        self._pos_ub = np.array([self._joint_limits[finger + "_pos_range"][1] for finger in ["thumb", "index", "mrl"]])
+        # Bounds for joint positions in observation space
+        self._obs_pos_lb = np.array([limit[0] for limit in limits_config["obs_joint_limits"].values()])
+        self._obs_pos_ub = np.array([limit[1] for limit in limits_config["obs_joint_limits"].values()])
         
-        # Bounds for joint velocities
-        self._vel_limits = limits_config["velocity_limits"]
-        self._vel_lb = np.array([self._vel_limits[finger + "_vel_range"][0] for finger in ["thumb", "index", "mrl"]])
-        self._vel_ub = np.array([self._vel_limits[finger + "_vel_range"][1] for finger in ["thumb", "index", "mrl"]])
+        # Bounds for joint velocities in observation space
+        self._obs_vel_lb = np.array([limit[0] for limit in limits_config["obs_velocity_limits"].values()])
+        self._obs_vel_ub = np.array([limit[1] for limit in limits_config["obs_velocity_limits"].values()])
         
-        # Save number of _joints
-        self._dof = len(self._joint_limits)
+        # Bounds for joint velocities in action space
+        self._act_vel_lb = np.array([limit[0] for limit in limits_config["act_velocity_limits"].values()])
+        self._act_vel_ub = np.array([limit[1] for limit in limits_config["act_velocity_limits"].values()])
+        
+        # Save number of joints
+        self._dof = len(limits_config["obs_joint_limits"])
         
         # Parameters for the state and observation space
         self._joints = None
         self._joints_vel = None
         self._pc_cam_handler.pc.append(o3d.geometry.PointCloud())
         self._object_pose = Pose()
+        
+        self.setup_imagination(["1.001.stl", "UR_flange.stl"])
         
         # Print the spaces
         rospy.logdebug("ACTION SPACES TYPE===>"+str(self.action_space))
@@ -119,18 +124,7 @@ class MiaHandWorldEnv(MiaHandEnv):
         :param action: The action integer that set s what movement to do next.
         """
         
-        rospy.logdebug("Start Set Action ==>"+str(action))
-        
-        # Get the action
-        action = np.array([action[0], action[1], action[2]])
-        
-        # Get the new joint velocities
-        velocities = self._joints_vel + action
-        velocities.clip(self._as_low, self._as_high)
-        
-        self.move_fingers(velocities)
-        
-        rospy.logdebug("END Set Action ==>"+str(action))
+        raise NotImplementedError() 
 
 
     def _get_state_obs(self):
@@ -150,7 +144,7 @@ class MiaHandWorldEnv(MiaHandEnv):
         return observation
         
 
-    def _is_done(self):
+    def _is_done(self, observation):
         # Terminate episode if the object has been lifted
         if self._object_pose.position.z > OBJECT_LIFT_LOWER_LIMIT:
             self._episode_done = True
@@ -158,13 +152,13 @@ class MiaHandWorldEnv(MiaHandEnv):
         return self._episode_done
 
 
-    def _compute_reward(self):
+    def _compute_reward(self, observation, done):
         """
         Compute the reward for the given rl step
         :return: reward
         """
         # Check if episode is done
-        if self.is_done():
+        if done:
             return self._end_episode_points
         
         # Obtain the shortest distance between finger and object
@@ -172,7 +166,7 @@ class MiaHandWorldEnv(MiaHandEnv):
         finger_object_dist = np.clip(finger_object_dist, 0.03, 0.8)
         
         # Obtain the combined joint velocity
-        clipped_vel = np.clip(self._joints_vel, self._vel_lb, self._vel_ub)
+        clipped_vel = np.clip(self._joints_vel, self._act_vel_lb, self._act_vel_ub)
         combined_joint_vel = np.sum(np.abs(clipped_vel))
         
         # Check if at least three fingers are in contact with object
@@ -197,13 +191,14 @@ class MiaHandWorldEnv(MiaHandEnv):
 
     @cached_property
     def action_space(self):
-        return gym.spaces.Box(self._vel_lb, self._vel_ub, dtype = np.float32)
+        return gym.spaces.Box(self._act_vel_lb, self._act_vel_ub, dtype = np.float32)
 
 
     @cached_property
     def observation_space(self):
-        state_space = gym.spaces.Box(self._pos_lb, self._pos_ub, dtype = np.float32)
-        obs_dict = {"state": state_space}
+        pos_space = gym.spaces.Box(self._obs_pos_lb, self._obs_pos_ub, dtype = np.float32)
+        vel_space = gym.spaces.Box(self._obs_vel_lb, self._obs_vel_ub, dtype = np.float32)
+        obs_dict = {"joints": pos_space, "joints_vel": vel_space}
         
         for cam_name, cam_config in self._config_cameras.items():
             for modality_name in cam_config.keys():
@@ -227,7 +222,6 @@ class MiaHandWorldEnv(MiaHandEnv):
             obs_dict[key_name] = spec
             
         if self._config_imagined is not None:
-            self.update_imagination()
             obs_dict["imagined"] = gym.spaces.Box(low=-np.inf, high=np.inf, shape=((self._config_imagined["num_points"],) + (3,)))
             
         return gym.spaces.Dict(obs_dict)
@@ -255,8 +249,9 @@ class MiaHandWorldEnv(MiaHandEnv):
                     raise NotImplementedError()
                 
                 elif modality_name == 'point_cloud':
+                    # TODO: Decide whether to include table or not
                     # Remove table and enforce cardinality
-                    self._pc_cam_handler.remove_plane()
+                    # self._pc_cam_handler.remove_plane()
                     self._pc_cam_handler.update_cardinality(modality_config["num_points"])
 
                     # Transform point cloud to reference frame
@@ -273,16 +268,16 @@ class MiaHandWorldEnv(MiaHandEnv):
         
         return obs_dict
         
-    def setup_imagination(self, right_hand : bool):
+    def setup_imagination(self, stl_ignores : Optional[List[str]] = None):
         # Get an instance of RosPack with the default search paths
         rospack = rospkg.RosPack()
         
         # Get the stl files from the mia description package
         stl_folder = rospack.get_path(self._config_imagined["stl_package"]) + "/meshes/stl"
-        stl_files = [file for file in glob.glob(stl_folder + "/*") if (Path(file).name not in self._config_imagined["stl_ignores"])]
+        stl_files = [file for file in glob.glob(stl_folder + "/*") if (Path(file).name not in stl_ignores)]
         
         # Extract stl files for the correct hand
-        filtered_stl_files = [file for file in stl_files if (("mirrored" in file) != right_hand)]
+        filtered_stl_files = [file for file in stl_files if (("mirrored" in file) != self._config_general["right_hand"])]
         
         # config has: "stl_files", "ref_frame", "groups", "num_points"
         # Define the imagined groups where each group corresponds to a movable joint in the hand (along with base palm)
@@ -359,4 +354,4 @@ class MiaHandWorldEnv(MiaHandEnv):
             # rospy.logdebug(f"Relative transform:\n {rel_transform}")
 
         # Update the overall hand point cloud based on the updated group point clouds
-        self._pc_imagine_handler.update_hand()
+        self._pc_imagine_handler.update_hand(self._config_imagined["num_points"])
