@@ -144,7 +144,7 @@ class SimulationInterface(WorldInterface):
             index = self._model_states.name.index(self.hand.name)
             return self._model_states.pose[index]
         except ValueError:
-            rospy.logwarn("The gazebo model: '", self.hand.name, "', was not found in the list of list of model states in gazebo")
+            rospy.logwarn(f"The gazebo model \"{self.hand.name}\" was not found in the list of list of model states in gazebo")
             return None
 
     @property
