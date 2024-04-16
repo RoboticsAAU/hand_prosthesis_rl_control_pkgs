@@ -88,14 +88,18 @@ class PointCloudHandler():
         
         # Downsample pc if specified num_points is less
         if num_points < len(self._pc[index].points):
-            # Downsample to get the desired number of points
-            self._pc[index] = self._pc[index].random_down_sample(num_points/len(self._pc[index].points))
+            # Downsample to get the desired number of points. The +1e-8 is to fix the issue where ratio is interpreted as num_points-1
+            self._pc[index] = self._pc[index].random_down_sample(num_points/len(self._pc[index].points) + 1e-8)
         
-        else: # Upsample
+        # Upsample
+        else:
             repeated = np.ones((num_points - len(self._pc[index].points), 1)) * self._pc[index].points[0].reshape(1, 3)
             points = np.asarray(self._pc[index].points)
             points = np.vstack([points, repeated])
             self._pc[index].points = o3d.utility.Vector3dVector(points)
+            
+        if num_points != len(self._pc[index].points):
+            raise ValueError("Cardinality update failed. The number of points is not equal to the specified number of points.")   
 
     
     @_check_multiple_run
