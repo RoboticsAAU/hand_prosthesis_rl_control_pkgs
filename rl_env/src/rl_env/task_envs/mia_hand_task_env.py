@@ -144,7 +144,7 @@ class MiaHandWorldEnv(MiaHandEnv):
         return observation
         
 
-    def _is_done(self):
+    def _is_done(self, observation):
         # Terminate episode if the object has been lifted
         if self._object_pose.position.z > OBJECT_LIFT_LOWER_LIMIT:
             self._episode_done = True
@@ -249,8 +249,9 @@ class MiaHandWorldEnv(MiaHandEnv):
                     raise NotImplementedError()
                 
                 elif modality_name == 'point_cloud':
+                    # TODO: Decide whether to include table or not
                     # Remove table and enforce cardinality
-                    self._pc_cam_handler.remove_plane()
+                    # self._pc_cam_handler.remove_plane()
                     self._pc_cam_handler.update_cardinality(modality_config["num_points"])
 
                     # Transform point cloud to reference frame

@@ -2,6 +2,7 @@ import rospy
 import rospkg
 import numpy as np
 import yaml
+import time
 from stable_baselines3 import PPO
 
 from rl_env.task_envs.mia_hand_task_env import MiaHandWorldEnv
@@ -48,19 +49,20 @@ def main():
         # Reset the rl env
         obs = rl_env.reset()
         
-        rospy.logwarn("Reset Observation: " + str(obs) + "\n")
-        rospy.logwarn("General Observation Shape: " + str(rl_env.observation_space))
-        
         for _ in range(rl_config["hyper_params"]["max_episode_steps"]):
             # Select an action
+            time_start = time.time()
+            
             action = model.predict(obs)
             # Step the environment
-            obs, reward, done, info = rl_env.step(action)
-
-            if rl_interface.step(action) == True:
+            # obs, reward, done, info = rl_env.step(action)
+            dur = time.time() - time_start
+            
+            rospy.logwarn(f"Duration: {dur}")
+            if rl_interface.step(action[0]) == True:
                 break
             
-            r.sleep()
+            # r.sleep()
         
 
 if __name__ == "__main__":
