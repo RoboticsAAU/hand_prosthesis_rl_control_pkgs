@@ -25,7 +25,7 @@ visual_sensors:
 
 # Joint and velocity limits
 limits:
-  joint_limits:
+  joint_limits: # Defines the number degrees of freedom
     thumb_pos_range: [0.029, 1.313]
     index_pos_range: [-1.177, 1.188]
     mrl_pos_range: [-0.120, 1.303]
