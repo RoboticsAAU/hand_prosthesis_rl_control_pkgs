@@ -8,13 +8,13 @@ move_hand:
 
   # Starting position of the hand constraints. The hand will start in the interior of the sphere defined by the following parameters
   outer_radius: 1.5
-  inner_radius: 0.5
+  inner_radius: 0.1
 
 objects:
   # The selected object dataset folder from the assets package
   object_dataset: "shapenet_sdf"
   # Mode in which objects are selected each episode
-  selection_mode: "random"
+  selection_mode: "sequential" # "random" or "sequential"
   # How many objects to train on
-  num_objects: 10
+  num_objects: 4
   inter_object_dist: 2.0

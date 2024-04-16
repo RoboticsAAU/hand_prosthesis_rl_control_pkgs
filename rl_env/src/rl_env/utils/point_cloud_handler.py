@@ -42,9 +42,11 @@ class PointCloudHandler():
         """
         assert self.count > 0, "The point cloud is not set."
         
+        if self._pc[index] is None or len(self.points[index]) == 0:
+            return
+        
         # Get the point cloud for the specified index or combined
         pc = self._pc[index] if not combined else self.get_combined()
-        
         # Create a mesh representing the global coordinate frame axes
         axis_mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.020)
         
@@ -63,27 +65,38 @@ class PointCloudHandler():
         :param index: The index of the point cloud
         """
         # Isolate the plane in the point cloud
-        (plane_coeffs, plane_indices) = self._pc[index].segment_plane(distance_threshold=2, ransac_n=3, num_iterations=1000)
+        (plane_coeffs, plane_indices) = self._pc[index].segment_plane(distance_threshold=0.005, ransac_n=3, num_iterations=1000)
         
         # Remove the plane from the point cloud
         self._pc[index] = self._pc[index].select_by_index(plane_indices, invert=True)
     
     @_check_multiple_run
-    def update_cardinality(self, num_points : int, voxel_size : float = 0.005, index : Optional[int] = None):
+    def update_cardinality(self, num_points : int, voxel_size : float = 0.003, index : Optional[int] = None):
         """
         Update the cardinality of the point cloud (only implemented for downsampling).
         :param num_points: The number of points in output pc
         :param voxel_size: The voxel size used during sampling 
         :param index: The index of the point cloud
         """
-        # Check if the number of points is less than the number of points in the point cloud
-        assert num_points < len(self._pc[index].points), "The number of points is greater than the number of points in the point cloud"
+        
+        # Early return if the point cloud is empty
+        if not self._pc[index].has_points():
+            raise ValueError("The point cloud is empty.")
         
         # Downsample using voxel grid to get a uniform distribution of points in space
         self._pc[index] = self._pc[index].voxel_down_sample(voxel_size)
         
-        # Downsample to get the desired number of points
-        self._pc[index] = self._pc[index].random_down_sample(num_points/len(self._pc[index].points))
+        # Downsample pc if specified num_points is less
+        if num_points < len(self._pc[index].points):
+            # Downsample to get the desired number of points
+            self._pc[index] = self._pc[index].random_down_sample(num_points/len(self._pc[index].points))
+        
+        else: # Upsample
+            repeated = np.ones((num_points - len(self._pc[index].points), 1)) * self._pc[index].points[0].reshape(1, 3)
+            points = np.asarray(self._pc[index].points)
+            points = np.vstack([points, repeated])
+            self._pc[index].points = o3d.utility.Vector3dVector(points)
+
     
     @_check_multiple_run
     def add(self, point_cloud : o3d.geometry.PointCloud, index : int = None):

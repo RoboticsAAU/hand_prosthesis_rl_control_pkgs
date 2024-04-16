@@ -4,9 +4,9 @@ topics:
     joint_state_topic: /joint_states
     camera_points_topic: /camera/depth_registered/points
   publications:
-    thumb_velocity_topic: /j_thumb_fle_velocity_controller/command
-    index_velocity_topic: /j_index_fle_velocity_controller/command
-    mrl_velocity_topic: /j_mrl_fle_velocity_controller/command
+    thumb_controller_topic: /j_thumb_fle_eff_controller/command
+    index_controller_topic: /j_index_fle_eff_controller/command
+    mrl_controller_topic: /j_mrl_fle_eff_controller/command
 
 # Camera configuration
 visual_sensors:
@@ -14,6 +14,7 @@ visual_sensors:
     camera:
       point_cloud:
         setup: "static" # "static" or "hand"
+        optical_frame: "camera_depth_optical_frame"
         ref_frame: "palm"
         num_points: 512
         min_range: 0.5
@@ -22,6 +23,9 @@ visual_sensors:
   config_imagined:
     ref_frame: "palm"
     num_points: 512
+    stl_package: "mia_hand_description" # Package where the STL files are located. Assumes they are under the folder /meshes/stl of this package
+    stl_ignores: ["1.001.stl", "UR_flange.stl"] # List of STL files to ignore
+
 
 # Joint and velocity limits
 limits:

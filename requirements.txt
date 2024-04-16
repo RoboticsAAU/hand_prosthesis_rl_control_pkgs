@@ -1,3 +1,9 @@
 -r move_hand/requirements.txt
 -r rl_env/requirements.txt
 -r sim_world/requirements.txt
+
+setuptools>=60.2.0
+typing-extensions>=4.6.6
+requests>=2.31
+importlib-resources>=3.1.0; python_version < "3.10"
+testresources

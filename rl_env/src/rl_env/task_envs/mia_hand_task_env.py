@@ -3,12 +3,14 @@ import numpy as np
 import rospkg
 import open3d as o3d
 import gym
+import glob
 from gym.envs.registration import register
 from pathlib import Path
 from functools import cached_property
 from typing import Dict, List, Any
 from geometry_msgs.msg import Pose
 
+from rl_env.robot_envs.mia_hand_env import MiaHandEnv
 from rl_env.utils.tf_handler import TFHandler
 from rl_env.utils.point_cloud_handler import PointCloudHandler, ImaginedPointCloudHandler
 from rl_env.utils.urdf_handler import URDFHandler
@@ -20,11 +22,11 @@ timestep_limit_per_episode = 10000 # Can be any Value
 
 register(
         id='MiaHandWorld-v0',
-        entry_point='task_envs.mia_hand_task_env:MiaHandWorldEnv',
+        entry_point='rl_env.task_envs.mia_hand_task_env:MiaHandWorldEnv',
         #timestep_limit=timestep_limit_per_episode,
     )
 
-class MiaHandWorldEnv(gym.Env):
+class MiaHandWorldEnv(MiaHandEnv):
     def __init__(self, visual_sensor_config : Dict[str, Any], limits_config : Dict[str, Any]):
         """
         This Task Env is designed for having the Mia hand in the hand grasping world.
@@ -66,20 +68,26 @@ class MiaHandWorldEnv(gym.Env):
         self._object_pose = Pose()
         
         # Print the spaces
-        rospy.logdebug("ACTION SPACES TYPE===>"+str(self._action_space))
-        rospy.logdebug("OBSERVATION SPACES TYPE===>"+str(self._obs_space))
+        rospy.logdebug("ACTION SPACES TYPE===>"+str(self.action_space))
+        rospy.logdebug("OBSERVATION SPACES TYPE===>"+str(self.observation_space))
         
         # TODO: Define these in setup
         self._end_episode_points = 0.0
         self._cumulated_steps = 0.0
         self._finger_object_dist = np.zeros(3)
     
-
-    def step(self, action):
-        pass
     
-    def reset(self):
-        pass
+    # def step(self, action):
+    #     pass
+    
+    
+    def reset(self) -> Dict[str, Any]:
+        rospy.logdebug("Reseting MiaHandWorldEnv")
+        self._init_env_variables()
+        obs = self._get_obs()
+        rospy.logdebug("END Reseting MiaHandWorldEnv")
+        return obs
+    
     
     def update(self, rl_data : Dict[str, Any]):
         """
@@ -93,7 +101,7 @@ class MiaHandWorldEnv(gym.Env):
         # self._object_pose = Pose()
     
     # Methods needed by the TrainingEnvironment
-    def init_env_variables(self):
+    def _init_env_variables(self):
         """
         Inits variables needs to be initialised each time we reset at the start
         of an episode.
@@ -105,7 +113,7 @@ class MiaHandWorldEnv(gym.Env):
         self._episode_done = False
 
 
-    def set_action(self, action):
+    def _set_action(self, action):
         """
         This method will set the velocity of the hand based on the action number given.
         :param action: The action integer that set s what movement to do next.
@@ -125,7 +133,7 @@ class MiaHandWorldEnv(gym.Env):
         rospy.logdebug("END Set Action ==>"+str(action))
 
 
-    def get_obs(self):
+    def _get_state_obs(self):
         """
         Fetch observations from the Mia Hand
         :return: observation
@@ -135,7 +143,6 @@ class MiaHandWorldEnv(gym.Env):
         observation = {
             "joints" : self._joints,
             "joints_vel" : self._joints_vel,
-            "points" : self._pc_cam_handler.points
         }
         
         rospy.logdebug("Observations==>"+str(observation))
@@ -143,15 +150,15 @@ class MiaHandWorldEnv(gym.Env):
         return observation
         
 
-    def is_done(self):
-        # We check if it has crashed based on the imu
+    def _is_done(self):
+        # Terminate episode if the object has been lifted
         if self._object_pose.position.z > OBJECT_LIFT_LOWER_LIMIT:
             self._episode_done = True
 
         return self._episode_done
 
 
-    def compute_reward(self):
+    def _compute_reward(self):
         """
         Compute the reward for the given rl step
         :return: reward
@@ -189,12 +196,12 @@ class MiaHandWorldEnv(gym.Env):
 
 
     @cached_property
-    def _action_space(self):
+    def action_space(self):
         return gym.spaces.Box(self._vel_lb, self._vel_ub, dtype = np.float32)
 
 
     @cached_property
-    def _obs_space(self):
+    def observation_space(self):
         state_space = gym.spaces.Box(self._pos_lb, self._pos_ub, dtype = np.float32)
         obs_dict = {"state": state_space}
         
@@ -221,20 +228,18 @@ class MiaHandWorldEnv(gym.Env):
             
         if self._config_imagined is not None:
             self.update_imagination()
-            obs_dict["imagination"] = gym.spaces.Box(low=-np.inf, high=np.inf, shape=((self._config_imagined["num_points"],) + (3,)))
+            obs_dict["imagined"] = gym.spaces.Box(low=-np.inf, high=np.inf, shape=((self._config_imagined["num_points"],) + (3,)))
             
         return gym.spaces.Dict(obs_dict)
     
-    def get_all_observations(self):
-        all_obs = self.get_camera_obs()
-        state_obs = self.get_state_obs()
+    def _get_obs(self):
+        all_obs = self._get_camera_obs()
+        state_obs = self._get_state_obs()
         all_obs.update(state_obs)
         return all_obs
-    
-    def get_state_obs(self):
-        raise NotImplementedError()
+
         
-    def get_camera_obs(self):
+    def _get_camera_obs(self):
         # Initialize the observation dictionary
         obs_dict = {}
         
@@ -255,9 +260,8 @@ class MiaHandWorldEnv(gym.Env):
                     self._pc_cam_handler.update_cardinality(modality_config["num_points"])
 
                     # Transform point cloud to reference frame
-                    transform = self._tf_handler.get_transform_matrix(cam_name, modality_config["ref_frame"])
-                    self._pc_cam_handler.transform(transform)
-                    obs_dict[key_name] = self._pc_cam_handler.points[0]
+                    transform = self._tf_handler.get_transform_matrix(modality_config["optical_frame"], modality_config["ref_frame"])
+                    obs_dict[key_name] = self._pc_cam_handler.transform(self._pc_cam_handler.pc[0], transform).points
                     
                 else:
                     raise RuntimeError("Modality not supported")
@@ -269,7 +273,17 @@ class MiaHandWorldEnv(gym.Env):
         
         return obs_dict
         
-    def setup_imagination(self):
+    def setup_imagination(self, right_hand : bool):
+        # Get an instance of RosPack with the default search paths
+        rospack = rospkg.RosPack()
+        
+        # Get the stl files from the mia description package
+        stl_folder = rospack.get_path(self._config_imagined["stl_package"]) + "/meshes/stl"
+        stl_files = [file for file in glob.glob(stl_folder + "/*") if (Path(file).name not in self._config_imagined["stl_ignores"])]
+        
+        # Extract stl files for the correct hand
+        filtered_stl_files = [file for file in stl_files if (("mirrored" in file) != right_hand)]
+        
         # config has: "stl_files", "ref_frame", "groups", "num_points"
         # Define the imagined groups where each group corresponds to a movable joint in the hand (along with base palm)
         free_joints = self._urdf_handler.get_free_joints()
@@ -277,7 +291,7 @@ class MiaHandWorldEnv(gym.Env):
         self._imagined_groups["j_" + self._config_imagined["ref_frame"]] = self._urdf_handler.get_link_group(self._config_imagined["ref_frame"])
         
         mesh_dict = {}  # Initialize an empty dictionary
-        for stl_file in self._config_imagined["stl_files"]:
+        for stl_file in filtered_stl_files:
             # Get the origin and scale for the mesh
             visual_origin, scale = self._urdf_handler.get_visual_origin_and_scale(Path(stl_file).stem)
             

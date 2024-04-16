@@ -109,7 +109,7 @@ This is the Gazebo URDF model for an rgbd camera adapted from the Intel RealSens
         <depthOpticalframeName>${depth_optical_frame}</depthOpticalframeName>
         <infrared1OpticalframeName>${infrared1_optical_frame}</infrared1OpticalframeName>
         <infrared2OpticalframeName>${infrared2_optical_frame}</infrared2OpticalframeName>
-        <rangeMinDepth>0.2</rangeMinDepth>
+        <rangeMinDepth>0.05</rangeMinDepth>
         <rangeMaxDepth>10.0</rangeMaxDepth>
       </plugin>
     </gazebo>
@@ -127,7 +127,7 @@ This is the Gazebo URDF model for an rgbd camera adapted from the Intel RealSens
             <format>RGB_INT8</format>
           </image>
           <clip>
-            <near>0.1</near>
+            <near>0.05</near>
             <far>100</far>
           </clip>
           <noise>
