@@ -76,8 +76,10 @@ class RLInterface():
         """
         Spawn the objects in a grid in the gazebo world.
         """
+        # Find the x and y directions of the grid. The grid is chosen to be as square as possible. The factors resolve the number of objects into two factors that when multiplied together, gives n.
         def find_factors(n):
             factors = []
+            # we only need to look up to the square root of n, because the other factor will be found by dividing n by the first factor
             for i in range(1, int(n**0.5) + 1):
                 if n % i == 0:
                     factors.append((i, n // i))
