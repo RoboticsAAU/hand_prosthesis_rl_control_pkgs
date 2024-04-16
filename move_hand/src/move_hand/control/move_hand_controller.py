@@ -64,6 +64,7 @@ class HandController:
                 "num_way_points": random.randint(1, 5),
                 "sample_type": "constant",
                 "num_points": 1000,
+                "dt" : 0.01,
             }
         elif self._config["path_planner"] == "navigation_function":
             path_params = {
@@ -71,6 +72,7 @@ class HandController:
                 "obs_rad": random.uniform(0.1, 0.5),
                 "kappa": 5,
                 "step_size": 0.1,
+                "dt" : 0.01,
             }
         
         #TODO: Implement orientation in the path planner
@@ -209,7 +211,7 @@ class HandController:
             ax.plot([obj_center[0], start_pose[0]], 
                     [obj_center[1], start_pose[1]], 
                     [obj_center[2], start_pose[2]], 
-                    color='b', linestyle='-', linewidth=1, label='Line from Intersection to Goal')
+                    color='b', linestyle='-', linewidth=1, label='Line from Object Center to Start Position')
             
             # Set axes limits
             lim = 0.2
@@ -231,6 +233,7 @@ if __name__ == '__main__':
     # Test move hand controller class
     hand_controller = HandController({"path_planner": "bezier"}, np.eye(3))
     
-    goal_pose = hand_controller._sample_goal_pose(np.array([0,0,0]), np.array([1,-1,1]))
+    # start_pose = hand_controller._sample_start_pose(np.array([0,0,0]), 0.1)
+    # goal_pose = hand_controller._sample_goal_pose(np.array([0,0,0]), np.array([1,-1,1]))
     
     

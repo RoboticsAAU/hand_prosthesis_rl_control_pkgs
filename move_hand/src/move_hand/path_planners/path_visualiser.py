@@ -93,11 +93,26 @@ def plot_path(path: np.ndarray, orientation_axes: List[bool] = [1, 1, 1]):
     
 if __name__ == "__main__":
     # Example usage
-    positions = np.array([[0, .1, .2, .3, .4, .5, .6, .7, .8, .9], 
-                          [0, .1, .2, .3, .4, .5, .6, .7, .8, .9], 
-                          [0, .1, .2, .3, .4, .5, .6, .7, .8, .9]])
-    orientations = np.array([0,0,0,1]).repeat(10).reshape(4, 10)
+    num_points = 100
+    positions = np.linspace(0, 9, num_points).reshape(1,num_points).repeat(3, 0)
     
+    start_orientation = R.from_matrix([[1,0,0],
+                                       [0,1,0],
+                                       [0,0,1]]).as_quat()
+    goal_orientation = R.from_matrix([[-1,0,0],
+                                      [0,-1,0],
+                                      [0,0,1]]).as_quat()
+    
+    # 1. Using DMP to plan orientation
+    from move_hand.path_planners.orientation_planners.dmp_quaternion import QuaternionDMP
+    dmp_quaternion = QuaternionDMP()
+    # orientations = dmp_quaternion.plan_path([0.0,0.0,0.0,1.0], goal_orientation, num_points, 0.01)
+    
+    # 2. Using interpolation to plan orientation
+    from move_hand.path_planners.orientation_planners.interpolation import interpolate_rotation
+    orientations = interpolate_rotation([0.0,0.0,0.0,1.0], goal_orientation, num_points)
+    
+    # Combine positions and orientations
     path = np.concatenate((positions, orientations), axis=0)
     
     plot_path(path)
