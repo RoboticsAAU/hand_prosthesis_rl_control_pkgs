@@ -17,6 +17,7 @@
 
 
      <!-- Arguments to upload hardware interface and controllers of each finger -->
+     <arg name="tc_type" default="eff" doc="type of trajectory controller to launch. Values: vel, pos, eff"/>
      <arg name="hw_interface_thumb_fle" default="EffortJointInterface"
           doc="type of hardware interface for thumb flexion. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
      <arg name="hw_interface_index_fle" default="EffortJointInterface"
