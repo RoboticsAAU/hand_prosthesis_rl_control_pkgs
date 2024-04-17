@@ -26,7 +26,8 @@ class RLInterface():
         self.spawn_objects_in_grid(np.array([1.0, 0.0]))
         
         # Spawn hand in an appropriate position
-        self.move_hand(Pose(position=Point(0, 0, 1), orientation=Quaternion(0.7071, 0, 0, 0.7071)))
+        self.default_pose = Pose(position=Point(0, 0, 0), orientation=Quaternion(0.7071, 0, 0, 0.7071))
+        self.move_hand(self.default_pose)
         
         # Initialise subscriber data container
         self._subscriber_data = {}
@@ -121,14 +122,17 @@ class RLInterface():
         
         # Update the current object
         if self._object_handler.curr_obj is not None:
+            self.move_hand(self.default_pose)
             self.reset_object(self._object_handler.curr_obj)
+            
         self._object_handler.update_current_object()
         
         # Update the hand controller trajectory
         object_pose = self.rl_data["obj_data"]
         obj_center = np.array([object_pose.position.x, object_pose.position.y, object_pose.position.z])
         self._hand_controller.plan_trajectory(obj_center, self._object_handler.objects[self._object_handler.curr_obj]["mesh"])
-        
+    
+    
     @property
     def rl_data(self):
         self._subscriber_data = self._world_interface.get_subscriber_data()
