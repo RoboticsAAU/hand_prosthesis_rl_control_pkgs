@@ -1,7 +1,7 @@
 import numpy as np
 import rospy
 
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, Point, Quaternion
 from typing import Dict, Callable, Any, Union
 from scipy.spatial.transform import Rotation as R
 
@@ -23,7 +23,10 @@ class RLInterface():
         
         # Spawn objects in the gazebo world
         self._object_poses = {}
-        self.spawn_objects_in_grid()
+        self.spawn_objects_in_grid(np.array([1.0, 0.0]))
+        
+        # Spawn hand in an appropriate position
+        self.move_hand(Pose(position=Point(0, 0, 1), orientation=Quaternion(0.7071, 0, 0, 0.7071)))
         
         # Initialise subscriber data container
         self._subscriber_data = {}
@@ -62,12 +65,10 @@ class RLInterface():
         """
         Publish the position of the hand to the world interface.
         """
-        # TODO: Quick fix. Should be solved correctly later
-        pose[2] += 1.0
         self._world_interface.set_pose(self._world_interface.hand.name, pose)
     
     
-    def spawn_objects_in_grid(self):
+    def spawn_objects_in_grid(self, offset : np.array = np.zeros(2)):
         """
         Spawn the objects in a grid in the gazebo world.
         """
@@ -83,8 +84,8 @@ class RLInterface():
         factors = find_factors(self._object_handler.config["num_objects"])
         grid_dims = min(factors, key=lambda pair: abs(pair[0] - pair[1]))
         
-        x_vals = np.linspace(0, (grid_dims[0] - 1) * self._object_handler.config["inter_object_dist"], grid_dims[0])
-        y_vals = np.linspace(0, (grid_dims[1] - 1) * self._object_handler.config["inter_object_dist"], grid_dims[1])
+        x_vals = np.linspace(0, (grid_dims[0] - 1) * self._object_handler.config["inter_object_dist"], grid_dims[0]) + offset[0]
+        y_vals = np.linspace(0, (grid_dims[1] - 1) * self._object_handler.config["inter_object_dist"], grid_dims[1]) + offset[1]
         grid = np.meshgrid(x_vals, y_vals)
         
         for index, (obj_name, obj) in enumerate(self._object_handler.objects.items()):
