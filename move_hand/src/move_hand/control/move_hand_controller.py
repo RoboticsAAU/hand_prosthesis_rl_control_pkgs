@@ -142,42 +142,57 @@ class HandController:
         normal_dist: The orthogonal distance from the object surface
         :return: The goal pose for the hand
         """
+
         # Extract the triangles from the object mesh and shift them to the object center
         triangles = obj_mesh.vectors + obj_center[:3].reshape(1,-1)
+        triangle_normals = obj_mesh.normals
         
         # Function to check if a line intersects a triangle and returns the intersection point 
         # and surface normal if it does
-        def intersect_line_triangle(line_point1, line_point2, triangle):
-            # Define the line as a vector and a point on the line
+        def intersect_line_triangle(line_point1, line_point2, triangle, normal):
+            # Define the line as a vector (from start position to object center) and a point on the line (start position)
             line_vector = line_point2 - line_point1
             line_point = line_point1
             
-            # Define the triangle's vertices (extracted as rows in "triangle")
+            # Define the triangle's vertices (extracted as rows in "triangle") and the triangle's normal
             v0, v1, v2 = triangle
+            triangle_normal = normal / np.linalg.norm(normal)
             
-            # Define the triangle's plane
-            triangle_normal = np.cross(v1 - v0, v2 - v0)
-            triangle_normal /= np.linalg.norm(triangle_normal)
-            triangle_d = -np.dot(triangle_normal, v0)
+            # Return early if the triangle normal from the mesh is pointing in the same direction as the line vector
+            if np.dot(triangle_normal, line_vector) > 0:
+                return False, None, None
             
-            # Calculate the intersection point between the line and the plane
-            t = -(np.dot(triangle_normal, line_point) + triangle_d) / np.dot(triangle_normal, line_vector)
+            # Calculate the intersection point between the line and the plane. We do this by solving the equation of the line
+            # and the plane simultaneously. The intersection point is given by the point on the line that satisfies the equation
+            # of the plane. The value t describes how far along the line the intersection point is.
+            # https://stackoverflow.com/questions/42740765/intersection-between-line-and-triangle-in-3d
+            t = -(np.dot(triangle_normal, line_point - v0) / np.dot(triangle_normal, line_vector))
             intersection_point = line_point + t * line_vector
             
-            # Check if the intersection point is inside the triangle
+            # Return early if the intersection point is outside the line segment
+            if t < 0 or t > 1:
+                return False, None, None
+            
+            # Check if the intersection point is inside the triangle. We do this by checking if the intersection point is on 
+            # the same side of each edge. Using the cross product between a vector on the triangle side and a vector from the 
+            # triangle corner to the intersection point, we either get a vector pointing in the same direction or 
+            # opposite direction of the triangle normal. If the vectors point in the same direction, the dot product will be positive,
+            # otherwise it will be negative.
             u = np.dot(np.cross(v1 - v0, intersection_point - v0), triangle_normal)
             v = np.dot(np.cross(v2 - v1, intersection_point - v1), triangle_normal)
             w = np.dot(np.cross(v0 - v2, intersection_point - v2), triangle_normal)
             
-            if u >= 0 and v >= 0 and w >= 0 and 0 <= t <= 1:
-                return True, intersection_point, triangle_normal
-            else:
+            # Return early if the intersection point is outside the triangle
+            if u < 0 or v < 0 or w < 0:
                 return False, None, None
+            
+            # Return the intersection point and the triangle normal
+            return True, intersection_point, triangle_normal
         
         # Find all the triangles that the line between start position and object center intersects with 
         intersections = []
-        for triangle in triangles:
-            intersection, intersection_point, triangle_normal = intersect_line_triangle(obj_center, start_pose[:3], triangle)
+        for triangle, normal in zip(triangles,  triangle_normals):
+            intersection, intersection_point, triangle_normal = intersect_line_triangle(start_pose[:3], obj_center, triangle, normal)
             if intersection:
                 intersections.append((intersection_point, triangle_normal))
 
