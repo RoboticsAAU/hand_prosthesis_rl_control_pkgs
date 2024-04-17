@@ -25,7 +25,7 @@ class BezierPlanner(PathPlanner):
         
         # Combine the rotation into the path
         rotation = interpolate_rotation(start_pose[3:], goal_pose[3:], parameters["num_points"])
-        path = np.concatenate((path, rotation), axis=1)
+        path = np.concatenate((path, rotation), axis=0)
         
         return path
     

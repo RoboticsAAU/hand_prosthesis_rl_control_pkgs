@@ -97,7 +97,7 @@ class RLInterface():
             rotation_matrix = np.array([[1, 0, 0], 
                                         [0, 0, -1],
                                         [0, 1, 0]])
-            #TODO: Add object spawn height. Currently hardcoded to 0.1
+            #TODO: Add object spawn height. Currently hardcoded to 0.08
             position = np.array([grid[0].flatten()[index], grid[1].flatten()[index], 0.08])
             
             orientation = R.from_matrix(rotation_matrix).as_quat()
