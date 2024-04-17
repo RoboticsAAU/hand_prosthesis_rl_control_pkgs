@@ -5,7 +5,7 @@ from stl import mesh
 from geometry_msgs.msg import Pose
 from typing import Dict, Any, Union
 from scipy.spatial.transform import Rotation as R
-from move_hand.path_planners import bezier_paths, navigation_function, path_planner
+from move_hand.path_planners import bezier_paths, navigation_function, path_planner, path_visualiser
 
 # TODO: Compute trajectories for the hand
 # TODO: The hand orientation could always point towards some point, or the hand could be oriented tangent to the trajectory
@@ -56,14 +56,14 @@ class HandController:
         # Obtain the start and goal pose
         #TODO: z-offset should be a parameter in yaml
         start_pose = self._sample_start_pose(obj_center, 0.1)
-        goal_pose = self._sample_goal_pose(obj_center, start_pose, obj_mesh)
+        goal_pose = self._sample_goal_pose(obj_center, start_pose, obj_mesh, 0.05)
                 
         # Plan trajectory with the given path planner and parameters
         if self._config["path_planner"] == "bezier":
             path_params = {
                 "num_way_points": random.randint(1, 5),
                 "sample_type": "constant",
-                "num_points": 1000,
+                "num_points": 100,
                 "dt" : 0.01,
             }
         elif self._config["path_planner"] == "navigation_function":
@@ -76,8 +76,9 @@ class HandController:
             }
         
         self._pose_buffer = self._path_planner.plan_path(start_pose, goal_pose, path_params)
-        
-        
+
+        #self._pose_buffer[3:,:] = start_pose[3:].repeat(self._pose_buffer.shape[1]).reshape(4, -1) 
+        # path_visualiser.plot_path(self._pose_buffer)
         # to_append = np.vstack([start_pose[3:].copy()] * self._pose_buffer.shape[1]).T
         # self._pose_buffer = np.append(self._pose_buffer, to_append, axis=0)
         
@@ -239,11 +240,11 @@ class HandController:
             ax.set_zlabel('Z')
             plt.show()
         
-        visualize(triangles, intersection_point, goal_position, triangle_normal)
+        # visualize(triangles, intersection_point, goal_position, triangle_normal)
         
         
         # Store the rotation matrix from the start pose
-        start_rot_matrix = R.from_quat(start_pose[3:]).as_matrix()
+        start_rot_matrix = R.from_quat(start_pose[3:]).as_matrix() @ self._hand_rotation.T
         
         def project_vector_onto_plane(v, plane_v1, plane_v2):
             # Calculate the normal vector of the plane
@@ -278,7 +279,7 @@ class HandController:
             x_axis = np.cross(y_axis, z_axis)
         
         # Combine the rotation axes into a rotation matrix
-        rotation_matrix = np.array([x_axis, y_axis, z_axis]).T
+        rotation_matrix = np.array([x_axis, y_axis, z_axis]).T @ self._hand_rotation
         
         # Convert it to quaternion
         goal_orientation = R.from_matrix(rotation_matrix).as_quat()
