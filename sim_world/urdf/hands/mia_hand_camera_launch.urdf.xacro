@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://wiki.ros.org/xacro" name="mia_hand_camera">
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="$(arg robotNamespace)">
     <!-- Arguments -->
     <xacro:arg name="default_mia_model" default="false" />
     <xacro:arg name="right_hand" default="true" />
@@ -7,7 +7,7 @@
     <xacro:arg name="hw_interface_thumb_fle" default="VelocityJointInterface"/>
     <xacro:arg name="hw_interface_index_fle" default="VelocityJointInterface"/>
     <xacro:arg name="hw_interface_mrl_fle" default="VelocityJointInterface"/>
-    <xacro:arg name="robotNamespace" default="/mia_hand_camera"/> <!-- /mia_hand_camera -->
+    <xacro:arg name="robotNamespace" default="mia_hand_camera"/> <!-- /mia_hand_camera -->
     <xacro:arg name="camera_name" default="camera" />
     <xacro:arg name="camera_topic_ns" default="camera" />
 

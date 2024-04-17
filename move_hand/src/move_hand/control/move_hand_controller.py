@@ -75,10 +75,11 @@ class HandController:
                 "dt" : 0.01,
             }
         
-        #TODO: Implement orientation in the path planner
-        self._pose_buffer = self._path_planner.plan_path(start_pose[:3], goal_pose[:3], path_params)
-        to_append = np.vstack([start_pose[3:].copy()] * self._pose_buffer.shape[1]).T
-        self._pose_buffer = np.append(self._pose_buffer, to_append, axis=0)
+        self._pose_buffer = self._path_planner.plan_path(start_pose, goal_pose, path_params)
+        
+        
+        # to_append = np.vstack([start_pose[3:].copy()] * self._pose_buffer.shape[1]).T
+        # self._pose_buffer = np.append(self._pose_buffer, to_append, axis=0)
         
 
     def reset(self):
@@ -141,6 +142,8 @@ class HandController:
         normal_dist: The orthogonal distance from the object surface
         :return: The goal pose for the hand
         """
+        # Extract the triangles from the object mesh and shift them to the object center
+        triangles = obj_mesh.vectors + obj_center[:3].reshape(1,-1)
         
         # Function to check if a line intersects a triangle and returns the intersection point 
         # and surface normal if it does
@@ -173,7 +176,7 @@ class HandController:
         
         # Find all the triangles that the line between start position and object center intersects with 
         intersections = []
-        for triangle in obj_mesh.vectors:
+        for triangle in triangles:
             intersection, intersection_point, triangle_normal = intersect_line_triangle(obj_center, start_pose[:3], triangle)
             if intersection:
                 intersections.append((intersection_point, triangle_normal))

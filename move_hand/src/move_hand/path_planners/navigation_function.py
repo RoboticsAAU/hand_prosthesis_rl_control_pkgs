@@ -6,7 +6,7 @@ from tqdm import tqdm
 from move_hand.path_planners.path_visualiser import animate_path
 from move_hand.path_planners.path_planner import PathPlanner
 from typing import Dict, Any
-
+from move_hand.path_planners.orientation_planners.interpolation import interpolate_rotation
 
 # TODO: Check if goal/tart collide with obstacle. If so, raise error
 class NavFuncPlanner(PathPlanner):
@@ -36,17 +36,21 @@ class NavFuncPlanner(PathPlanner):
         self._express_nav_func()
     
     
-    def plan_path(self, start_pos : np.array, goal_pos : np.array, parameters : Dict[str, Any]) -> np.ndarray:
+    def plan_path(self, start_pose : np.array, goal_pose : np.array, parameters : Dict[str, Any]) -> np.ndarray:
         # Reset the planner
         self._reset()
         
         # Setup the planner
-        self.setup(parameters["num_rand_obs"], parameters["obs_rad"], goal_pos, parameters["kappa"])
+        self.setup(parameters["num_rand_obs"], parameters["obs_rad"], goal_pose[:3], parameters["kappa"])
 
         # Compute the path
-        self.compute_path(start_pos, parameters["step_size"], plot=False)
+        self.compute_path(start_pose[:3], parameters["step_size"], plot=False)
         
-        return self.path.copy()
+        # Combine the rotation into the path
+        rotation = interpolate_rotation(start_pose[3:], goal_pose[3:], self.path.shape[1])
+        path = np.concatenate((self.path, rotation), axis=1)
+
+        return path
     
     
     def compute_path(self, start_pos : np.array, step_size : float, plot : bool = True) -> None:

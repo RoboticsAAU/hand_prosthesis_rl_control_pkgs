@@ -69,7 +69,7 @@
           />
 
           <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-               args="-urdf -model mia_hand_camera -param robot_description"/>
+               args="-urdf -model $(arg robotNamespace) -param robot_description"/>
           
           <!-- Load the path of the config file of the MIA trasnsmission -->
           <param name="mia_transmissions_config_" type="string" value="$(find mia_hand_description)/calibration/transmission_config.yaml " />
@@ -88,17 +88,19 @@
 
 
      <!-- Run image processing (rectification and registration) -->
-     <include file="$(find sim_world)/launch/image_processing.launch"/>
+     <include file="$(find sim_world)/launch/image_processing.launch">
+          <arg name="robotNamespace" value="$(arg robotNamespace)"/>
+     </include>
 
      <!-- Run image_view to visualize the rectified and registered images -->
      <node if="$(arg image_view)" name="image_view_rgb" pkg="image_view" type="image_view" respawn="false" output="screen">
-          <remap from="image" to="/mia_hand_camera/camera/color/image_rect" />
+          <remap from="image" to="$(arg robotNamespace)/camera/color/image_rect" />
      </node>
      <node if="$(arg image_view)" name="image_view_depth" pkg="image_view" type="image_view" respawn="false" output="screen">
-          <remap from="image" to ="/mia_hand_camera/camera/depth/image_rect" />
+          <remap from="image" to ="$(arg robotNamespace)/camera/depth/image_rect" />
      </node>
      <node if="$(arg image_view)" name="image_view_depth_registered" pkg="image_view" type="image_view" respawn="false" output="screen">
-          <remap from="image" to ="/mia_hand_camera/camera/depth_registered/image_rect" />
+          <remap from="image" to ="$(arg robotNamespace)/camera/depth_registered/image_rect" />
      </node>
 
 </launch>
