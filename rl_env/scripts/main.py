@@ -24,45 +24,41 @@ with open(package_path + "/params/hand/mia_hand_params.yaml", 'r') as file:
     hand_config = yaml.safe_load(file)
 
 def main():
-    # Instantiate RL env
-    rl_env = MiaHandWorldEnv(hand_config["visual_sensors"], hand_config["limits"], hand_config["general"])  
     
     # Instantiate the RL interface to the simulation
     rl_interface = RLInterface(
         SimulationInterface(
             MiaHandSetup(hand_config["topics"], hand_config["general"])
         ),
-        rl_env.update,
         sim_config
     )
     
+    # Instantiate RL env
+    rl_env = MiaHandWorldEnv(rl_interface, rl_config, hand_config)  
+    #rl_env = MiaHandWorldEnv(hand_config["visual_sensors"], hand_config["limits"], hand_config["general"])  
+    
     model = PPO("MultiInputPolicy", rl_env, verbose=1)
+    model.learn(total_timesteps=100000)
     
-    r = rl_interface._world_interface._rate
+    # r = rl_interface._world_interface._rate
     
-    # Run the episodes
-    for _ in range(rl_config["hyper_params"]["num_episodes"]):
+    # # Run the episodes
+    # for _ in range(rl_config["hyper_params"]["num_episodes"]):
         
-        rl_interface.update_context()
-        rl_interface.step(np.zeros(rl_env.action_space.shape))
-
-        # Reset the rl env
-        obs = rl_env.reset()
+    #     # Reset the rl env
+    #     obs = rl_env.reset()
         
-        for _ in range(rl_config["hyper_params"]["max_episode_steps"]):
-            # Select an action
-            time_start = time.time()
+    #     for _ in range(rl_config["hyper_params"]["max_episode_steps"]):
+    #         # Select an action
+    #         start_time = time.time()
+    #         action = model.predict(obs)
+    #         rospy.logwarn_throttle(0.5, "Predict dur: " + str(time.time() - start_time))
+    #         # Step the environment
+    #         obs, reward, done, info = rl_env.step(action)
             
-            action = model.predict(obs)
-            # Step the environment
-            # obs, reward, done, info = rl_env.step(action)
-            dur = time.time() - time_start
-            
-            rospy.logwarn(f"Duration: {dur}")
-            if rl_interface.step(action[0]) == True:
-                break
-            
-            # r.sleep()
+    #         if rl_interface.step(action[0]) == True:
+    #             break
+    #         # r.sleep()
         
 
 if __name__ == "__main__":

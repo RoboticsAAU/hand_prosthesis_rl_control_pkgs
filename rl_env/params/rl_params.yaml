@@ -1,3 +1,6 @@
+# np.random seed
+seed: 0
+
 # Algorithm parameters
 general:
   alogrithm: "PPO"
