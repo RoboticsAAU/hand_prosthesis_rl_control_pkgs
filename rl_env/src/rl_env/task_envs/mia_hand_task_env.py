@@ -54,19 +54,21 @@ class MiaHandWorldEnv(gym.Env):
         self._imagined_groups = {}
         
         # Bounds for joint positions in observation space
-        self._obs_pos_lb = np.array([limit[0] for limit in self._config_limits["obs_joint_limits"].values()])
-        self._obs_pos_ub = np.array([limit[1] for limit in self._config_limits["obs_joint_limits"].values()])
+        self._obs_pos_lb = np.array([limit[0] for limit in self._config_limits["joint_position"].values()])
+        self._obs_pos_ub = np.array([limit[1] for limit in self._config_limits["joint_position"].values()])
         
         # Bounds for joint velocities in observation space
-        self._obs_vel_lb = np.array([limit[0] for limit in self._config_limits["obs_velocity_limits"].values()])
-        self._obs_vel_ub = np.array([limit[1] for limit in self._config_limits["obs_velocity_limits"].values()])
+        self._obs_vel_lb = np.array([limit[0] for limit in self._config_limits["joint_velocity"].values()])
+        self._obs_vel_ub = np.array([limit[1] for limit in self._config_limits["joint_velocity"].values()])
         
-        # Bounds for joint velocities in action space
-        self._act_vel_lb = np.array([limit[0] for limit in self._config_limits["act_velocity_limits"].values()])
-        self._act_vel_ub = np.array([limit[1] for limit in self._config_limits["act_velocity_limits"].values()])
+        # Bounds for joint velocities in action space.
+        # Notice that the thumb input control is 1-dimensional that maps to 2DoF (thumb_fle and thumb_opp), and we assume range for thumb_fle corresponds to control range
+        action_space_joints = ["index_range", "mrl_range", "thumb_fle_range"]
+        self._act_vel_lb = np.array([limit[0] for name, limit in self._config_limits["joint_velocity"].items() if name in action_space_joints])
+        self._act_vel_ub = np.array([limit[1] for name, limit in self._config_limits["joint_velocity"].items() if name in action_space_joints])
         
         # Save number of joints
-        self._dof = len(self._config_limits["obs_joint_limits"])
+        self._dof = len(self._config_limits["joint_position"])
         
         # Parameters for the state and observation space
         self._joints = None
