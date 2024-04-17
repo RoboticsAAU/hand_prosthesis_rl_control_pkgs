@@ -5,3 +5,4 @@ scipy
 urdfpy
 stable-baselines3 #[extra]
 tensorflow
+shimmy
