@@ -2,10 +2,10 @@ import rospy
 import numpy as np
 import rospkg
 import open3d as o3d
-import gym
+import gymnasium as gym
 import glob
-from gym.utils import seeding
-from gym.envs.registration import register
+from gymnasium.utils import seeding
+from gymnasium.envs.registration import register
 from pathlib import Path
 from functools import cached_property
 from typing import Dict, List, Any, Optional
