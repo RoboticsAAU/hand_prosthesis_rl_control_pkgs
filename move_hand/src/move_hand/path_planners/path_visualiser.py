@@ -78,12 +78,13 @@ def plot_path(path: np.ndarray, orientation_axes: List[bool] = [1, 1, 1]):
             linestyle='-', marker='o', color='k')
 
     # Plot orientation axes
+    skip_num = positions.shape[0] // 10
     axis_colors = ["red", "green", "blue"]
     for j, display_axis in enumerate(orientation_axes):
         if not display_axis:
             continue
         
-        ax.quiver(*(positions.T), *(orientations[:, :, j].T),
+        ax.quiver(*(positions[:: (skip_num + 1)].T), *(orientations[:: (skip_num + 1), :, j].T),
             color=axis_colors[j],
             length=(lim_max-lim_min)/10.0,
             normalize=True

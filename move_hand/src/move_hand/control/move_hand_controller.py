@@ -5,7 +5,7 @@ from stl import mesh
 from geometry_msgs.msg import Pose
 from typing import Dict, Any, Union
 from scipy.spatial.transform import Rotation as R
-from move_hand.path_planners import bezier_paths, navigation_function, path_planner
+from move_hand.path_planners import bezier_paths, navigation_function, path_planner, path_visualiser
 
 # TODO: Compute trajectories for the hand
 # TODO: The hand orientation could always point towards some point, or the hand could be oriented tangent to the trajectory
@@ -56,14 +56,14 @@ class HandController:
         # Obtain the start and goal pose
         #TODO: z-offset should be a parameter in yaml
         start_pose = self._sample_start_pose(obj_center, 0.1)
-        goal_pose = self._sample_goal_pose(obj_center, start_pose, obj_mesh)
+        goal_pose = self._sample_goal_pose(obj_center, start_pose, obj_mesh, 0.05)
                 
         # Plan trajectory with the given path planner and parameters
         if self._config["path_planner"] == "bezier":
             path_params = {
                 "num_way_points": random.randint(1, 5),
                 "sample_type": "constant",
-                "num_points": 1000,
+                "num_points": 100,
                 "dt" : 0.01,
             }
         elif self._config["path_planner"] == "navigation_function":
@@ -76,8 +76,9 @@ class HandController:
             }
         
         self._pose_buffer = self._path_planner.plan_path(start_pose, goal_pose, path_params)
-        
-        
+
+        #self._pose_buffer[3:,:] = start_pose[3:].repeat(self._pose_buffer.shape[1]).reshape(4, -1) 
+        # path_visualiser.plot_path(self._pose_buffer)
         # to_append = np.vstack([start_pose[3:].copy()] * self._pose_buffer.shape[1]).T
         # self._pose_buffer = np.append(self._pose_buffer, to_append, axis=0)
         
@@ -120,10 +121,6 @@ class HandController:
         x_axis = np.cross(y_axis, z_axis)
         x_axis /= np.linalg.norm(x_axis)
 
-        # If x-axis is not pointing down, flip the orientation 180 degrees around the z-axis
-        if x_axis[2] > 0:
-            x_axis, y_axis = -x_axis, -y_axis
-
         # Create the rotation matrix and account for hand frame rotation  
         rotation_matrix = np.array([x_axis, y_axis, z_axis]).T @ self._hand_rotation
 
@@ -142,7 +139,7 @@ class HandController:
         normal_dist: The orthogonal distance from the object surface
         :return: The goal pose for the hand
         """
-
+        
         # Extract the triangles from the object mesh and shift them to the object center
         triangles = obj_mesh.vectors + obj_center[:3].reshape(1,-1)
         triangle_normals = obj_mesh.normals
@@ -243,15 +240,70 @@ class HandController:
             ax.set_zlabel('Z')
             plt.show()
         
-        #visualize(triangles, intersection_point, goal_position, triangle_normal)
+        # visualize(triangles, intersection_point, goal_position, triangle_normal)
         
-        return np.concatenate([goal_position, start_pose[3:]])
+        
+        # Store the rotation matrix from the start pose
+        start_rot_matrix = R.from_quat(start_pose[3:]).as_matrix() @ self._hand_rotation.T
+        
+        def project_vector_onto_plane(v, plane_v1, plane_v2):
+            # Calculate the normal vector of the plane
+            n = np.cross(plane_v1, plane_v2)
+            
+            # Compute the projection of v onto the normal vector n
+            projection = np.dot(v, n) / np.dot(n, n) * n
+            
+            # Subtract the projection from v to obtain the projected vector onto the plane
+            projected_vector = v - projection
+            
+            return projected_vector
+        
+        # Compute the z-axis from the triangle normal
+        z_axis = -triangle_normal
+        
+        # Compute the plane vectors as the orthogonal vectors to the z-axis and two random vectors 
+        # (need not be orthogonal to z-axis)
+        plane_vec1, plane_vec2 = np.cross(random.rand(3), z_axis), np.cross(random.rand(3), z_axis)
+
+        # Project the start x- and y-axes onto this new plane
+        projected_x = project_vector_onto_plane(start_rot_matrix[:, 0], plane_vec1, plane_vec2)
+        projected_y = project_vector_onto_plane(start_rot_matrix[:, 1], plane_vec1, plane_vec2)
+        
+        # Choose the axis with the largest projection onto the plane (and normalise it), and select the other axis
+        # with the right hand rule (this will ensure that the new rotation is similar to the start rotation)
+        if np.linalg.norm(projected_x) > np.linalg.norm(projected_y):
+            x_axis = projected_x / np.linalg.norm(projected_x)
+            y_axis = np.cross(z_axis, x_axis)
+        else:
+            y_axis = projected_y / np.linalg.norm(projected_y)
+            x_axis = np.cross(y_axis, z_axis)
+        
+        # Combine the rotation axes into a rotation matrix
+        rotation_matrix = np.array([x_axis, y_axis, z_axis]).T @ self._hand_rotation
+        
+        # Convert it to quaternion
+        goal_orientation = R.from_matrix(rotation_matrix).as_quat()
+        
+        return np.concatenate([goal_position, goal_orientation])
 
 if __name__ == '__main__':
     # Test move hand controller class
     hand_controller = HandController({"path_planner": "bezier"}, np.eye(3))
     
-    # start_pose = hand_controller._sample_start_pose(np.array([0,0,0]), 0.1)
-    # goal_pose = hand_controller._sample_goal_pose(np.array([0,0,0]), np.array([1,-1,1]))
+    import rospkg
+    from time import time
+    rospack = rospkg.RosPack()
+    stl_file = rospack.get_path('assets') + '/shapenet_sdf/category_1/obj_2/mesh.stl'
+    obj_mesh = mesh.Mesh.from_file(stl_file)
+    obj_mesh.vectors = obj_mesh.vectors * 0.15
     
+    # start_pose = hand_controller._sample_start_pose(np.array([0,0,0]), 0.1)
+    start_pose = np.array([1,2,1,0,0,0,1], dtype=np.float32)
+    start = time()
+    goal_pose = hand_controller._sample_goal_pose(np.array([0,0,0], dtype=np.float32), start_pose,  obj_mesh)
+    
+    from move_hand.path_planners.path_visualiser import plot_path
+    
+    path = np.concatenate([start_pose.reshape(-1,1), goal_pose.reshape(-1,1)], axis=1)
+    plot_path(path)
     
