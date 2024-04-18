@@ -200,6 +200,12 @@ class HandController:
         # Find all the triangles that the line between start position and object center intersects with 
         intersections = []
         for triangle, normal in zip(triangles,  triangle_normals):
+            if np.linalg.norm(normal) == 0:
+                rospy.logwarn("Length of normal vector is zero")
+                triangle_area = np.linalg.norm(np.cross(triangle[1] - triangle[0], triangle[2] - triangle[0])) / 2
+                rospy.logwarn("Triangle vectors: {}".format(triangle))
+                rospy.logwarn("Triangle area: {}".format(triangle_area))
+                continue
             intersection, intersection_point, triangle_normal = intersect_line_triangle(start_pose[:3], obj_center, triangle, normal)
             if intersection:
                 intersections.append((intersection_point, triangle_normal))

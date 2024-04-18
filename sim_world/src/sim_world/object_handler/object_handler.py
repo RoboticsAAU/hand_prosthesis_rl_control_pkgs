@@ -40,7 +40,7 @@ class ObjectHandler():
                 
                 # Load mesh object
                 path_mesh = glob.glob(object_folder + '/mesh.stl')[0]
-                cuboid = mesh.Mesh.from_file(path_mesh)
+                cuboid = mesh.Mesh.from_file(path_mesh, remove_empty_areas=True)
                 # TODO: Hardcoded scale. Should be read from the sdf file.
                 cuboid.vectors *= 0.15
                 
