@@ -4,6 +4,7 @@ from move_hand.path_planners.path_visualiser import animate_path
 from move_hand.path_planners.path_planner import PathPlanner
 from typing import Dict, Any
 from move_hand.path_planners.orientation_planners.interpolation import interpolate_rotation
+import rospy
 
 class BezierPlanner(PathPlanner):
     def __init__(self):

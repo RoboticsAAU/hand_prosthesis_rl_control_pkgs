@@ -142,6 +142,9 @@ class HandController:
         
         # Extract the triangles from the object mesh and shift them to the object center
         triangles = obj_mesh.vectors + obj_center[:3].reshape(1,-1)
+
+        if obj_mesh is None:
+            raise ValueError("No object mesh provided")
         triangle_normals = obj_mesh.normals
         
         # Function to check if a line intersects a triangle and returns the intersection point 
@@ -186,6 +189,14 @@ class HandController:
             # Return the intersection point and the triangle normal
             return True, intersection_point, triangle_normal
         
+        # In the case that there is no intersection, select the closest vertex in the object to the start position
+        def select_closest_vertex(points, start_pose):
+            # Find the vertex that is closest to the start position
+            closest_vertex = min(points, key=lambda x: np.linalg.norm(x - start_pose[:3]))
+            return closest_vertex
+
+
+
         # Find all the triangles that the line between start position and object center intersects with 
         intersections = []
         for triangle, normal in zip(triangles,  triangle_normals):
@@ -193,11 +204,26 @@ class HandController:
             if intersection:
                 intersections.append((intersection_point, triangle_normal))
 
-        # Find the intersection point that is closest to the start position
-        intersection_point, triangle_normal = min(intersections, key=lambda x: np.linalg.norm(x[0] - start_pose[:3]))
-        
-        # Compute the goal position as some orthogonal offset to the intersection point
-        goal_position = intersection_point + normal_dist * triangle_normal
+
+        # If there was no intersections registered, select the closest vertex in the object
+        if len(intersections) == 0:
+            rospy.loginfo("No intersections found, selecting closest vertex")
+            # The the verticies of the triangles and remove duplicates
+            points = np.around(np.unique(triangles.reshape([triangles.size//3, 3]), axis=0), 4)
+            # From the vertext closes to the start pose, select the goal position in the direction away from the object center through the selected vertex. 
+            selected_vertex = select_closest_vertex(points, start_pose)
+            # Compute the direction vector from the object center to the selected vertex. This will make the hand be oriented towards the center of the object.
+            direction_vector = (selected_vertex - obj_center)
+
+            # Compute the goal position as some offset from the selected vertex along the direction vector
+            goal_position = selected_vertex + normal_dist * (selected_vertex - obj_center)
+        else:
+            # Find the intersection point that is closest to the start position
+            intersection_point, triangle_normal = min(intersections, key=lambda x: np.linalg.norm(x[0] - start_pose[:3]))
+            # Compute the goal position as some orthogonal offset to the intersection point
+            goal_position = intersection_point + normal_dist * triangle_normal
+
+            direction_vector = triangle_normal
         
         def visualize(triangles, intersection_point, goal_position, surface_normal_vector):
             import matplotlib.pyplot as plt
@@ -227,12 +253,19 @@ class HandController:
                     [obj_center[1], start_pose[1]], 
                     [obj_center[2], start_pose[2]], 
                     color='b', linestyle='-', linewidth=1, label='Line from Object Center to Start Position')
-            
+
+            # Plot all the surface normals
+            for normal, triangle in zip(triangle_normals, triangles):
+                ax.quiver(triangle[0,0], triangle[0,1], triangle[0,2],
+                    normal[0], normal[1], normal[2],
+                    length=0.05, color='c', normalize=True, label='Surface Normal')
+
+
             # Set axes limits
             lim = 0.2
-            ax.set_xlim([-lim, lim])  # Set appropriate values for xmin and xmax
-            ax.set_ylim([-lim, lim])  # Set appropriate values for ymin and ymax
-            ax.set_zlim([-lim, lim])  # Set appropriate values for zmin and zmax
+            ax.set_xlim([-lim + obj_center[0], lim + obj_center[0]])  # Set appropriate values for xmin and xmax
+            ax.set_ylim([-lim + obj_center[1], lim + obj_center[1]])  # Set appropriate values for ymin and ymax
+            ax.set_zlim([-lim + obj_center[2], lim + obj_center[2]])  # Set appropriate values for zmin and zmax
             
             # Set labels and show plot
             ax.set_xlabel('X')
@@ -240,6 +273,8 @@ class HandController:
             ax.set_zlabel('Z')
             plt.show()
         
+        
+        # Uncomment if you need to plot it. Only works when running the script directly
         # visualize(triangles, intersection_point, goal_position, triangle_normal)
         
         
@@ -259,7 +294,7 @@ class HandController:
             return projected_vector
         
         # Compute the z-axis from the triangle normal
-        z_axis = -triangle_normal
+        z_axis = -direction_vector
         
         # Compute the plane vectors as the orthogonal vectors to the z-axis and two random vectors 
         # (need not be orthogonal to z-axis)
@@ -293,14 +328,14 @@ if __name__ == '__main__':
     import rospkg
     from time import time
     rospack = rospkg.RosPack()
-    stl_file = rospack.get_path('assets') + '/shapenet_sdf/category_1/obj_2/mesh.stl'
+    stl_file = rospack.get_path('assets') + '/shapenet_sdf/category_3/obj_48/mesh.stl'
     obj_mesh = mesh.Mesh.from_file(stl_file)
     obj_mesh.vectors = obj_mesh.vectors * 0.15
     
     # start_pose = hand_controller._sample_start_pose(np.array([0,0,0]), 0.1)
-    start_pose = np.array([1,2,1,0,0,0,1], dtype=np.float32)
+    start_pose = np.array([1.33862776,1.44750272,0.24139338,0,0,0,1], dtype=np.float32)
     start = time()
-    goal_pose = hand_controller._sample_goal_pose(np.array([0,0,0], dtype=np.float32), start_pose,  obj_mesh)
+    goal_pose = hand_controller._sample_goal_pose(np.array([9.98964016e-01,2.51447086e-05,4.28053344e-02], dtype=np.float32), start_pose,  obj_mesh)
     
     from move_hand.path_planners.path_visualiser import plot_path
     
