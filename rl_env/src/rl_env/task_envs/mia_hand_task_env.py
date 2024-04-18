@@ -87,15 +87,6 @@ class MiaHandWorldEnv(gym.Env):
         self._cumulated_steps = 0.0
         self._finger_object_dist = np.zeros(3)
         
-        self.seed(self._rl_config["seed"])
-    
-    
-     # Env methods
-    def seed(self, seed : int = None):
-        seed = seed if seed >= 0 else None
-        self.np_random, seed = seeding.np_random(seed)
-        return [seed]
-
     
     def step(self, action):
         done = self._rl_interface.step(action)
@@ -104,16 +95,20 @@ class MiaHandWorldEnv(gym.Env):
         info = {}
         reward = self._compute_reward(obs, done)
         
-        return obs, reward, done, info
+        return obs, reward, done, False, info
     
-    def reset(self) -> Dict[str, Any]:
+    def reset(self, seed=None):
+        super().reset(seed=seed)
+        
         rospy.logdebug("Reseting MiaHandWorldEnv")
         self._init_env_variables()
         self._rl_interface.update_context()
         self.update()
         obs = self._get_obs()
+        info = {}
         rospy.logdebug("END Reseting MiaHandWorldEnv")
-        return obs
+        
+        return obs, info
     
     
     def update(self):
