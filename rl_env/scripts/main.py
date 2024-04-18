@@ -2,8 +2,8 @@ import rospy
 import rospkg
 import numpy as np
 import yaml
-import time
 from stable_baselines3 import PPO
+from datetime import datetime
 
 from rl_env.task_envs.mia_hand_task_env import MiaHandWorldEnv
 from move_hand.control.move_hand_controller import HandController
@@ -23,6 +23,12 @@ with open(package_path + "/params/sim_params.yaml", 'r') as file:
 with open(package_path + "/params/hand/mia_hand_params.yaml", 'r') as file:
     hand_config = yaml.safe_load(file)
 
+# Current date as a string in the format "ddmmyyyy"
+algorithm_name = "PPO"
+env_name= "mia_hand_rl"
+date_string = datetime.now().strftime("%d%m%Y")
+log_name = f"{env_name}_{algorithm_name}_{date_string}" 
+
 def main():
     
     # Instantiate the RL interface to the simulation
@@ -35,10 +41,12 @@ def main():
     
     # Instantiate RL env
     rl_env = MiaHandWorldEnv(rl_interface, rl_config, hand_config)  
-    #rl_env = MiaHandWorldEnv(hand_config["visual_sensors"], hand_config["limits"], hand_config["general"])  
     
-    model = PPO("MultiInputPolicy", rl_env, verbose=1)
-    model.learn(total_timesteps=100000)
+    # Instantiate the PPO model
+    model = PPO("MultiInputPolicy", rl_env, verbose=1, tensorboard_log=rospack.get_path("rl_env") + "/logs")
+    
+    # Train the model
+    model.learn(total_timesteps=100000, tb_log_name=log_name)
     
     # r = rl_interface._world_interface._rate
     
