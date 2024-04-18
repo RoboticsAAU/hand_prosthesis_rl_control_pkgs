@@ -36,7 +36,7 @@ def main():
         sim_config
     )
     
-    model = PPO("MultiInputPolicy", rl_env, verbose=1)
+    model = PPO("MultiInputPolicy", rl_env, verbose=1, device='cuda:0')
     
     r = rl_interface._world_interface._rate
     
