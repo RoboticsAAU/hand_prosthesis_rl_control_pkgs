@@ -1,5 +1,4 @@
 import rospy
-import numpy as np
 import numpy.random as random
 import xml.etree.ElementTree as ET
 from stl import mesh
@@ -8,6 +7,7 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Dict, List, Any
 import rospkg
+from tqdm import tqdm
 
 class ObjectHandler():
     def __init__(self, object_config : Dict[str, Any]):
@@ -31,8 +31,8 @@ class ObjectHandler():
             raise ValueError("The object path is not a valid directory: "+str(object_dataset_path))
         
         # Load the objects into the objects variable
-        for category_folder in glob.glob(object_dataset_path + "/*"):
-            for object_folder in glob.glob(category_folder + "/*"):
+        for category_folder in tqdm(glob.glob(object_dataset_path + "/*"), desc="Loading objects"):
+            for object_folder in tqdm(glob.glob(category_folder + "/*"), leave=False):
                 # Load sdf string
                 path_sdf = glob.glob(object_folder + '/mesh_new.sdf')[0]
                 tree = ET.parse(path_sdf)
