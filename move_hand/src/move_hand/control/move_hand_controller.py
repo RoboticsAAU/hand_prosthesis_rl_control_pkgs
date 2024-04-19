@@ -57,7 +57,7 @@ class HandController:
         #TODO: z-offset should be a parameter in yaml
         start_pose = self._sample_start_pose(obj_center, 0.1)
         goal_pose = self._sample_goal_pose(obj_center, start_pose, obj_mesh, 0.05)
-                
+        
         # Plan trajectory with the given path planner and parameters
         if self._config["path_planner"] == "bezier":
             path_params = {
@@ -188,12 +188,6 @@ class HandController:
             
             # Return the intersection point and the triangle normal
             return True, intersection_point, triangle_normal
-        
-        # In the case that there is no intersection, select the closest vertex in the object to the start position
-        def select_closest_vertex(points, start_pose):
-            # Find the vertex that is closest to the start position
-            closest_vertex = min(points, key=lambda x: np.linalg.norm(x - start_pose[:3]))
-            return closest_vertex
 
 
         # Find all the triangles that the line between start position and object center intersects with 
@@ -216,10 +210,11 @@ class HandController:
             points = np.around(np.unique(triangles.reshape([triangles.size//3, 3]), axis=0), 4)
             
             # From the vertex closes to the start pose, select the goal position in the direction away from the object center through the selected vertex. 
-            selected_point = select_closest_vertex(points, start_pose)
+            selected_point = min(points, key=lambda x: np.linalg.norm(x - start_pose[:3]))
             
             # Compute the direction vector from the object center to the selected vertex. This will make the hand be oriented towards the center of the object.
-            direction_vector = (selected_point - obj_center)
+            direction_vector = selected_point - obj_center
+            direction_vector = direction_vector / np.linalg.norm(direction_vector)
         
         # Compute the goal position as some offset from the intersection point along the direction vector
         goal_position = selected_point + normal_dist * direction_vector
@@ -254,11 +249,10 @@ class HandController:
                     color='b', linestyle='-', linewidth=1, label='Line from Object Center to Start Position')
 
             # Plot all the surface normals
-            for normal, triangle in zip(triangle_normals, triangles):
-                ax.quiver(triangle[0,0], triangle[0,1], triangle[0,2],
-                    normal[0], normal[1], normal[2],
-                    length=0.05, color='c', normalize=True, label='Surface Normal')
-
+            # for normal, triangle in zip(triangle_normals, triangles):
+            #     ax.quiver(triangle[0,0], triangle[0,1], triangle[0,2],
+            #         normal[0], normal[1], normal[2],
+            #         length=0.05, color='c', normalize=True, label='Surface Normal')
 
             # Set axes limits
             lim = 0.2
@@ -272,9 +266,8 @@ class HandController:
             ax.set_zlabel('Z')
             plt.show()
         
-        
         # Uncomment if you need to plot it. Only works when running the script directly
-        # visualize(triangles, intersection_point, goal_position, triangle_normal)
+        #visualize(triangles, selected_point, goal_position, direction_vector)
         
         
         # Store the rotation matrix from the start pose
@@ -327,17 +320,19 @@ if __name__ == '__main__':
     import rospkg
     from time import time
     rospack = rospkg.RosPack()
-    stl_file = rospack.get_path('assets') + '/shapenet_sdf/category_3/obj_48/mesh.stl'
+    stl_file = rospack.get_path('assets') + '/shapenet_sdf/category_3/obj_28/mesh.stl'
     obj_mesh = mesh.Mesh.from_file(stl_file)
     obj_mesh.vectors = obj_mesh.vectors * 0.15
+    random.seed(0)
+    obj_center = np.array([2.0, 1.0, 0.0], dtype=np.float32)
     
-    # start_pose = hand_controller._sample_start_pose(np.array([0,0,0]), 0.1)
-    start_pose = np.array([1.33862776,1.44750272,0.24139338,0,0,0,1], dtype=np.float32)
-    start = time()
-    goal_pose = hand_controller._sample_goal_pose(np.array([9.98964016e-01,2.51447086e-05,4.28053344e-02], dtype=np.float32), start_pose,  obj_mesh)
-    
-    from move_hand.path_planners.path_visualiser import plot_path
-    
-    path = np.concatenate([start_pose.reshape(-1,1), goal_pose.reshape(-1,1)], axis=1)
-    plot_path(path)
+    for i in range(100):
+        start_pose = hand_controller._sample_start_pose(obj_center, 0.1)
+        # start_pose = np.array([1.33862776,1.44750272,0.24139338,0,0,0,1], dtype=np.float32)
+        goal_pose = hand_controller._sample_goal_pose(obj_center, start_pose, obj_mesh)
+        
+        from move_hand.path_planners.path_visualiser import plot_path
+        
+        path = np.concatenate([start_pose.reshape(-1,1), goal_pose.reshape(-1,1)], axis=1)
+        plot_path(path)
     
