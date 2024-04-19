@@ -148,15 +148,13 @@ class MiaHandWorldEnv(gym.Env):
         Fetch observations from the Mia Hand
         :return: observation
         """
-        rospy.logdebug("Start Get Observation ==>")
 
         observation = {
             "joints" : self._joints,
             "joints_vel" : self._joints_vel,
         }
         
-        rospy.logdebug("Observations==>"+str(observation))
-        rospy.logdebug("END Get Observation ==>")
+        rospy.logdebug("Observations: "+str(observation))
         return observation
         
 
