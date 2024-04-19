@@ -196,40 +196,33 @@ class HandController:
             return closest_vertex
 
 
-
         # Find all the triangles that the line between start position and object center intersects with 
         intersections = []
         for triangle, normal in zip(triangles,  triangle_normals):
-            if np.linalg.norm(normal) == 0:
-                rospy.logwarn("Length of normal vector is zero")
-                triangle_area = np.linalg.norm(np.cross(triangle[1] - triangle[0], triangle[2] - triangle[0])) / 2
-                rospy.logwarn("Triangle vectors: {}".format(triangle))
-                rospy.logwarn("Triangle area: {}".format(triangle_area))
-                continue
             intersection, intersection_point, triangle_normal = intersect_line_triangle(start_pose[:3], obj_center, triangle, normal)
             if intersection:
                 intersections.append((intersection_point, triangle_normal))
 
-
         # If there was no intersections registered, select the closest vertex in the object
-        if len(intersections) == 0:
-            rospy.loginfo("No intersections found, selecting closest vertex")
-            # The the verticies of the triangles and remove duplicates
-            points = np.around(np.unique(triangles.reshape([triangles.size//3, 3]), axis=0), 4)
-            # From the vertext closes to the start pose, select the goal position in the direction away from the object center through the selected vertex. 
-            selected_vertex = select_closest_vertex(points, start_pose)
-            # Compute the direction vector from the object center to the selected vertex. This will make the hand be oriented towards the center of the object.
-            direction_vector = (selected_vertex - obj_center)
-
-            # Compute the goal position as some offset from the selected vertex along the direction vector
-            goal_position = selected_vertex + normal_dist * (selected_vertex - obj_center)
-        else:
+        if len(intersections) > 0:
             # Find the intersection point that is closest to the start position
             intersection_point, triangle_normal = min(intersections, key=lambda x: np.linalg.norm(x[0] - start_pose[:3]))
-            # Compute the goal position as some orthogonal offset to the intersection point
-            goal_position = intersection_point + normal_dist * triangle_normal
 
-            direction_vector = triangle_normal
+            # Save the direction vector and the selected point
+            direction_vector, selected_point = triangle_normal, intersection_point
+        else:
+            rospy.logdebug("No intersections found, selecting closest vertex")
+            # Get the verticies of the triangles and remove duplicates
+            points = np.around(np.unique(triangles.reshape([triangles.size//3, 3]), axis=0), 4)
+            
+            # From the vertex closes to the start pose, select the goal position in the direction away from the object center through the selected vertex. 
+            selected_point = select_closest_vertex(points, start_pose)
+            
+            # Compute the direction vector from the object center to the selected vertex. This will make the hand be oriented towards the center of the object.
+            direction_vector = (selected_point - obj_center)
+        
+        # Compute the goal position as some offset from the intersection point along the direction vector
+        goal_position = selected_point + normal_dist * direction_vector
         
         def visualize(triangles, intersection_point, goal_position, surface_normal_vector):
             import matplotlib.pyplot as plt
