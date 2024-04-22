@@ -36,12 +36,12 @@ limits:
     thumb_opp_range: [-0.628, 0.000]
 
   joint_velocity:
-    index_range: [-1.0, 1.0]
-    little_range: [-1.0, 1.0]
-    mrl_range: [-1.0, 1.0]
-    ring_range: [-1.0, 1.0]
-    thumb_fle_range: [-1.0, 1.0]
-    thumb_opp_range: [-1.0, 1.0]
+    index_range: [-0.1, 0.1]
+    little_range: [-0.1, 0.1]
+    mrl_range: [-0.1, 0.1]
+    ring_range: [-0.1, 0.1]
+    thumb_fle_range: [-0.1, 0.1]
+    thumb_opp_range: [-0.1, 0.1]
 
 # General parameters
 general: 

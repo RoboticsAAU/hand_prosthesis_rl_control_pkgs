@@ -176,12 +176,12 @@ class MiaHandWorldEnv(gym.Env):
             return self._end_episode_points
         
         # Obtain the shortest distance between finger and object
+        # TODO: Either downssample finger pointclouds or use TF transform to get finger object distance
         finger_object_dist = np.min(self._finger_object_dist)
         finger_object_dist = np.clip(finger_object_dist, 0.03, 0.8)
         
         # Obtain the combined joint velocity
-        clipped_vel = np.clip(observation["joints_vel"], self._obs_vel_lb, self._obs_vel_ub)
-        combined_joint_vel = np.sum(np.abs(clipped_vel))
+        combined_joint_vel = np.sum(np.abs(observation["joints_vel"]))
         
         # Check if at least three fingers are in contact with object
         fingers_in_contact = np.sum(self._finger_object_dist < 0.03)
