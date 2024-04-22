@@ -10,6 +10,7 @@
     <xacro:arg name="robotNamespace" default="mia_hand_camera"/> <!-- /mia_hand_camera -->
     <xacro:arg name="camera_name" default="camera" />
     <xacro:arg name="camera_topic_ns" default="camera" />
+    <xacro:arg name="wrist_rotation" default="true" />
 
 
 
@@ -83,17 +84,52 @@
     <!-- base_link to palm transform-->
     <link name="base_link"/>
 
+    <xacro:if value="$(arg wrist_rotation)">
+        <link name="forearm_link"/>
+        <!-- Motions for a right hand: -->
+        <!-- Pronation (inwards so the palm is down) /suppination (palm up) = Rotation -->
+        <joint name="j_wrist_rotation" type="revolute">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <parent link="forearm_link"/>
+            <child link="rot_to_exfle_link"/>
+        </joint>
+        <link name="rot_to_exfle_link" />
+
+        <!-- Extension (up) / flexion (down) = up/down  -->
+        <joint name="j_wrist_exfle" type="revolute">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <parent link="rot_to_exfle_link"/>
+            <child link="exfle_to_ulra_link"/>
+        </joint>
+        <link name="exfle_to_ulra_link" />
+        
+        <!-- Ulnar (outwards) / Radial (inwards)-->
+        <joint name="j_wrist_ulra" type="revolute">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <parent link="exfle_to_ulra_link"/>
+            <child link="wrist_link"/>
+        </joint>
+        
+        <link name="wrist_link" />
+        
+    </xacro:if>
+    <xacro:unless value="$(arg wrist_rotation)">
+        <link name="wrist_link" />
+
+    </xacro:unless>
+    
+
     <xacro:if value="$(arg right_hand)">
         <joint name="j_palm" type="fixed">
         <origin xyz="0 0 0" rpy="0 0 0"/> <!-- origin xyz="0 0 1" rpy="1.57 0 0""/ -->
-        <parent link="base_link"/>
+        <parent link="wrist_link"/>
         <child link="palm"/>
         </joint>
     </xacro:if>
     <xacro:unless value="$(arg right_hand)">
         <joint name="j_palm" type="fixed">
         <origin xyz="0 0 0" rpy="0 0 0"/> <!-- origin xyz="0 0 1" rpy="1.57 3.14 0""/ -->
-        <parent link="base_link"/>
+        <parent link="wrist_link"/>
         <child link="palm"/>
         </joint> 
     </xacro:unless>
