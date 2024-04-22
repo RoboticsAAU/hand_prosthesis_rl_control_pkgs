@@ -120,6 +120,7 @@ class MiaHandWorldEnv(gym.Env):
         self._joints_vel = self._rl_interface.rl_data["hand_data"]["joints_vel"]
         self._pc_cam_handler.pc[0] = self._rl_interface.rl_data["hand_data"]["point_cloud"]
         self._object_pose = self._rl_interface.rl_data["obj_data"]
+        self._contacts = self._rl_interface.rl_data["hand_data"]["contacts"]
     
     # Methods needed by the TrainingEnvironment
     def _init_env_variables(self):

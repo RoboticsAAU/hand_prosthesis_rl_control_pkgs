@@ -53,7 +53,8 @@ class MiaHandSetup(HandSetup):
                 "joints_pos": self.joints_pos,
                 "joints_vel": self.joints_vel,
                 "joints_effort": self.joints_effort,
-                "point_cloud": self.point_cloud
+                "point_cloud": self.point_cloud,
+                "contacts": self._get_hand_contact()
             }
         }
         return subscriber_data
