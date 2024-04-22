@@ -9,6 +9,7 @@
     <!-- Launch Mia RL environment bringup -->
     <include file="$(find sim_world)/launch/mia_hand_env_bringup.launch">
         <arg name="robotNamespace"              value="$(arg robot_namespace)"/>
+        <arg name="wrist_rotation"              value="true"/>
     </include>
     
     <!-- Launch gazebo contact republisher -->

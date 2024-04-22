@@ -12,6 +12,7 @@
      <arg name="robotNamespace" default="mia_hand"/> <!-- /mia_hand_camera -->
      <arg name="load_default_mia_model" default="false" />
      <arg name="right_hand" default="true" doc="True to for right hand False otherwise" /> <!-- Params to set right or left Mia hand version  -->
+     <arg name="wrist_rotation" default="true" doc="True to add wrist rotation to the hand" /> <!-- Params to set rotation of the wrist of the Mia hand  -->
      <arg name="joint_limits_config_filename" default="joint_limits.yaml" doc="name of the yaml file to calibrate joints limit of URDF file" />
      <arg name="transmission_config_filename" default="transmission_config.yaml" doc="name of the yaml file to calibrate transmissions of MiaHand" />
 
@@ -65,7 +66,9 @@
                joint_limits_config_filename:=$(arg joint_limits_config_filename)
                hw_interface_thumb_fle:=$(arg hw_interface_thumb_fle)
                hw_interface_index_fle:=$(arg hw_interface_index_fle)
-               hw_interface_mrl_fle:=$(arg hw_interface_mrl_fle)"
+               hw_interface_mrl_fle:=$(arg hw_interface_mrl_fle)
+               wrist_rotation:=$(arg wrist_rotation)"
+               
           />
 
           <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
