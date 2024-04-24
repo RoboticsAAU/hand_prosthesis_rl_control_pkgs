@@ -28,7 +28,7 @@ class GazeboConnection():
         self.reset_world_or_sim = reset_world_or_sim
         self.init_values()
         # We always pause the simulation, important for legged robots learning
-        self.pauseSim()
+        # self.pauseSim()
 
     def pauseSim(self):
         rospy.logdebug("PAUSING START")

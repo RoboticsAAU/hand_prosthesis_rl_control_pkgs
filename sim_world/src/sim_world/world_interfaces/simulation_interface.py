@@ -1,17 +1,17 @@
-# !/usr/bin/env python
-
 import rospy
+import numpy as np
 from gazebo_msgs.msg import ModelState, ModelStates
 from geometry_msgs.msg import Pose, Twist, Point, Quaternion, Vector3
 from gazebo_msgs.srv import SpawnModel, DeleteModel
-import numpy as np
+from controller_manager_msgs.srv import LoadController
 from typing import Union, Dict, List, Type
 
-# Utils
 from move_hand.utils.ros_helper_functions import _is_connected, wait_for_connection
 from move_hand.utils.move_helper_functions import next_pose, convert_pose, convert_velocity
 from sim_world.world_interfaces.world_interface import WorldInterface
 from rl_env.setup.hand.hand_setup import HandSetup
+from rl_env.gazebo.gazebo_connection import GazeboConnection
+from rl_env.gazebo.controllers_connection import ControllersConnection
 
 class SimulationInterface(WorldInterface):
     def __init__(self, hand_setup : Type[HandSetup]):
@@ -20,13 +20,25 @@ class SimulationInterface(WorldInterface):
         # Initialize the parent class
         super(SimulationInterface, self).__init__(hand_setup)
         
-        # Initialise empty set fpr object names
+        # Initialise empty set for object names
         self._spawned_obj_names = set()
 
         # Model state publisher and subscriber
         self._pub_state = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=10)
         self._sub_state = rospy.Subscriber('/gazebo/model_states', ModelStates, self._state_callback, buff_size=1000)
 
+        # Storing the urdf of the hand
+        self._hand_urdf = rospy.get_param("~/robot_description")
+        
+        # Gazebo connection for pausing/unpausing, configuring physics, etc. 
+        self._gazebo_connection = GazeboConnection(False, "NO_RESET_SIM")
+        
+        # Defining the list of controllers to connect to
+        self._controller_list = [topic.split("/")[1] for topic in self.hand._topic_config["publications"].values()]
+        self._controller_list.append("joint_state_controller") # Since this is not specified in the params file
+        rospy.loginfo("Controllers list: " + str(self._controller_list))
+        self._controllers_connection = ControllersConnection(namespace=self.hand.name, controllers_list=self._controller_list)
+        
         # Set the rate of the controller.
         self.hz = 1000
         self._rate = rospy.Rate(self.hz)  # 1000hz
@@ -38,7 +50,9 @@ class SimulationInterface(WorldInterface):
         rospy.wait_for_service('/gazebo/spawn_sdf_model')
         rospy.wait_for_service('/gazebo/delete_model')
         self._spawn_model = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
+        self._spawn_urdf_model = rospy.ServiceProxy('/gazebo/spawn_urdf_model', SpawnModel)
         self._delete_model = rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)
+        self._load_controller = rospy.ServiceProxy(self.hand.name + '/controller_manager/load_controller', LoadController)
         
         # Initialize variables for saving state information
         self._model_states = ModelStates()
@@ -66,6 +80,7 @@ class SimulationInterface(WorldInterface):
     def set_pose(self, model_name : str, pose: Union[Pose, np.ndarray], reference_frame: str = 'world'):
         """ Set the pose of the hand to the given position and orientation. Orientation is given in quaternions. """
         try:
+            pose = convert_pose(pose)
             self._publish_pose(model_name, pose, reference_frame)
         except Exception as e:
             rospy.logwarn("Failed to set position because: ", e)
@@ -77,6 +92,38 @@ class SimulationInterface(WorldInterface):
         except Exception as e:
             rospy.logwarn("Failed to set velocity because: ", e)
 
+    def load_controllers(self, controller_names : List[str]):
+        """ Load the controllers for the hand. """
+        try:
+            
+            for controller_name in controller_names:
+                self._load_controller(controller_name)
+            rospy.loginfo(f"Controller {controller_names} loaded successfully.")
+        except Exception as e:
+            rospy.logerr("Failed to load controller because: ", e)
+            
+    def respawn_hand(self, pose : Union[Pose, np.ndarray]):
+        self.delete_urdf_model(self.hand.name)
+        self.spawn_urdf_model(
+            model_name = self.hand.name,
+            model_urdf = self._hand_urdf,
+            namespace = "/" + self.hand.name + "/",
+            pose = pose
+        )
+        self.load_controllers(self._controller_list)
+
+    def spawn_urdf_model(self, model_name : str, model_urdf: str, namespace : str, pose : Union[Pose, np.ndarray]):
+        """ Spawn the object in the gazebo world. """
+        # Call the service to spawn the object
+        try:
+            pose = convert_pose(pose)
+            
+            self._spawn_urdf_model(model_name, model_urdf, namespace, pose, "world")
+            rospy.loginfo(f"Model {model_name} spawned successfully.")
+            rospy.sleep(0.1)
+        except Exception as e:
+            rospy.logerr("Failed to spawn object because: ", e)
+    
     def spawn_object(self, model_name : str, model_sdf: str, pose: Union[Pose, np.ndarray]):
         """ Spawn the object in the gazebo world. """
         # Call the service to spawn the object
@@ -90,6 +137,15 @@ class SimulationInterface(WorldInterface):
         except Exception as e:
             rospy.logerr("Failed to spawn object because: ", e)
         
+    def delete_urdf_model(self, model_name: str):
+        """ Delete the object from the gazebo world. """
+        try:
+            self._delete_model(model_name)
+            rospy.loginfo(f"Model {model_name} deleted successfully.")
+            rospy.sleep(1)
+        except rospy.ServiceException as e:
+            rospy.logerr("Failed to delete object because: ", e)
+    
     def delete_object(self, model_name: str):
         """ Delete the object from the gazebo world. """
         try:

@@ -70,6 +70,7 @@ class HandSetup(ABC):
             while subscriber_data is None and not rospy.is_shutdown():
                 try:
                     subscriber_data = rospy.wait_for_message(subscriber_info['topic'], subscriber_info['message_type'], timeout=1.0)
+                    rospy.sleep(0.1)
                 except:
                     rospy.logerr_throttle_identical(5.0,f"Current {subscriber_info['topic']} not ready yet, retrying for getting {subscriber_info['message_type']}")
 

@@ -10,6 +10,7 @@ from pathlib import Path
 from functools import cached_property
 from typing import Dict, List, Any, Optional
 from geometry_msgs.msg import Pose
+from contact_republisher.msg import contact_msg
 
 from sim_world.rl_interface.rl_interface import RLInterface
 from rl_env.utils.tf_handler import TFHandler
@@ -88,7 +89,7 @@ class MiaHandWorldEnv(gym.Env):
         self._finger_object_dist = np.zeros(3)
         
     
-    def step(self, action):
+    def step(self, action):     
         done = self._rl_interface.step(action)
         self.update()
         obs = self._get_obs()
@@ -97,20 +98,37 @@ class MiaHandWorldEnv(gym.Env):
         
         return obs, reward, done, False, info
     
+    
     def reset(self, seed=None):
         super().reset(seed=seed)
         
-        rospy.logdebug("Reseting MiaHandWorldEnv")
+        rospy.logdebug("Resetting MiaHandWorldEnv")
         self._init_env_variables()
+        if self._joints is not None and np.any(np.logical_or(self._joints < self._obs_pos_lb - 0.1, self._obs_pos_ub + 0.1 < self._joints)):
+            rospy.logwarn(f"Joint positions out of bounds:\n {self._joints}")
+            rospy.logwarn("Resetting hand model")   
+            self._reset_hand()
         self._rl_interface.update_context()
         self._rl_interface._world_interface.hand.set_finger_pos(self._obs_pos_lb)
                     
         self.update()
         obs = self._get_obs()
         info = {}
-        rospy.logdebug("END Reseting MiaHandWorldEnv")
+        rospy.logdebug("END Resetting MiaHandWorldEnv")
         
         return obs, info
+    
+    
+    def _reset_hand(self):
+        """Resets the hand completely. This is used when the hand becomes unstable due to exceeded joint bounds.
+        """
+        rospy.logdebug("RESET HAND START")
+        self._rl_interface._world_interface._controllers_connection.reset_controllers()
+        self._rl_interface._world_interface.check_system_ready()
+        self._rl_interface._world_interface.respawn_hand(self._rl_interface.default_pose)
+        self._rl_interface._world_interface._controllers_connection.reset_controllers()
+        self._rl_interface._world_interface.check_system_ready()
+        rospy.logdebug("RESET HAND END")
     
     
     def update(self):
@@ -123,6 +141,9 @@ class MiaHandWorldEnv(gym.Env):
         self._pc_cam_handler.pc[0] = self._rl_interface.rl_data["hand_data"]["point_cloud"]
         self._object_pose = self._rl_interface.rl_data["obj_data"]
         self._contacts = self._rl_interface.rl_data["hand_data"]["contacts"]
+        # if len(self._contacts.contacts) != 0:
+        #     rospy.logwarn(str(self._contacts) + "\n\n")
+        
     
     # Methods needed by the TrainingEnvironment
     def _init_env_variables(self):
@@ -159,13 +180,6 @@ class MiaHandWorldEnv(gym.Env):
         
         rospy.logdebug("Observations: "+str(observation))
         return observation
-        
-
-    # def _is_done(self, observation):
-    #     # Terminate episode if the object has been lifted
-    #     # if self._object_pose.position.z > OBJECT_LIFT_LOWER_LIMIT:
-    #     #     self._episode_done = True
-    #     return self._episode_done
 
 
     def _compute_reward(self, observation, done):
@@ -178,7 +192,7 @@ class MiaHandWorldEnv(gym.Env):
             return self._end_episode_points
         
         # Obtain the shortest distance between finger and object
-        # TODO: Either downssample finger pointclouds or use TF transform to get finger object distance
+        # TODO: Either downsample finger pointclouds or use TF transform to get finger object distance
         finger_object_dist = np.min(self._finger_object_dist)
         finger_object_dist = np.clip(finger_object_dist, 0.03, 0.8)
         
@@ -190,6 +204,7 @@ class MiaHandWorldEnv(gym.Env):
         
         # Reward for energy expenditure (based on distance to object)
         reward = -(finger_object_dist * combined_joint_vel) * 0.01
+        
         if fingers_in_contact >= 2:
             # Reward for contact
             reward += 0.5 * fingers_in_contact
