@@ -45,6 +45,7 @@ def convert_pose(pose : Union[np.array, Pose]) -> Pose:
     else:
         return pose
 
+
 def convert_velocity(velocity : Union[np.array, Twist]) -> Twist:
     """
     Function to convert a np.array velocity to a geometry_msg.msg.Twist.

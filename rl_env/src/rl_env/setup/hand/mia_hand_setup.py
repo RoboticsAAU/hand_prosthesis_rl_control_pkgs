@@ -4,9 +4,10 @@ import numpy as np
 from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState, PointCloud2
 from gazebo_msgs.srv import SetModelConfiguration
-from rl_env.setup.hand.hand_setup import HandSetup
-import rl_env.utils.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
 from typing import Dict, List, Any
+
+import rl_env.utils.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
+from rl_env.setup.hand.hand_setup import HandSetup
 
 class MiaHandSetup(HandSetup):
     def __init__(self, topics: Dict[str, Dict], general: Dict[str, Any]):
