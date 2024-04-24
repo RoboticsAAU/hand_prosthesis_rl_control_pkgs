@@ -2,8 +2,8 @@ import rospy
 import yaml
 import numpy as np
 from std_msgs.msg import Float64
-from sensor_msgs.msg import JointState
-from sensor_msgs.msg import PointCloud2
+from sensor_msgs.msg import JointState, PointCloud2
+from gazebo_msgs.srv import SetModelConfiguration
 from rl_env.setup.hand.hand_setup import HandSetup
 import rl_env.utils.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
 from typing import Dict, List, Any
@@ -26,6 +26,7 @@ class MiaHandSetup(HandSetup):
         self._thumb_controller_pub = rospy.Publisher(self._name + self._topic_config["publications"]["thumb_controller_topic"], Float64, queue_size=1)
         self._index_controller_pub = rospy.Publisher(self._name + self._topic_config["publications"]["index_controller_topic"], Float64, queue_size=1)
         self._mrl_controller_pub = rospy.Publisher(self._name + self._topic_config["publications"]["mrl_controller_topic"], Float64, queue_size=1)
+        self._set_configuration_srv = rospy.ServiceProxy("/gazebo/set_model_configuration", SetModelConfiguration)
         
         # Initialise the subscribed data variables
         self.joints_pos = [Float64()]
@@ -76,6 +77,23 @@ class MiaHandSetup(HandSetup):
         else:
             raise ValueError("The finger_id specified is not valid")
     
+    def set_finger_pos(self, pos : np.array) -> None:
+        """
+        It will move the fingers to a given position.
+        :param pos: Positions in the positive axis of the fingers
+        """
+        # Before finger position can be set, effort must be set to zero
+        for index, finger_id in enumerate(["index", "mrl", "thumb"]):
+            self.set_finger_vel(0.0, finger_id)
+        
+        self._set_configuration_srv(
+            model_name=self._name,
+            urdf_param_name="mia_hand_description",
+            joint_names=self._general_config["joint_names"],
+            joint_positions=pos
+        )
+    
+        
     def set_action(self, vels : np.array) -> None:
         """
         It will move the fingers based on the velocities given.

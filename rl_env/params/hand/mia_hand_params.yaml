@@ -45,4 +45,5 @@ limits:
 
 # General parameters
 general: 
+  joint_names: ["j_index_fle", "j_little_fle", "j_mrl_fle", "j_ring_fle", "j_thumb_fle", "j_thumb_opp"]
   right_hand: true

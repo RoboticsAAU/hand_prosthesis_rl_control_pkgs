@@ -103,6 +103,8 @@ class MiaHandWorldEnv(gym.Env):
         rospy.logdebug("Reseting MiaHandWorldEnv")
         self._init_env_variables()
         self._rl_interface.update_context()
+        self._rl_interface._world_interface.hand.set_finger_pos(self._obs_pos_lb)
+                    
         self.update()
         obs = self._get_obs()
         info = {}
