@@ -1,0 +1,12 @@
+# Joint limits of the wrist revolute joints
+
+joint_limits:
+  j_wrist_rotation:
+    min_position: -1.57079632679
+    max_position: 1.57079632679
+  j_wrist_exfle:
+    min_position: -1.57079632679
+    max_position: 1.57079632679
+  j_wrist_ulra:
+    min_position: -1.57079632679
+    max_position: 1.57079632679
