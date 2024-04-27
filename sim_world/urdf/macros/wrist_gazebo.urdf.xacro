@@ -21,11 +21,11 @@
     Add transmission for every not fixed joint ////
    ////////////////////////////////////////////////////-->
 
-  <xacro:include filename="$(find sim_world)/urdf/macros/joint_transmission_wrist.xacro" />
+  <xacro:include filename="$(find sim_world)/urdf/macros/joint_wrist.transmission.xacro" />
 
-  <xacro:joint_transmission_wrist_macro joint_name="j_wrist_rotation"   trans_type="transmission_interface/SimpleTransmission"  hw_interface="${hw_interface_wrist_rotation}"/> <!-- Fake transmission-->
-  <xacro:joint_transmission_wrist_macro joint_name="j_wrist_exfle"  	trans_type="transmission_interface/SimpleTransmission"  hw_interface="${hw_interface_wrist_exfle}"/>
-  <xacro:joint_transmission_wrist_macro joint_name="j_wrist_ulra" 	    trans_type="transmission_interface/SimpleTransmission"  hw_interface="${hw_interface_wrist_ulra}"/>
+  <xacro:joint_wrist_transmission_macro joint_name="j_wrist_rotation"   trans_type="transmission_interface/SimpleTransmission"  hw_interface="${hw_interface_wrist_rotation}"/> <!-- Fake transmission-->
+  <xacro:joint_wrist_transmission_macro joint_name="j_wrist_exfle"  	trans_type="transmission_interface/SimpleTransmission"  hw_interface="${hw_interface_wrist_exfle}"/>
+  <xacro:joint_wrist_transmission_macro joint_name="j_wrist_ulra" 	    trans_type="transmission_interface/SimpleTransmission"  hw_interface="${hw_interface_wrist_ulra}"/>
 
   <!-- ros_control plugin -->
   <xacro:if value="${LoadGZPlugin}">
@@ -120,29 +120,17 @@
 
 
   <!-- Might need these: -->
-  <!-- <gazebo reference="j_index_fle">
+  <gazebo reference="j_wrist_rotation">
     <implicitSpringDamper>1</implicitSpringDamper>
   </gazebo>
 
-  <gazebo reference="j_little_fle">
+  <gazebo reference="j_wrist_exfle">
     <implicitSpringDamper>1</implicitSpringDamper>
   </gazebo>
 
-  <gazebo reference="j_mrl_fle">
+  <gazebo reference="j_wrist_ulra">
     <implicitSpringDamper>1</implicitSpringDamper>
   </gazebo>
-
-  <gazebo reference="j_ring_fle">
-    <implicitSpringDamper>1</implicitSpringDamper>
-  </gazebo>
-
-  <gazebo reference="j_thumb_fle">
-    <implicitSpringDamper>1</implicitSpringDamper>
-  </gazebo>
-
-  <gazebo reference="j_thumb_opp">
-    <implicitSpringDamper>1</implicitSpringDamper>
-  </gazebo> -->
 
 </xacro:macro>
 </robot>

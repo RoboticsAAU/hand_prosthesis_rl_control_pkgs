@@ -1,4 +1,4 @@
----
+
 #---------------------------------------------------------------------
 # Controllers v1.1
 #---------------------------------------------------------------------
@@ -7,10 +7,10 @@
 # Publish all joint states -----------------------------------
 #---------------------------------------------------------------------
 
-joint_state_controller:
-  type: joint_state_controller/JointStateController
-  publish_rate: 50
-  pid: { p: 100.0, i: 0.01, d: 3.0 }
+# joint_state_controller:
+#   type: joint_state_controller/JointStateController
+#   publish_rate: 50
+#   pid: { p: 100.0, i: 0.01, d: 3.0 }
 
 #---------------------------------------------------------------------
 # Effort- Controllers ---------------------------------------
@@ -47,7 +47,7 @@ j_wrist_rotation_eff_position_controller:
 
 j_wrist_exfle_eff_position_controller:
   type: effort_controllers/JointPositionController
-  joint: j_thumb_fle
+  joint: j_wrist_exfle
   pid:
     d: 0.005
     i: 0.001
@@ -58,7 +58,7 @@ j_wrist_exfle_eff_position_controller:
     max_force: 3.0
 j_wrist_ulra_eff_position_controller:
   type: effort_controllers/JointPositionController
-  joint: j_index_fle
+  joint: j_wrist_ulra
   pid:
     d: 0.005
     i: 0.1

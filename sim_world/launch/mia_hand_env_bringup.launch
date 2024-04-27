@@ -15,7 +15,6 @@
      <arg name="wrist_rotation" default="true" doc="True to add wrist rotation to the hand" /> <!-- Params to set rotation of the wrist of the Mia hand  -->
      <arg name="joint_limits_config_filename" default="joint_limits.yaml" doc="name of the yaml file to calibrate joints limit of URDF file" />
      <arg name="transmission_config_filename" default="transmission_config.yaml" doc="name of the yaml file to calibrate transmissions of MiaHand" />
-     <arg name="wrist_transmission_config_filename" default="transmission_config_wrist.yaml" doc="name of the yaml file to calibrate transmissions of MiaHand" />
 
 
      <!-- Arguments to upload hardware interface and controllers of each finger -->
@@ -27,11 +26,11 @@
      <arg name="hw_interface_mrl_fle" default="EffortJointInterface"
           doc="type of hardware interface for mrl flexion. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
      <!-- Wrist interfaces: -->
-     <arg name="hw_interface_wrist_rotation" default="PositionJointInterface"
+     <arg name="hw_interface_wrist_rotation" default="EffortJointInterface"
           doc="type of hardware interface for wrist rotation. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
-     <arg name="hw_interface_wrist_exfle" default="PositionJointInterface"
+     <arg name="hw_interface_wrist_exfle" default="EffortJointInterface"
           doc="type of hardware interface for wrist extension and flexion. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
-     <arg name="hw_interface_wrist_ulra" default="PositionJointInterface"
+     <arg name="hw_interface_wrist_ulra" default="EffortJointInterface"
           doc="type of hardware interface for wrist ulnar and radial motion. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
 
      <arg name="controller_thumb_fle" default="eff"
@@ -41,11 +40,11 @@
      <arg name="controller_mrl_fle"   default="eff"
           doc="type of controller for mrl fingers flexion. Values: position, velocity, eff, eff_position,(eff_velocity has not been tuned)"/>
      <!-- Wrist Controller types -->
-     <arg name="controller_wrist_rotation" default="position"
+     <arg name="controller_wrist_rotation" default="eff"
           doc="type of controller for wrist rotation. Values: position, velocity, eff, eff_position, (eff_velocity has not been tuned)"/>
-     <arg name="controller_wrist_exfle" default="position"
+     <arg name="controller_wrist_exfle" default="eff"
           doc="type of controller for wrist flexion and extension. Values: position,velocity,eff, eff_position, (eff_velocity has not been tuned)"/>
-     <arg name="controller_wrist_ulra"   default="position"
+     <arg name="controller_wrist_ulra"   default="eff"
           doc="type of controller for ulnar and radial motion. Values: position, velocity, eff, eff_position,(eff_velocity has not been tuned)"/>
 
      <!-- Gazebo empty_world.launch -->
@@ -71,7 +70,6 @@
           
           <arg name="joint_limits_config_filename" default="joint_limits.yaml" doc="name of the yaml file to calibrate joints limit of URDF file" />
           <arg name="transmission_config_filename" default="transmission_config.yaml" doc="name of the yaml file to calibrate transmissions of MiaHand" />
-          <arg name="wrist_transmission_config_filename" default="transmission_config_wrist.yaml" doc="name of the yaml file that contains the transmission configuration of the wrist" />
      </include>
 
      <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
@@ -96,9 +94,7 @@
           
           <!-- Load the path of the config file of the MIA trasnsmission -->
           <param name="mia_transmissions_config_" type="string" value="$(find mia_hand_description)/calibration/transmission_config.yaml " />
-          <param name="mia_wrist_transmissions_config_" type="string" value="$(find sim_world)/urdf/calibration/$(arg wrist_transmission_config_filename)" />
           
-
           <!-- Load joint controller configurations from YAML file to parameter server -->
           <rosparam file="$(find mia_hand_gazebo)/config/mia_hand_controllers.yaml" command="load"/>
           <rosparam file="$(find mia_hand_gazebo)/config/gazebo_pid_thumb_opp.yaml" command="load"/>
