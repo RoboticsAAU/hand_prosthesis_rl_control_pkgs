@@ -10,7 +10,7 @@ from pathlib import Path
 from functools import cached_property
 from typing import Dict, List, Any, Optional
 from geometry_msgs.msg import Pose
-from contact_republisher.msg import contact_msg
+from contact_republisher.msg import contacts_msg
 
 from sim_world.rl_interface.rl_interface import RLInterface
 from rl_env.utils.tf_handler import TFHandler
@@ -52,6 +52,36 @@ class MiaHandWorldEnv(gym.Env):
         self._config_general = hand_config["general"]
         self._config_limits = hand_config["limits"]
         self._rl_config = rl_config
+        self.force_config = {
+            "index_fle": {
+                # "range" is the accepted force angle about y-axis of each finger frame. 
+                "range": tuple(np.deg2rad([-70, 70])),
+                # "rotation" is the SO3 rotation from desired finger frame (x-axis pointing out from dorsal) to actual finger frame
+                "rotation": np.eye(3)
+            },
+            "middle_fle": {
+                "range": tuple(np.deg2rad([-70, 70])),
+                "rotation": np.eye(3)
+            },
+            "ring_fle": {
+                "range": tuple(np.deg2rad([-70, 70])),
+                "rotation": np.eye(3)
+            },
+            "little_fle": {
+                "range": tuple(np.deg2rad([-70, 70])),
+                "rotation": np.eye(3)
+            },
+            "thumb_fle": {
+                "range": tuple(np.deg2rad([-70, 70])),
+                "rotation": np.eye(3)
+            },
+            "base_link": {
+                "range": tuple(np.deg2rad([-90, 90])),
+                "rotation": np.array([[0,1,0],
+                                      [0,0,-1],
+                                      [-1,0,0]], dtype=np.float64)
+            }
+        }
         self._imagined_groups = {}
         
         # Bounds for joint positions in observation space
@@ -76,8 +106,9 @@ class MiaHandWorldEnv(gym.Env):
         self._joints_vel = None
         self._pc_cam_handler.pc.append(o3d.geometry.PointCloud())
         self._object_pose = Pose()
-        
-        self.setup_imagination(["1.001.stl", "UR_flange.stl"])
+        self._contacts = []
+                
+        self.setup_imagination(stl_ignores=["1.001.stl", "UR_flange.stl"])
         
         # Print the spaces
         rospy.logdebug("ACTION SPACES TYPE===>"+str(self.action_space))
@@ -95,6 +126,10 @@ class MiaHandWorldEnv(gym.Env):
         obs = self._get_obs()
         info = {}
         reward = self._compute_reward(obs, done)
+        self._cumulated_steps += 1
+
+        if self._contacts.contacts:        
+            rospy.logwarn("Is palmar: " + str(self.check_contact(self._contacts)))            
         
         return obs, reward, done, False, info
     
@@ -385,3 +420,51 @@ class MiaHandWorldEnv(gym.Env):
 
         # Update the overall hand point cloud based on the updated group point clouds
         self._pc_imagine_handler.update_hand(self._config_imagined["num_points"])
+    
+    
+    def check_contact(self, contacts : contacts_msg) -> bool:
+        """ 
+        Checks whether the contact is palmar (i.e. all contact point normals point inwards.)
+        param contacts: The contacts message.
+        return: True if all contacts are valid, False otherwise.
+        """
+        
+        # TODO: Implement 3-finger check
+        
+        # Container of contact checks
+        in_bound = []
+        
+        for contact in contacts.contacts:
+            
+            # Early continue if the contact is with the ground plane or if force vector is zero (spurious contact)
+            if "ground_plane" in (contact.collision_1 + contact.collision_2) or np.all(np.isclose(contact.forces, 0, atol=1e-6)):
+                continue
+            
+            # Store force
+            force = np.array(contact.forces)
+            
+            # Get name of link in contact and the corresponding force. 
+            if self._rl_interface._world_interface.hand.name in contact.collision_1:
+                link_name = contact.collision_1.split("::")[1]
+                finger_force = force
+            else:
+                link_name = contact.collision_2.split("::")[1]
+                # Since contact republisher only publishes forces for first contact, we might have to flip the force vector.
+                # This is because net force must be zero, so force acting on the other object is directly opposing.
+                finger_force = -force
+            
+            # Early continue if collision object is not of relevance 
+            if link_name not in list(self.force_config.keys()):
+                continue
+            
+            finger_force = self.force_config[link_name]["rotation"] @ finger_force
+            
+            # Check if the force vector is pointing out of the hand and within the bounds (indicating palmar contact)
+            lower_bound, upper_bound = self.force_config[link_name]["range"]
+            y_rot = np.arctan2(finger_force[2], finger_force[0])
+            in_bound.append((lower_bound < y_rot) and (y_rot < upper_bound)) 
+               
+        # Return true if all hand contacts are palmar for a non-empty list. If list is empty we always return false.
+        return all(in_bound) if in_bound else False
+        
+            

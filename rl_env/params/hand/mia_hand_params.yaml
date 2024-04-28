@@ -44,6 +44,7 @@ limits:
     thumb_opp_range: [-0.1, 0.1]
 
 # General parameters
-general: 
+general:
+  # TODO: Use urdf_handler instead of joint_names
   joint_names: ["j_index_fle", "j_little_fle", "j_mrl_fle", "j_ring_fle", "j_thumb_fle", "j_thumb_opp"]
   right_hand: true
