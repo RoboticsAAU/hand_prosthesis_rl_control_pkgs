@@ -116,7 +116,7 @@ class MiaHandWorldEnv(gym.Env):
         
         # TODO: Define these in setup
         self._end_episode_points = 0.0
-        self._cumulated_steps = 0.0
+        self._cumulated_steps = 0
         self._finger_object_dist = np.zeros(3)
         
     
@@ -176,8 +176,6 @@ class MiaHandWorldEnv(gym.Env):
         self._pc_cam_handler.pc[0] = self._rl_interface.rl_data["hand_data"]["point_cloud"]
         self._object_pose = self._rl_interface.rl_data["obj_data"]
         self._contacts = self._rl_interface.rl_data["hand_data"]["contacts"]
-        # if len(self._contacts.contacts) != 0:
-        #     rospy.logwarn(str(self._contacts) + "\n\n")
         
     
     # Methods needed by the TrainingEnvironment
@@ -239,6 +237,8 @@ class MiaHandWorldEnv(gym.Env):
         
         # Reward for energy expenditure (based on distance to object)
         reward = -(finger_object_dist * combined_joint_vel) * 0.01
+        
+        #TODO: Penalise hitting ground plane?
         
         if fingers_in_contact >= 2:
             # Reward for contact
@@ -457,11 +457,14 @@ class MiaHandWorldEnv(gym.Env):
             if link_name not in list(self.force_config.keys()):
                 continue
             
+            # Rotate force vector if the frame does not match the assumed frame 
             finger_force = self.force_config[link_name]["rotation"] @ finger_force
+            
+            # Compute angle of force vector w.r.t. x-axis in the xz-plane
+            y_rot = np.arctan2(finger_force[2], finger_force[0])
             
             # Check if the force vector is pointing out of the hand and within the bounds (indicating palmar contact)
             lower_bound, upper_bound = self.force_config[link_name]["range"]
-            y_rot = np.arctan2(finger_force[2], finger_force[0])
             in_bound.append((lower_bound < y_rot) and (y_rot < upper_bound)) 
                
         # Return true if all hand contacts are palmar for a non-empty list. If list is empty we always return false.
