@@ -134,4 +134,8 @@
 
   <node pkg="controller_manager" type="spawner" name="joint_state_controller_spawner" output="screen" ns="$(arg robotNamespace)" args="joint_state_controller" />
 
+  <!-- Launch gazebo contact republisher -->
+  <node name="contact_republisher" pkg="contact_republisher" type="contact_republisher_node" ns="$(arg robotNamespace)" args="--log_level=debug" />
+
+
 </launch>

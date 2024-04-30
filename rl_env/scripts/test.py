@@ -5,69 +5,42 @@ import numpy as np
 import rospkg
 import glob
 from pathlib import Path
-from rl_env.task_envs.mia_hand_task_env import MiaHandWorldEnv
-
+from contact_republisher.msg import contacts_msg
+import matplotlib.pyplot as plt
+from time import time
 
 def main():
+    
+    _contacts_data = []
+    timestamp = time()
+    
+    def _contact_callback(data : contacts_msg) -> None:
+        nonlocal timestamp, _contacts_data
+        val = 0
+        count = 0
+        for contact in data.contacts:
+            # Early continue if the contact is with the ground plane or if force vector is zero (spurious contact)
+            if ("ground_plane" in (contact.collision_1 + contact.collision_2)):
+                continue
+            
+            if (contact.collision_1 + contact.collision_2).count("thumb_fle") > 0:
+                val = 1
+        
+        _contacts_data.append(val)
+                
+        if time() - timestamp >= 1:
+            print("Saving figure...")
+            plt.scatter(range(len(_contacts_data)), _contacts_data, marker='.', s=0.1)
+            plt.savefig("contact_plot.png")
+            plt.close()
+            print("Contacts length: ", len(_contacts_data)) 
+            print("Contacts percentage: ", _contacts_data.count(1) / len(_contacts_data) * 100.0, "%")
+            timestamp = time()
+            _contacts_data.clear()
+    
+    rospy.Subscriber("mia_hand_sim" + "/contact", contacts_msg, _contact_callback)
+    rospy.spin()
 
-    def create_env():
-        # Get an instance of RosPack with the default search paths
-        rospack = rospkg.RosPack()
-        
-        # Get the stl files from the mia description package
-        ignore_files = ["1.001.stl", "UR_flange.stl"]
-        stl_folder = rospack.get_path('mia_hand_description') + "/meshes/stl"
-        stl_files = [file for file in glob.glob(stl_folder + "/*") if (Path(file).name not in ignore_files)]
-        
-        # Extract stl files for left and right hand respectively
-        stl_files_left, stl_files_right = [], []
-        for x in stl_files:
-            (stl_files_right, stl_files_left)["mirrored" in x].append(x)
-        
-        config_imagined = {"stl_files" : stl_files_right,
-                            "ref_frame" : "palm",
-                            "num_points" : 512}
-        
-        config_cameras = {
-            "realsense_d435": {
-                "point_cloud": {
-                    "ref_frame": "palm",
-                    "num_points": 512,
-                    "fov_x": 60,
-                    "fov_y": 60,
-                    "max_range": 1.5,
-                    "min_range": 0.5
-                }
-            }
-        }
-        
-        config = {"config_imagined" : config_imagined,
-                  "config_cameras" : config_cameras}
-        
-        env = MiaHandWorldEnv(config)
-        
-        # Setup camera and imagination
-        env.setup_imagination()
-        
-        return env
-    
-    mia_world_env = create_env()
-    
-    rospy.sleep(2)
-    
-    while not rospy.is_shutdown():
-        current_time = rospy.get_time()
-        
-        # Alternating between opening and closing hand
-        alternating_time = 5
-        if (int(current_time) % (2*alternating_time)) < alternating_time:
-            speed = 0.5
-        else:
-            speed = -0.5
-        mia_world_env.move_fingers(np.repeat(speed, 3))
-        rospy.sleep(0.1)
-        #mia_world_env.pc_imagine_handler.visualize(index=0)
-        mia_world_env.update_imagination()
 
 if __name__ == "__main__":
     rospy.init_node("mia_hand_rl_env")
