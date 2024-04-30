@@ -108,7 +108,7 @@
             <parent link="wrist_link"/>
             <child link="rot_link"/>
             <!-- <dynamics damping="0.0" friction="0.0"/> -->
-            <axis xyz="1.0 0.0 0.0"/>
+            <axis xyz="0.0 1.0 0.0"/>
         </joint>
         <link name="rot_link">
             <inertial>
@@ -125,7 +125,7 @@
             <parent link="rot_link"/>
             <child link="exfle_link"/>
             <!-- <dynamics damping="0.0" friction="0.0"/> -->
-            <axis xyz="0.0 1.0 0.0"/>
+            <axis xyz="1.0 0.0 0.0"/>
         </joint>
         <link name="exfle_link">
             <inertial>
