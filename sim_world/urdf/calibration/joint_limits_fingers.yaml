@@ -1,0 +1,22 @@
+# Joints Limits of hand MNS20
+#
+# Last modified: 28-Mar-2023
+joint_limits:
+  j_index_fle:
+    min_position: -1.177
+    max_position: 1.188
+  j_little_fle:
+    min_position: -1.177
+    max_position: 1.188
+  j_mrl_fle:
+    min_position: -0.120
+    max_position: 1.303
+  j_ring_fle:
+    min_position: -1.177
+    max_position: 1.188
+  j_thumb_fle:
+    min_position: 0.029
+    max_position: 1.313
+  j_thumb_opp:
+    min_position: -0.628
+    max_position: 0.000
