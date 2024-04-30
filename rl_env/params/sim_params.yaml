@@ -1,5 +1,5 @@
 # Random seed for the environment
-seed: 0
+seed: 75995
 
 
 move_hand:
@@ -16,5 +16,5 @@ objects:
   # Mode in which objects are selected each episode
   selection_mode: "sequential" # "random" or "sequential"
   # How many objects to train on
-  num_objects: 4
+  num_objects: 2
   inter_object_dist: 2.0
