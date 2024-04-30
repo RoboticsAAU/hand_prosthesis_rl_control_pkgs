@@ -129,6 +129,8 @@ class MiaHandSetup(HandSetup):
         It will move the fingers and wrist joints based on the velocities given.
         :param vels: Velocities in the positive axis of the fingers, and wrist velocities in both directions
         """
+        # TODO: Make this general (instead of specific to velocity) to work with effort also
+        
         # Fingers
         for index, finger_id in enumerate(["index", "mrl", "thumb"]):
             self.set_finger_vel(vels[index], finger_id)
@@ -155,5 +157,8 @@ class MiaHandSetup(HandSetup):
         return [
             self._thumb_controller_pub,
             self._index_controller_pub,
-            self._mrl_controller_pub
+            self._mrl_controller_pub,
+            self._wrist_rot_controller_pub,
+            self._wrist_exfle_controller_pub,
+            self._wrist_ulra_controller_pub
         ]
