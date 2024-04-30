@@ -16,10 +16,10 @@
     <node name="contact_republisher" pkg="contact_republisher" type="contact_republisher_node" ns="$(arg robot_namespace)" args="--log_level=debug" />
 
     <!-- Launch Mia RL node -->
-    <!-- <node name="mia_hand_rl" pkg="rl_env" type="main.py" output="screen">
+    <node name="mia_hand_rl" pkg="rl_env" type="main.py" output="screen">
         <param name="robot_namespace"           value="$(arg robot_namespace)" />
         <param name="hand_config_file"          value="$(arg hand_config_file)" />
         <param name="rl_config_file"            value="$(arg rl_config_file)" />
         <param name="sim_world_config_file"     value="$(arg sim_world_config_file)" />
-    </node> -->
+    </node>
 </launch>
