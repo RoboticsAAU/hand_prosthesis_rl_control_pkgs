@@ -4,15 +4,21 @@ import rospkg
 import numpy as np
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any
+from contact_republisher.msg import contacts_msg
 
 class HandSetup(ABC):
     def __init__(self):
         self._name = rospy.get_param('~robot_namespace', None)
         assert self._name is not None, rospy.logerr("Could not get robot namespace")
+        rospy.loginfo(self._name)
         
         self._config = {}
         self._hand_rotation = None
+        self._contacts_data = contacts_msg()
         self.rospack = rospkg.RosPack()
+        
+        # Starting ros subscriber to get contacts from contact_republisher_node
+        rospy.Subscriber(self._name + "/contact", contacts_msg, self._contact_callback)
     
     @abstractmethod
     def set_action(self, action: np.array) -> None:
@@ -24,7 +30,7 @@ class HandSetup(ABC):
     @abstractmethod
     def get_subscriber_data(self) -> Dict[str, Any]:
         """
-        Get all the subsriber data and return it in a dictionary.
+        Get all the subscriber data and return it in a dictionary.
         """
         pass
     
@@ -44,6 +50,18 @@ class HandSetup(ABC):
         """
         pass
     
+    def _get_hand_contact(self) -> contacts_msg:
+        
+        # Filter contact information to keep only relevant hand-related contacts, i.e. contact between the hand and ground_plane/world.
+        # We check if count is equal 1 to avoid collisions between hand and hand itself. 
+        hand_contacts = [contact for contact in self._contacts_data.contacts if (contact.collision_1 + contact.collision_2).count(self.name) == 1]
+
+        # Store the filtered contacts in a contacts_msg object
+        filt_contacts = contacts_msg()
+        filt_contacts.contacts.extend(hand_contacts)
+        
+        return filt_contacts        
+    
     def _check_all_sensors_ready(self) -> None:
         rospy.logdebug("START ALL SENSORS READY")
         
@@ -52,6 +70,7 @@ class HandSetup(ABC):
             while subscriber_data is None and not rospy.is_shutdown():
                 try:
                     subscriber_data = rospy.wait_for_message(subscriber_info['topic'], subscriber_info['message_type'], timeout=1.0)
+                    rospy.sleep(0.1)
                 except:
                     rospy.logerr_throttle_identical(5.0,f"Current {subscriber_info['topic']} not ready yet, retrying for getting {subscriber_info['message_type']}")
 
@@ -72,6 +91,9 @@ class HandSetup(ABC):
             rospy.logdebug(f"{publisher} Publisher Connected")
         
         rospy.loginfo("ALL PUBLISHERS CONNECTED")
+
+    def _contact_callback(self, data : contacts_msg) -> None:
+        self._contacts_data = data
 
     @property
     def name(self):

@@ -56,7 +56,7 @@ class HandController:
         # Obtain the start and goal pose
         #TODO: z-offset should be a parameter in yaml
         start_pose = self._sample_start_pose(obj_center, 0.1)
-        goal_pose = self._sample_goal_pose(obj_center, start_pose, obj_mesh, 0.05)
+        goal_pose = self._sample_goal_pose(obj_center, start_pose, obj_mesh, 0.1)
         
         # Plan trajectory with the given path planner and parameters
         if self._config["path_planner"] == "bezier":
@@ -76,6 +76,8 @@ class HandController:
             }
         
         self._pose_buffer = self._path_planner.plan_path(start_pose, goal_pose, path_params)
+        #TODO: Appending the last element N times to the buffer to make the hand stay at the goal pose
+        self._pose_buffer = np.append(self._pose_buffer, np.vstack([goal_pose] * 15).T, axis=1)
 
         #self._pose_buffer[3:,:] = start_pose[3:].repeat(self._pose_buffer.shape[1]).reshape(4, -1) 
         # path_visualiser.plot_path(self._pose_buffer)

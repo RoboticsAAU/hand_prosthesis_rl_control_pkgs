@@ -2,11 +2,12 @@ import rospy
 import yaml
 import numpy as np
 from std_msgs.msg import Float64
-from sensor_msgs.msg import JointState
-from sensor_msgs.msg import PointCloud2
-from rl_env.setup.hand.hand_setup import HandSetup
-import rl_env.utils.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
+from sensor_msgs.msg import JointState, PointCloud2
+from gazebo_msgs.srv import SetModelConfiguration
 from typing import Dict, List, Any
+
+import rl_env.utils.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
+from rl_env.setup.hand.hand_setup import HandSetup
 
 class MiaHandSetup(HandSetup):
     def __init__(self, topics: Dict[str, Dict], general: Dict[str, Any], wrist_limits: Dict[str, Any], finger_limits: Dict[str, Any]):
@@ -32,6 +33,9 @@ class MiaHandSetup(HandSetup):
         self._wrist_rot_controller_pub = rospy.Publisher(self._name + self._topic_config["publications"]["wrist_rot_controller_topic"], Float64, queue_size=1)
         self._wrist_exfle_controller_pub = rospy.Publisher(self._name + self._topic_config["publications"]["wrist_exfle_controller_topic"], Float64, queue_size=1)
         self._wrist_ulra_controller_pub = rospy.Publisher(self._name + self._topic_config["publications"]["wrist_ulra_controller_topic"], Float64, queue_size=1)
+
+        self._set_configuration_srv = rospy.ServiceProxy("/gazebo/set_model_configuration", SetModelConfiguration)
+
         
 
         # Initialise the subscribed data variables
@@ -60,7 +64,8 @@ class MiaHandSetup(HandSetup):
                 "joints_pos": self.joints_pos,
                 "joints_vel": self.joints_vel,
                 "joints_effort": self.joints_effort,
-                "point_cloud": self.point_cloud
+                "point_cloud": self.point_cloud,
+                "contacts": self._get_hand_contact()
             }
         }
         return subscriber_data
@@ -82,6 +87,7 @@ class MiaHandSetup(HandSetup):
         else:
             raise ValueError("The finger_id specified is not valid")
     
+
     def set_wrist_vel(self, vel: float, wrist_id: str) -> None:
         """
         It will move the wrist based on the velocity given.
@@ -100,6 +106,24 @@ class MiaHandSetup(HandSetup):
             raise ValueError("The wrist_id {} is not valid".format(wrist_id))
 
     
+
+    def set_finger_pos(self, pos : np.array) -> None:
+        """
+        It will move the fingers to a given position.
+        :param pos: Positions in the positive axis of the fingers
+        """
+        # Before finger position can be set, effort must be set to zero
+        for index, finger_id in enumerate(["index", "mrl", "thumb"]):
+            self.set_finger_vel(0.0, finger_id)
+        
+        self._set_configuration_srv(
+            model_name=self._name,
+            urdf_param_name="mia_hand_description",
+            joint_names=self._general_config["joint_names"],
+            joint_positions=pos
+        )
+    
+
     def set_action(self, vels : np.array) -> None:
         """
         It will move the fingers and wrist joints based on the velocities given.

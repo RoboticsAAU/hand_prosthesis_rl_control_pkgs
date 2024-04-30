@@ -10,6 +10,7 @@ from pathlib import Path
 from functools import cached_property
 from typing import Dict, List, Any, Optional
 from geometry_msgs.msg import Pose
+from contact_republisher.msg import contacts_msg
 
 from sim_world.rl_interface.rl_interface import RLInterface
 from rl_env.utils.tf_handler import TFHandler
@@ -53,6 +54,36 @@ class MiaHandWorldEnv(gym.Env):
         self._finger_limits = finger_limits["joint_limits"]
         self._config_limits = hand_config["limits"]
         self._rl_config = rl_config
+        self.force_config = {
+            "index_fle": {
+                # "range" is the accepted force angle about y-axis of each finger frame. 
+                "range": tuple(np.deg2rad([-70, 70])),
+                # "rotation" is the SO3 rotation from desired finger frame (x-axis pointing out from dorsal) to actual finger frame
+                "rotation": np.eye(3)
+            },
+            "middle_fle": {
+                "range": tuple(np.deg2rad([-70, 70])),
+                "rotation": np.eye(3)
+            },
+            "ring_fle": {
+                "range": tuple(np.deg2rad([-70, 70])),
+                "rotation": np.eye(3)
+            },
+            "little_fle": {
+                "range": tuple(np.deg2rad([-70, 70])),
+                "rotation": np.eye(3)
+            },
+            "thumb_fle": {
+                "range": tuple(np.deg2rad([-70, 70])),
+                "rotation": np.eye(3)
+            },
+            "base_link": {
+                "range": tuple(np.deg2rad([-90, 90])),
+                "rotation": np.array([[0,1,0],
+                                      [0,0,-1],
+                                      [-1,0,0]], dtype=np.float64)
+            }
+        }
         self._imagined_groups = {}
         
         # Joint position bounds in observation space
@@ -83,8 +114,9 @@ class MiaHandWorldEnv(gym.Env):
         self._joints_vel = None
         self._pc_cam_handler.pc.append(o3d.geometry.PointCloud())
         self._object_pose = Pose()
-        
-        self.setup_imagination(["1.001.stl", "UR_flange.stl"])
+        self._contacts = []
+                
+        self.setup_imagination(stl_ignores=["1.001.stl", "UR_flange.stl"])
         
         # Print the spaces
         rospy.logdebug("ACTION SPACES TYPE===>"+str(self.action_space))
@@ -92,31 +124,54 @@ class MiaHandWorldEnv(gym.Env):
         
         # TODO: Define these in setup
         self._end_episode_points = 0.0
-        self._cumulated_steps = 0.0
+        self._cumulated_steps = 0
         self._finger_object_dist = np.zeros(3)
         
     
-    def step(self, action):
+    def step(self, action):     
         done = self._rl_interface.step(action)
         self.update()
         obs = self._get_obs()
         info = {}
         reward = self._compute_reward(obs, done)
+        self._cumulated_steps += 1
+
+        if self._contacts.contacts:        
+            rospy.logwarn("Is palmar: " + str(self.check_contact(self._contacts)))            
         
         return obs, reward, done, False, info
+    
     
     def reset(self, seed=None):
         super().reset(seed=seed)
         
-        rospy.logdebug("Reseting MiaHandWorldEnv")
+        rospy.logdebug("Resetting MiaHandWorldEnv")
         self._init_env_variables()
+        if self._joints is not None and np.any(np.logical_or(self._joints < self._obs_pos_lb - 0.1, self._obs_pos_ub + 0.1 < self._joints)):
+            rospy.logwarn(f"Joint positions out of bounds:\n {self._joints}")
+            rospy.logwarn("Resetting hand model")   
+            self._reset_hand()
         self._rl_interface.update_context()
+        self._rl_interface._world_interface.hand.set_finger_pos(self._obs_pos_lb)
+                    
         self.update()
         obs = self._get_obs()
         info = {}
-        rospy.logdebug("END Reseting MiaHandWorldEnv")
+        rospy.logdebug("END Resetting MiaHandWorldEnv")
         
         return obs, info
+    
+    
+    def _reset_hand(self):
+        """Resets the hand completely. This is used when the hand becomes unstable due to exceeded joint bounds.
+        """
+        rospy.logdebug("RESET HAND START")
+        self._rl_interface._world_interface._controllers_connection.reset_controllers()
+        self._rl_interface._world_interface.check_system_ready()
+        self._rl_interface._world_interface.respawn_hand(self._rl_interface.default_pose)
+        self._rl_interface._world_interface._controllers_connection.reset_controllers()
+        self._rl_interface._world_interface.check_system_ready()
+        rospy.logdebug("RESET HAND END")
     
     
     def update(self):
@@ -128,6 +183,8 @@ class MiaHandWorldEnv(gym.Env):
         self._joints_vel = self._rl_interface.rl_data["hand_data"]["joints_vel"]
         self._pc_cam_handler.pc[0] = self._rl_interface.rl_data["hand_data"]["point_cloud"]
         self._object_pose = self._rl_interface.rl_data["obj_data"]
+        self._contacts = self._rl_interface.rl_data["hand_data"]["contacts"]
+        
     
     # Methods needed by the TrainingEnvironment
     def _init_env_variables(self):
@@ -164,13 +221,6 @@ class MiaHandWorldEnv(gym.Env):
         
         rospy.logdebug("Observations: "+str(observation))
         return observation
-        
-
-    # def _is_done(self, observation):
-    #     # Terminate episode if the object has been lifted
-    #     # if self._object_pose.position.z > OBJECT_LIFT_LOWER_LIMIT:
-    #     #     self._episode_done = True
-    #     return self._episode_done
 
 
     def _compute_reward(self, observation, done):
@@ -183,18 +233,21 @@ class MiaHandWorldEnv(gym.Env):
             return self._end_episode_points
         
         # Obtain the shortest distance between finger and object
+        # TODO: Either downsample finger pointclouds or use TF transform to get finger object distance
         finger_object_dist = np.min(self._finger_object_dist)
         finger_object_dist = np.clip(finger_object_dist, 0.03, 0.8)
         
         # Obtain the combined joint velocity
-        clipped_vel = np.clip(observation["joints_vel"], self._obs_vel_lb, self._obs_vel_ub)
-        combined_joint_vel = np.sum(np.abs(clipped_vel))
+        combined_joint_vel = np.sum(np.abs(observation["joints_vel"]))
         
         # Check if at least three fingers are in contact with object
         fingers_in_contact = np.sum(self._finger_object_dist < 0.03)
         
         # Reward for energy expenditure (based on distance to object)
         reward = -(finger_object_dist * combined_joint_vel) * 0.01
+        
+        #TODO: Penalise hitting ground plane?
+        
         if fingers_in_contact >= 2:
             # Reward for contact
             reward += 0.5 * fingers_in_contact
@@ -377,23 +430,54 @@ class MiaHandWorldEnv(gym.Env):
             # rospy.logdebug(f"Relative transform:\n {rel_transform}")
 
         # Update the overall hand point cloud based on the updated group point clouds
-        self._pc_imagine_handler.update_hand(self._config_imagined["num_points"])
-
-
-
-
-if __name__ == "__main__":
-    import rospkg
-    import yaml
-    rospack = rospkg.RosPack()
-    with open(rospack.get_path("sim_world") + "/urdf/calibration/joint_limits_wrist.yaml", 'r') as file:
-        wrist_limits = yaml.safe_load(file)
-
-    with open(rospack.get_path("mia_hand_description") + "/calibration/joint_limits.yaml", 'r') as file:
-        finger_limits = yaml.safe_load(file)
-
-    print(wrist_limits.keys())
-
-    np.array([joint["min_position"] for joint in wrist_limits.keys()]),
-    np.array([joint["min_position"] for joint in finger_limits.keys()])
-
+        self._pc_imagine_handler.update_hand(self._config_imagined["num_points"])   
+    
+    def check_contact(self, contacts : contacts_msg) -> bool:
+        """ 
+        Checks whether the contact is palmar (i.e. all contact point normals point inwards.)
+        param contacts: The contacts message.
+        return: True if all contacts are valid, False otherwise.
+        """
+        
+        # TODO: Implement 3-finger check
+        
+        # Container of contact checks
+        in_bound = []
+        
+        for contact in contacts.contacts:
+            
+            # Early continue if the contact is with the ground plane or if force vector is zero (spurious contact)
+            if "ground_plane" in (contact.collision_1 + contact.collision_2) or np.all(np.isclose(contact.forces, 0, atol=1e-6)):
+                continue
+            
+            # Store force
+            force = np.array(contact.forces)
+            
+            # Get name of link in contact and the corresponding force. 
+            if self._rl_interface._world_interface.hand.name in contact.collision_1:
+                link_name = contact.collision_1.split("::")[1]
+                finger_force = force
+            else:
+                link_name = contact.collision_2.split("::")[1]
+                # Since contact republisher only publishes forces for first contact, we might have to flip the force vector.
+                # This is because net force must be zero, so force acting on the other object is directly opposing.
+                finger_force = -force
+            
+            # Early continue if collision object is not of relevance 
+            if link_name not in list(self.force_config.keys()):
+                continue
+            
+            # Rotate force vector if the frame does not match the assumed frame 
+            finger_force = self.force_config[link_name]["rotation"] @ finger_force
+            
+            # Compute angle of force vector w.r.t. x-axis in the xz-plane
+            y_rot = np.arctan2(finger_force[2], finger_force[0])
+            
+            # Check if the force vector is pointing out of the hand and within the bounds (indicating palmar contact)
+            lower_bound, upper_bound = self.force_config[link_name]["range"]
+            in_bound.append((lower_bound < y_rot) and (y_rot < upper_bound)) 
+               
+        # Return true if all hand contacts are palmar for a non-empty list. If list is empty we always return false.
+        return all(in_bound) if in_bound else False
+        
+            

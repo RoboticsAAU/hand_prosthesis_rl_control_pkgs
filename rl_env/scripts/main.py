@@ -47,32 +47,19 @@ def main():
     
     # Instantiate RL env
     rl_env = MiaHandWorldEnv(rl_interface, rl_config, hand_config, wrist_limits, finger_limits)  
-    
+
     # Instantiate the PPO model
-    model = PPO("MultiInputPolicy", rl_env, verbose=1, tensorboard_log=rospack.get_path("rl_env") + "/logs", device='cuda:0')
+    model = PPO(
+        policy = "MultiInputPolicy",
+        env = rl_env,
+        batch_size = 64,
+        verbose = 1,
+        tensorboard_log = rospack.get_path("rl_env") + "/logs",
+        device = 'cuda:0'
+    )
     
     # Train the model
     model.learn(total_timesteps=100000, tb_log_name=log_name)
-    
-    # r = rl_interface._world_interface._rate
-    
-    # # Run the episodes
-    # for _ in range(rl_config["hyper_params"]["num_episodes"]):
-        
-    #     # Reset the rl env
-    #     obs = rl_env.reset()
-        
-    #     for _ in range(rl_config["hyper_params"]["max_episode_steps"]):
-    #         # Select an action
-    #         start_time = time.time()
-    #         action = model.predict(obs)
-    #         rospy.logwarn_throttle(0.5, "Predict dur: " + str(time.time() - start_time))
-    #         # Step the environment
-    #         obs, reward, done, info = rl_env.step(action)
-            
-    #         if rl_interface.step(action[0]) == True:
-    #             break
-    #         # r.sleep()
         
 
 if __name__ == "__main__":

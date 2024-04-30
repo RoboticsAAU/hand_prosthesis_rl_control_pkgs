@@ -8,7 +8,6 @@ from scipy.spatial.transform import Rotation as R
 from sim_world.world_interfaces.simulation_interface import SimulationInterface
 from sim_world.object_handler.object_handler import ObjectHandler
 from move_hand.control.move_hand_controller import HandController
-from move_hand.utils.move_helper_functions import convert_pose
 
 class RLInterface():
     def __init__(self, world_interface: SimulationInterface, sim_config : Dict[str, Any]):
