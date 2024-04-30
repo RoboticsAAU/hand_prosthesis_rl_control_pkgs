@@ -8,12 +8,20 @@
 #include <gazebo/gazebo_config.h>
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
+#include <ros/console.h>
 #include <geometry_msgs/Vector3.h>
 #include "contact_republisher/contact_msg.h"
 #include "contact_republisher/contacts_msg.h"
 #include <iostream>
 #include <vector>
+#include <string>
+#include <map>
+#include <numeric>
 ros::Publisher pub;
+
+std::vector<contact_republisher::contact_msg> contacts_buffer;
+size_t buffer_count = 0;
+size_t buffer_size = 10;
 
 // Forces callback function
 void forcesCb(ConstContactsPtr &_msg)
@@ -23,7 +31,6 @@ void forcesCb(ConstContactsPtr &_msg)
     // What to do when callback
     for (int i = 0; i < _msg->contact_size(); ++i)
     {
-
         contact_republisher::contact_msg contact_message;
 
         contact_message.collision_1 = _msg->contact(i).collision1();
@@ -37,9 +44,13 @@ void forcesCb(ConstContactsPtr &_msg)
         contact_message.position[1] = _msg->contact(i).position().Get(0).y();
         contact_message.position[2] = _msg->contact(i).position().Get(0).z();
 
-        contact_message.forces[0] = _msg->contact(i).wrench(0).body_1_wrench().force().x();
-        contact_message.forces[1] = _msg->contact(i).wrench(0).body_1_wrench().force().y();
-        contact_message.forces[2] = _msg->contact(i).wrench(0).body_1_wrench().force().z();
+        contact_message.forces_1[0] = _msg->contact(i).wrench(0).body_1_wrench().force().x();
+        contact_message.forces_1[1] = _msg->contact(i).wrench(0).body_1_wrench().force().y();
+        contact_message.forces_1[2] = _msg->contact(i).wrench(0).body_1_wrench().force().z();
+
+        contact_message.forces_2[0] = _msg->contact(i).wrench(0).body_2_wrench().force().x();
+        contact_message.forces_2[1] = _msg->contact(i).wrench(0).body_2_wrench().force().y();
+        contact_message.forces_2[2] = _msg->contact(i).wrench(0).body_2_wrench().force().z();
 
         contact_message.depth = _msg->contact(i).depth().Get(0);
 
@@ -60,16 +71,73 @@ void forcesCb(ConstContactsPtr &_msg)
         contact_message.position[1] = 0;
         contact_message.position[2] = 0;
 
-        contact_message.forces[0] = 0;
-        contact_message.forces[1] = 0;
-        contact_message.forces[2] = 0;
+        contact_message.forces_1[0] = 0;
+        contact_message.forces_1[1] = 0;
+        contact_message.forces_1[2] = 0;
+
+        contact_message.forces_2[0] = 0;
+        contact_message.forces_2[1] = 0;
+        contact_message.forces_2[2] = 0;
 
         contact_message.depth = 0;
 
         contacts_list.push_back(contact_message);
     }
-    contacts_message.contacts = contacts_list;
-    pub.publish(contacts_message);
+
+    contacts_buffer.insert(contacts_buffer.end(), contacts_list.begin(), contacts_list.end());
+
+    if (++buffer_count == buffer_size)
+    {
+        buffer_count = 0;
+        // Processing the contacts
+        using count = size_t;
+        using index = size_t;
+        std::map<std::string, std::pair<index, count>> filtered_contact;
+        float max_force = 0.0f;
+        ROS_INFO_STREAM("Buffer size: " << contacts_buffer.size());
+        // Loop through each contact
+        int i = 0;
+        for (contact_republisher::contact_msg contact : contacts_buffer)
+        {
+            std::string unique_key = contact.collision_1;
+            unique_key.append(contact.collision_2);
+            std::sort(unique_key.begin(), unique_key.end());
+
+            if (filtered_contact.find(unique_key) != filtered_contact.end())
+            {
+                // If the contact already exists, increment the count
+                filtered_contact[unique_key].second++;
+            }
+            else
+            {
+                // If the contact does not exist, add it to the map
+                filtered_contact[unique_key] = std::make_pair(i, 1);
+            }
+
+            // Sum the forces
+            contact_republisher::contact_msg best_contact = contacts_buffer[filtered_contact[unique_key].first];
+            max_force = std::accumulate(best_contact.forces_1.begin(), best_contact.forces_1.end(), 0) + std::accumulate(best_contact.forces_2.begin(), best_contact.forces_2.end(), 0);
+            float force = std::accumulate(contact.forces_1.begin(), contact.forces_1.end(), 0) + std::accumulate(contact.forces_2.begin(), contact.forces_2.end(), 0);
+
+            if (force > max_force)
+            {
+                filtered_contact[unique_key].first = i;
+                max_force = force;
+            }
+            i++;
+        }
+
+        contacts_list.clear();
+        ROS_INFO_STREAM("Filtered contacts: " << filtered_contact.size());
+        for (const auto &[key, value] : filtered_contact)
+        {
+            if (static_cast<float>(value.second) > static_cast<float>(buffer_size) / 2.0f)
+                contacts_list.push_back(contacts_buffer[value.first]);
+        }
+        contacts_message.contacts = contacts_list;
+        pub.publish(contacts_message);
+        contacts_buffer.clear();
+    }
 }
 
 int main(int _argc, char **_argv)
@@ -85,7 +153,7 @@ int main(int _argc, char **_argv)
 
     // Create ROS node and init
     ros::NodeHandle n;
-    pub = n.advertise<contact_republisher::contacts_msg>("contact", 1000);
+    pub = n.advertise<contact_republisher::contacts_msg>("contact", 1);
 
     // Listen to Gazebo contacts topic
     gazebo::transport::SubscriberPtr sub = node->Subscribe("/gazebo/default/physics/contacts", forcesCb);
