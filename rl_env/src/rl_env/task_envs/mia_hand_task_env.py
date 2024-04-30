@@ -117,6 +117,7 @@ class MiaHandWorldEnv(gym.Env):
         # TODO: Define these in setup
         self._end_episode_points = 0.0
         self._cumulated_steps = 0
+        self._episode_count = 0
         self._finger_object_dist = np.zeros(3)
         
     
@@ -129,13 +130,15 @@ class MiaHandWorldEnv(gym.Env):
         self._cumulated_steps += 1
 
         if self._contacts.contacts:        
-            rospy.logwarn("Is palmar: " + str(self.check_contact(self._contacts)))            
+            rospy.logwarn("Is palmar: " + str(self.check_contact(self._contacts).values()))            
         
         return obs, reward, done, False, info
     
     
     def reset(self, seed=None):
         super().reset(seed=seed)
+        
+        self._episode_count += 1
         
         rospy.logdebug("Resetting MiaHandWorldEnv")
         self._init_env_variables()
@@ -224,29 +227,23 @@ class MiaHandWorldEnv(gym.Env):
         if done:
             return self._end_episode_points
         
-        # Obtain the shortest distance between finger and object
-        # TODO: Either downsample finger pointclouds or use TF transform to get finger object distance
-        finger_object_dist = np.min(self._finger_object_dist)
-        finger_object_dist = np.clip(finger_object_dist, 0.03, 0.8)
-        
         # Obtain the combined joint velocity
         combined_joint_vel = np.sum(np.abs(observation["joints_vel"]))
         
         # Check if at least three fingers are in contact with object
-        fingers_in_contact = np.sum(self._finger_object_dist < 0.03)
+        hand_contacts = self.check_contact(self._contacts)
+        fingers_in_contact = list(hand_contacts.values()).count(True)
         
         # Reward for energy expenditure (based on distance to object)
-        reward = -(finger_object_dist * combined_joint_vel) * 0.01
+        reward = -0.01 * combined_joint_vel * min(1, 150/self._episode_count)
         
         #TODO: Penalise hitting ground plane?
         
-        if fingers_in_contact >= 2:
+        reward = 0.1 * fingers_in_contact / self._episode_count
+        
+        if hand_contacts["thumb_fle"] and fingers_in_contact >= 2:
             # Reward for contact
             reward += 0.5 * fingers_in_contact
-            
-            # Reward for lifting object
-            lift = np.clip(self._object_pose.position.z, 0, 0.2)
-            reward += 10 * lift
 
         rospy.logdebug("reward=" + str(reward))
         self.cumulated_reward += reward
