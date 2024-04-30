@@ -77,8 +77,8 @@ class MiaHandWorldEnv(gym.Env):
             },
             "base_link": {
                 "range": tuple(np.deg2rad([-90, 90])),
-                "rotation": np.array([[0,1,0],
-                                      [0,0,-1],
+                "rotation": np.array([[0,0,1],
+                                      [0,1,0],
                                       [-1,0,0]], dtype=np.float64)
             }
         }
@@ -422,36 +422,31 @@ class MiaHandWorldEnv(gym.Env):
         self._pc_imagine_handler.update_hand(self._config_imagined["num_points"])
     
     
-    def check_contact(self, contacts : contacts_msg) -> bool:
+    def check_contact(self, contacts : contacts_msg) -> Dict[str, bool]:
         """ 
-        Checks whether the contact is palmar (i.e. all contact point normals point inwards.)
+        Checks whether there is a valid contact between the hand and the object.
         param contacts: The contacts message.
-        return: True if all contacts are valid, False otherwise.
+        return: Dictionary with the contact status for each finger.
         """
         
-        # TODO: Implement 3-finger check
-        
         # Container of contact checks
-        in_bound = []
+        hand_contact = {link_name : False for link_name in self.force_config.keys()}
         
         for contact in contacts.contacts:
             
             # Early continue if the contact is with the ground plane or if force vector is zero (spurious contact)
-            if "ground_plane" in (contact.collision_1 + contact.collision_2) or np.all(np.isclose(contact.forces, 0, atol=1e-6)):
+            if ("ground_plane" in (contact.collision_1 + contact.collision_2) or
+                np.all(np.isclose(contact.forces_1, 0, atol=1e-6)) or
+                np.all(np.isclose(contact.forces_2, 0, atol=1e-6))):
                 continue
-            
-            # Store force
-            force = np.array(contact.forces)
             
             # Get name of link in contact and the corresponding force. 
             if self._rl_interface._world_interface.hand.name in contact.collision_1:
                 link_name = contact.collision_1.split("::")[1]
-                finger_force = force
+                finger_force = np.array(contact.forces_1, dtype=np.float64)
             else:
                 link_name = contact.collision_2.split("::")[1]
-                # Since contact republisher only publishes forces for first contact, we might have to flip the force vector.
-                # This is because net force must be zero, so force acting on the other object is directly opposing.
-                finger_force = -force
+                finger_force = np.array(contact.forces_2, dtype=np.float64)
             
             # Early continue if collision object is not of relevance 
             if link_name not in list(self.force_config.keys()):
@@ -465,9 +460,8 @@ class MiaHandWorldEnv(gym.Env):
             
             # Check if the force vector is pointing out of the hand and within the bounds (indicating palmar contact)
             lower_bound, upper_bound = self.force_config[link_name]["range"]
-            in_bound.append((lower_bound < y_rot) and (y_rot < upper_bound)) 
-               
-        # Return true if all hand contacts are palmar for a non-empty list. If list is empty we always return false.
-        return all(in_bound) if in_bound else False
+            hand_contact[link_name] = (lower_bound < y_rot) and (y_rot < upper_bound) 
+            
+        return hand_contact
         
             
