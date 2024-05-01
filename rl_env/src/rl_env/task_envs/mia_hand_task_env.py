@@ -145,8 +145,9 @@ class MiaHandWorldEnv(gym.Env):
             rospy.logwarn("Resetting hand model")   
             self._reset_hand()
         self._rl_interface.update_context()
-        self._rl_interface._world_interface.hand.set_finger_pos(self._obs_pos_lb)
-                    
+        # Set finger position as average of joint limits
+        average_pos = [sum(limits)/2.0 for limits in zip(self._obs_pos_lb, self._obs_pos_ub)]
+        self._rl_interface._world_interface.hand.set_finger_pos(average_pos)
         self.update()
         obs = self._get_obs()
         info = {}
