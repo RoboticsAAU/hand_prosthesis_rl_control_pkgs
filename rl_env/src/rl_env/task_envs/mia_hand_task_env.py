@@ -29,7 +29,7 @@ register(
     )
 
 class MiaHandWorldEnv(gym.Env):
-    def __init__(self, rl_interface : RLInterface, rl_config : Dict[str, Any], hand_config : Dict[str, Any], wrist_limits : Dict[str, Any], finger_limits : Dict[str, Any]):
+    def __init__(self, rl_interface : RLInterface, rl_config : Dict[str, Any]):
         """
         This Task Env is designed for having the Mia hand in the hand grasping world.
         It will learn how to move around without crashing.
@@ -47,12 +47,9 @@ class MiaHandWorldEnv(gym.Env):
         self._rl_interface = rl_interface
         
         # Get the configurations for the cameras and the imagined point clouds
-        self._config_imagined = hand_config["visual_sensors"]["config_imagined"]
-        self._config_cameras = hand_config["visual_sensors"]["config_cameras"]
-        self._config_general = hand_config["general"]
-        self._wrist_limits = wrist_limits["joint_limits"]
-        self._finger_limits = finger_limits["joint_limits"]
-        self._config_limits = hand_config["limits"]
+        self._config_imagined = rl_config["visual_sensors"]["config_imagined"]
+        self._config_cameras = rl_config["visual_sensors"]["config_cameras"]
+        
         self._rl_config = rl_config
         self.force_config = {
             "index_fle": {
@@ -87,27 +84,21 @@ class MiaHandWorldEnv(gym.Env):
         self._imagined_groups = {}
         
         # Joint position bounds in observation space
-        self._obs_pos_lb = np.hstack((
-            np.array([self._wrist_limits[joint]["min_position"] for joint in self._wrist_limits.keys()]),
-            np.array([self._finger_limits[joint]["min_position"] for joint in self._finger_limits.keys()])
-        ))
-        self._obs_pos_ub = np.hstack((
-            np.array([self._wrist_limits[joint]["max_position"] for joint in self._wrist_limits.keys()]), 
-            np.array([self._finger_limits[joint]["max_position"] for joint in self._finger_limits.keys()])
-        ))
+        self._obs_pos_lb = np.array([limits["min_position"] for limits in self._rl_interface._world_interface.hand._joint_limits.values()])
+        self._obs_pos_ub = np.array([limits["max_position"] for limits in self._rl_interface._world_interface.hand._joint_limits.values()])
 
         # Velocity bounds in observation space
-        self._obs_vel_lb = np.array([limit[0] for limit in self._config_limits["joint_velocity"].values()])
-        self._obs_vel_ub = np.array([limit[1] for limit in self._config_limits["joint_velocity"].values()])
+        self._obs_vel_lb = np.array([limit[0] for limit in self._rl_interface._world_interface.hand._joint_velocity_limits.values()])
+        self._obs_vel_ub = np.array([limit[1] for limit in self._rl_interface._world_interface.hand._joint_velocity_limits.values()])
         
         # Bounds for joint velocities in action space.
         # Notice that the thumb input control is 1-dimensional that maps to 2DoF (thumb_fle and thumb_opp), and we assume range for thumb_fle corresponds to control range
-        action_space_joints = ["wrist_rotation_range", "wrist_exfle_range", "wrist_ulra_range", "index_range", "mrl_range", "thumb_fle_range"]
-        self._act_vel_lb = np.array([limit[0] for name, limit in self._config_limits["joint_velocity"].items() if name in action_space_joints])
-        self._act_vel_ub = np.array([limit[1] for name, limit in self._config_limits["joint_velocity"].items() if name in action_space_joints])
+        action_space_joints = ["j_index_fle", "j_mrl_fle", "j_thumb_fle", "j_wrist_rotation", "j_wrist_exfle", "j_wrist_ulra"]
+        self._act_vel_lb = np.array([limit[0] for name, limit in self._rl_interface._world_interface.hand._joint_velocity_limits.items() if name in action_space_joints])
+        self._act_vel_ub = np.array([limit[1] for name, limit in self._rl_interface._world_interface.hand._joint_velocity_limits.items() if name in action_space_joints])
         
         # Save number of joints
-        self._dof = len(self._config_limits["joint_velocity"])
+        self._dof = len(self._rl_interface._world_interface.hand._joint_velocity_limits)
         
         # Parameters for the state and observation space
         self._joints = None
@@ -350,7 +341,7 @@ class MiaHandWorldEnv(gym.Env):
         stl_files = [file for file in glob.glob(stl_folder + "/*") if (Path(file).name not in stl_ignores)]
         
         # Extract stl files for the correct hand
-        filtered_stl_files = [file for file in stl_files if (("mirrored" in file) != self._config_general["right_hand"])]
+        filtered_stl_files = [file for file in stl_files if (("mirrored" in file) != self._rl_interface._world_interface.hand._general_config["right_hand"])]
         
         # config has: "stl_files", "ref_frame", "groups", "num_points"
         # Define the imagined groups where each group corresponds to a movable joint in the hand (along with base palm)

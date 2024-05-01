@@ -23,11 +23,8 @@ with open(package_path + "/params/sim_params.yaml", 'r') as file:
 with open(package_path + "/params/hand/mia_hand_params.yaml", 'r') as file:
     hand_config = yaml.safe_load(file)
 
-with open(rospack.get_path("sim_world") + "/urdf/calibration/joint_limits_wrist.yaml", 'r') as file:
-    wrist_limits = yaml.safe_load(file)
-
-with open(rospack.get_path("sim_world") + "/urdf/calibration/joint_limits_fingers.yaml", 'r') as file:
-    finger_limits = yaml.safe_load(file)
+with open(rospack.get_path("sim_world") + "/config/joint_limits.yaml", 'r') as file:
+    joint_limits = yaml.safe_load(file)
 
 # Current date as a string in the format "ddmmyyyy"
 algorithm_name = "PPO"
@@ -40,13 +37,13 @@ def main():
     # Instantiate the RL interface to the simulation
     rl_interface = RLInterface(
         SimulationInterface(
-            MiaHandSetup(hand_config["topics"], hand_config["general"], wrist_limits, finger_limits),
+            MiaHandSetup(hand_config, joint_limits),
         ),
         sim_config
     )
     
     # Instantiate RL env
-    rl_env = MiaHandWorldEnv(rl_interface, rl_config, hand_config, wrist_limits, finger_limits)  
+    rl_env = MiaHandWorldEnv(rl_interface, rl_config)  
 
     # Instantiate the PPO model
     model = PPO(

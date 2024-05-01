@@ -60,11 +60,11 @@
 
     <xacro:unless value="$(arg default_mia_model)">
         <xacro:if value="$(arg right_hand)">
-        <xacro:mia_hand_robot joint_limits_parameters_file= '$(find mia_hand_description)/calibration/$(arg joint_limits_config_filename)' />
+        <xacro:mia_hand_robot joint_limits_parameters_file= '$(find sim_world)/config/$(arg joint_limits_config_filename)' />
         </xacro:if>
 
         <xacro:unless value="$(arg right_hand)">
-            <xacro:mia_hand_robot_left joint_limits_parameters_file= '$(find mia_hand_description)/calibration/$(arg joint_limits_config_filename)' />
+            <xacro:mia_hand_robot_left joint_limits_parameters_file= '$(find sim_world)/config/$(arg joint_limits_config_filename)' />
         </xacro:unless>
     </xacro:unless>
 
@@ -98,7 +98,7 @@
         <!-- Include the macro to read the wrist joint limits -->
         <xacro:include filename="$(find sim_world)/urdf/macros/import_joint_limits_wrist.xacro"/>
         <!-- Read the wrist joint limits and extract them into xacro:properties -->
-        <xacro:read_joint_limits_wrist joint_limits_parameters_file="$(find sim_world)/urdf/calibration/joint_limits_wrist.yaml"/>
+        <xacro:read_joint_limits_wrist joint_limits_parameters_file="$(find sim_world)/config/joint_limits.yaml"/>
 
         <!-- Motions for a right hand: -->
         <!-- Pronation (inwards so the palm is down) /suppination (palm up) = Rotation -->

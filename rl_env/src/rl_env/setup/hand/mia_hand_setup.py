@@ -10,12 +10,18 @@ import rl_env.utils.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
 from rl_env.setup.hand.hand_setup import HandSetup
 
 class MiaHandSetup(HandSetup):
-    def __init__(self, topics: Dict[str, Dict], general: Dict[str, Any], wrist_limits: Dict[str, Any], finger_limits: Dict[str, Any]):
+    def __init__(self, hand_config: Dict[str, Dict], joint_limits: Dict[str, Any]):
         
         super(MiaHandSetup, self).__init__()
         
-        self._topic_config = topics
-        self._general_config = general
+        self._topic_config = hand_config['topics']
+        self._general_config = hand_config['general']
+        
+        # Save the joint names and limits
+        self._joint_names = [joint_name for joint_name in joint_limits["joint_limits"].keys()]
+        self._joint_limits = joint_limits["joint_limits"]
+        self._joint_velocity_limits = hand_config["general"]["joint_velocity_limits"]
+        
         # hand_config_file = self.rospack.get_path("rl_env") + "/params/hand/mia_hand_params.yaml"
         # with open(hand_config_file, 'r') as file:
         #     self._config = yaml.safe_load(file)
@@ -119,7 +125,7 @@ class MiaHandSetup(HandSetup):
         self._set_configuration_srv(
             model_name=self._name,
             urdf_param_name="mia_hand_description",
-            joint_names=self._general_config["joint_names"],
+            joint_names=self._joint_names,
             joint_positions=pos
         )
     
