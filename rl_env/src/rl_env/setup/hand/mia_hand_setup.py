@@ -10,7 +10,7 @@ import rl_env.utils.addons.lib_cloud_conversion_Open3D_ROS as o3d_ros
 from rl_env.setup.hand.hand_setup import HandSetup
 
 class MiaHandSetup(HandSetup):
-    def __init__(self, topics: Dict[str, Dict], general: Dict[str, Any]):
+    def __init__(self, topics: Dict[str, Dict], general: Dict[str, Any], wrist_limits: Dict[str, Any], finger_limits: Dict[str, Any]):
         
         super(MiaHandSetup, self).__init__()
         
@@ -24,11 +24,20 @@ class MiaHandSetup(HandSetup):
         rospy.Subscriber(self._name + self._topic_config["subscriptions"]["joint_state_topic"], JointState, self._joints_callback)
         rospy.Subscriber(self._name + self._topic_config["subscriptions"]["camera_points_topic"], PointCloud2, self._camera_point_cloud_callback)
         
+        # Finger publishers
         self._thumb_controller_pub = rospy.Publisher(self._name + self._topic_config["publications"]["thumb_controller_topic"], Float64, queue_size=1)
         self._index_controller_pub = rospy.Publisher(self._name + self._topic_config["publications"]["index_controller_topic"], Float64, queue_size=1)
         self._mrl_controller_pub = rospy.Publisher(self._name + self._topic_config["publications"]["mrl_controller_topic"], Float64, queue_size=1)
+
+        # Wrist publishers
+        self._wrist_rot_controller_pub = rospy.Publisher(self._name + self._topic_config["publications"]["wrist_rot_controller_topic"], Float64, queue_size=1)
+        self._wrist_exfle_controller_pub = rospy.Publisher(self._name + self._topic_config["publications"]["wrist_exfle_controller_topic"], Float64, queue_size=1)
+        self._wrist_ulra_controller_pub = rospy.Publisher(self._name + self._topic_config["publications"]["wrist_ulra_controller_topic"], Float64, queue_size=1)
+
         self._set_configuration_srv = rospy.ServiceProxy("/gazebo/set_model_configuration", SetModelConfiguration)
+
         
+
         # Initialise the subscribed data variables
         self.joints_pos = [Float64()]
         self.joints_vel = [Float64()]
@@ -78,6 +87,26 @@ class MiaHandSetup(HandSetup):
         else:
             raise ValueError("The finger_id specified is not valid")
     
+
+    def set_wrist_vel(self, vel: float, wrist_id: str) -> None:
+        """
+        It will move the wrist based on the velocity given.
+        :param vel: Velocity of the wrist joint specified by wrist_id
+        :param wrist_id: The wrist joint to move
+        """
+        vel_value = Float64(data=vel)
+        rospy.logdebug("Setting velocity: " + str(vel_value) + " for wrist ID: " + wrist_id)
+        if wrist_id == "rot":
+            self._wrist_rot_controller_pub.publish(vel_value)
+        elif wrist_id == "exfle":
+            self._wrist_exfle_controller_pub.publish(vel_value)
+        elif wrist_id == "ulra":
+            self._wrist_ulra_controller_pub.publish(vel_value)
+        else:
+            raise ValueError("The wrist_id {} is not valid".format(wrist_id))
+
+    
+
     def set_finger_pos(self, pos : np.array) -> None:
         """
         It will move the fingers to a given position.
@@ -94,15 +123,21 @@ class MiaHandSetup(HandSetup):
             joint_positions=pos
         )
     
-        
+
     def set_action(self, vels : np.array) -> None:
         """
-        It will move the fingers based on the velocities given.
-        :param vels: Velocities in the positive axis of the fingers
-        :return:
+        It will move the fingers and wrist joints based on the velocities given.
+        :param vels: Velocities in the positive axis of the fingers, and wrist velocities in both directions
         """
+        # TODO: Make this general (instead of specific to velocity) to work with effort also
+        
+        # Fingers
         for index, finger_id in enumerate(["index", "mrl", "thumb"]):
             self.set_finger_vel(vels[index], finger_id)
+
+        # Wrist
+        for index, wrist_id in enumerate(["rot", "exfle", "ulra"]):
+            self.set_wrist_vel(vels[index], wrist_id)
     
     def _joints_callback(self, data : JointState):
         self.joints_pos = data.position
@@ -122,5 +157,8 @@ class MiaHandSetup(HandSetup):
         return [
             self._thumb_controller_pub,
             self._index_controller_pub,
-            self._mrl_controller_pub
+            self._mrl_controller_pub,
+            self._wrist_rot_controller_pub,
+            self._wrist_exfle_controller_pub,
+            self._wrist_ulra_controller_pub
         ]

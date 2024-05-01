@@ -12,6 +12,7 @@
      <arg name="robotNamespace" default="mia_hand"/> <!-- /mia_hand_camera -->
      <arg name="load_default_mia_model" default="false" />
      <arg name="right_hand" default="true" doc="True to for right hand False otherwise" /> <!-- Params to set right or left Mia hand version  -->
+     <arg name="wrist_rotation" default="true" doc="True to add wrist rotation to the hand" /> <!-- Params to set rotation of the wrist of the Mia hand  -->
      <arg name="joint_limits_config_filename" default="joint_limits.yaml" doc="name of the yaml file to calibrate joints limit of URDF file" />
      <arg name="transmission_config_filename" default="transmission_config.yaml" doc="name of the yaml file to calibrate transmissions of MiaHand" />
 
@@ -24,6 +25,13 @@
           doc="type of hardware interface for index flexion. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
      <arg name="hw_interface_mrl_fle" default="EffortJointInterface"
           doc="type of hardware interface for mrl flexion. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
+     <!-- Wrist interfaces: -->
+     <arg name="hw_interface_wrist_rotation" default="EffortJointInterface"
+          doc="type of hardware interface for wrist rotation. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
+     <arg name="hw_interface_wrist_exfle" default="EffortJointInterface"
+          doc="type of hardware interface for wrist extension and flexion. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
+     <arg name="hw_interface_wrist_ulra" default="EffortJointInterface"
+          doc="type of hardware interface for wrist ulnar and radial motion. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
 
      <arg name="controller_thumb_fle" default="eff"
           doc="type of controller for thumb flexion. Values: position, velocity, eff, eff_position, (eff_velocity has not been tuned)"/>
@@ -31,6 +39,13 @@
           doc="type of controller for index flexion + thumb abd. Values: position,velocity,eff, eff_position, (eff_velocity has not been tuned)"/>
      <arg name="controller_mrl_fle"   default="eff"
           doc="type of controller for mrl fingers flexion. Values: position, velocity, eff, eff_position,(eff_velocity has not been tuned)"/>
+     <!-- Wrist Controller types -->
+     <arg name="controller_wrist_rotation" default="eff"
+          doc="type of controller for wrist rotation. Values: position, velocity, eff, eff_position, (eff_velocity has not been tuned)"/>
+     <arg name="controller_wrist_exfle" default="eff"
+          doc="type of controller for wrist flexion and extension. Values: position,velocity,eff, eff_position, (eff_velocity has not been tuned)"/>
+     <arg name="controller_wrist_ulra"   default="eff"
+          doc="type of controller for ulnar and radial motion. Values: position, velocity, eff, eff_position,(eff_velocity has not been tuned)"/>
 
      <!-- Gazebo empty_world.launch -->
      <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -51,6 +66,8 @@
           <arg name="robotNamespace"   value="$(arg robotNamespace)"/> <!-- /mia_hand_camera -->
           <arg name="load_default_mia_model"   value="$(arg load_default_mia_model)"/>
           <arg name="right_hand"   value="$(arg right_hand)"/>
+          <arg name="wrist_rotation" value="$(arg wrist_rotation)"/>
+          
           <arg name="joint_limits_config_filename" default="joint_limits.yaml" doc="name of the yaml file to calibrate joints limit of URDF file" />
           <arg name="transmission_config_filename" default="transmission_config.yaml" doc="name of the yaml file to calibrate transmissions of MiaHand" />
      </include>
@@ -65,7 +82,11 @@
                joint_limits_config_filename:=$(arg joint_limits_config_filename)
                hw_interface_thumb_fle:=$(arg hw_interface_thumb_fle)
                hw_interface_index_fle:=$(arg hw_interface_index_fle)
-               hw_interface_mrl_fle:=$(arg hw_interface_mrl_fle)"
+               hw_interface_mrl_fle:=$(arg hw_interface_mrl_fle)
+               hw_interface_wrist_rotation:=$(arg hw_interface_wrist_rotation)
+               hw_interface_wrist_exfle:=$(arg hw_interface_wrist_exfle)
+               hw_interface_wrist_ulra:=$(arg hw_interface_wrist_ulra)
+               wrist_rotation:=$(arg wrist_rotation)"
           />
 
           <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
@@ -73,10 +94,11 @@
           
           <!-- Load the path of the config file of the MIA trasnsmission -->
           <param name="mia_transmissions_config_" type="string" value="$(find mia_hand_description)/calibration/transmission_config.yaml " />
-
+          
           <!-- Load joint controller configurations from YAML file to parameter server -->
           <rosparam file="$(find mia_hand_gazebo)/config/mia_hand_controllers.yaml" command="load"/>
           <rosparam file="$(find mia_hand_gazebo)/config/gazebo_pid_thumb_opp.yaml" command="load"/>
+          <rosparam file="$(find sim_world)/config/wrist_controllers.yaml" command="load"/>
      </group>
 
      <!-- load and start the controllers torso_controller -->
@@ -84,6 +106,9 @@
      output="screen" ns="$(arg robotNamespace)" args="j_thumb_fle_$(arg controller_thumb_fle)_controller
                                                        j_index_fle_$(arg controller_index_fle)_controller
                                                        j_mrl_fle_$(arg controller_mrl_fle)_controller
+                                                       j_wrist_rotation_$(arg controller_wrist_rotation)_controller
+                                                       j_wrist_exfle_$(arg controller_wrist_exfle)_controller
+                                                       j_wrist_ulra_$(arg controller_wrist_ulra)_controller
                                                        joint_state_controller"/>  <!-- j_thumb_opp_$(arg controller_index_fle)_controller -->
 
 

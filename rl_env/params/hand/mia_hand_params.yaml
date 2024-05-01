@@ -7,6 +7,9 @@ topics:
     thumb_controller_topic: /j_thumb_fle_eff_controller/command
     index_controller_topic: /j_index_fle_eff_controller/command
     mrl_controller_topic: /j_mrl_fle_eff_controller/command
+    wrist_rot_controller_topic: /j_wrist_rotation_eff_controller/command
+    wrist_exfle_controller_topic: /j_wrist_exfle_eff_controller/command
+    wrist_ulra_controller_topic: /j_wrist_ulra_eff_controller/command
 
 # Camera configuration
 visual_sensors:
@@ -27,21 +30,17 @@ visual_sensors:
 
 # Joint and velocity limits
 limits:
-  joint_position:
-    index_range: [-1.177, 1.188]
-    little_range: [-0.120, 1.303]
-    mrl_range: [-0.120, 1.303]
-    ring_range: [-0.120, 1.303]
-    thumb_fle_range: [0.029, 1.313]
-    thumb_opp_range: [-0.628, 0.000]
-
   joint_velocity:
-    index_range: [-0.1, 0.1]
-    little_range: [-0.1, 0.1]
-    mrl_range: [-0.1, 0.1]
-    ring_range: [-0.1, 0.1]
-    thumb_fle_range: [-0.1, 0.1]
-    thumb_opp_range: [-0.1, 0.1]
+    wrist_rotation_range: [-1.0, 1.0]
+    wrist_exfle_range: [-1.0, 1.0]
+    wrist_ulra_range: [-1.0, 1.0]
+    index_range: [-1.0, 1.0]
+    little_range: [-1.0, 1.0]
+    mrl_range: [-1.0, 1.0]
+    ring_range: [-1.0, 1.0]
+    thumb_fle_range: [-1.0, 1.0]
+    thumb_opp_range: [-1.0, 1.0]
+
 
 # General parameters
 general:

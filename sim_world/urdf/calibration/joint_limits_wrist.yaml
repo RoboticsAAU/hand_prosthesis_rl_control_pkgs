@@ -1,0 +1,13 @@
+# Joint limits of the wrist revolute joints
+
+joint_limits:
+  # For a right hand
+  j_wrist_rotation: # 80 deg sup, 70 pro
+    min_position: -1.22173 # Pronation
+    max_position: 1.39626 # Supination
+  j_wrist_exfle: # 80 deg flex, 30 deg ext
+    min_position: -0.523599 # Extension
+    max_position: 1.39626 # Flex
+  j_wrist_ulra: # 10 deg rad, 15 deg ulnar
+    min_position: -0.174533 # Radial
+    max_position: 0.261799 # Ulnar

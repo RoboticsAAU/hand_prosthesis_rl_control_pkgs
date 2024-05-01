@@ -1,13 +1,12 @@
 # Random seed for the environment
 seed: 75995
 
-
 move_hand:
   # What type of path planner to use for the approach trajectory
   path_planner: "bezier" # "nav_function" or "bezier"
 
   # Starting position of the hand constraints. The hand will start in the interior of the sphere defined by the following parameters
-  outer_radius: 1.5
+  outer_radius: 0.7
   inner_radius: 0.1
 
 objects:
