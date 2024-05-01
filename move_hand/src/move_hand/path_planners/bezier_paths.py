@@ -64,6 +64,8 @@ class BezierPlanner(PathPlanner):
                 control_points[:, i + 1] = np.random.uniform(start_point, end_point, 3)
 
             self.generate_bezier_curve(control_points)
+        
+        return control_points
     
     
     def sample_bezier_curve_constant(self, num_points : float, index : int = 0) -> np.ndarray:
@@ -113,9 +115,61 @@ if __name__ == "__main__":
                                [0, 3, 9],
                                [0, 5, 9]])
     #bp.generate_bezier_curve(control_points)
-    bp.generate_bezier_curves_random(np.array([0, 0, 0]), np.array([9, 9, 9]), 2)
+    # bp.generate_bezier_curves_random(np.array([0, 0, 0]), np.array([9, 9, 9]), 2)
     
-    path = bp.sample_bezier_curve_constant(100)
-    path2 = bp.sample_bezier_curve_velocity(np.linspace(0, 1, 100))
-    animate_path(path, final_time=10)
-    animate_path(path2, final_time=10)
+    # path = bp.sample_bezier_curve_constant(100)
+    # path2 = bp.sample_bezier_curve_velocity(np.linspace(0, 1, 100))
+    # animate_path(path, final_time=10)
+    # animate_path(path2, final_time=10)
+    
+    # Create a figure with subplots
+    import matplotlib.pyplot as plt
+    fig, axs = plt.subplots(1, 3, figsize=(15, 5))  # 1 row, 3 columns
+    
+    np.random.seed(2)
+    control_points_1 = bp.generate_bezier_curves_random(np.array([0, 0, 0]), np.array([10, 10, 10]), 1)
+    path_1 = bp.sample_bezier_curve_constant(100, 0)
+    np.random.seed(5)
+    control_points_2 = bp.generate_bezier_curves_random(np.array([0, 0, 0]), np.array([10, 10, 10]), 2)
+    path_2 = bp.sample_bezier_curve_constant(100, 1)
+    np.random.seed(7)
+    control_points_5 = bp.generate_bezier_curves_random(np.array([0, 0, 0]), np.array([10, 10, 10]), 5)
+    path_5 = bp.sample_bezier_curve_constant(100, 2)
+    
+    # Plot for 1 control point
+    axs[0].plot(path_1[0], path_1[1], color='blue', linestyle='-', label='Path')  # Plot the path
+    axs[0].plot(control_points_1[0,:], control_points_1[1,:], color='black', linestyle="--", marker="o", alpha=0.5)  # Plot the control points
+    axs[0].scatter(control_points_1[0,[0, -1]], control_points_1[1,[0, -1]], color='black', marker='o', zorder=5, label='Int. Control Points')  # Plot the control points
+    axs[0].set_xlabel('X-axis', fontsize=14)  # Label for the x-axis with increased font size
+    axs[0].set_ylabel('Y-axis', fontsize=14)  # Label for the y-axis with increased font size
+    axs[0].set_title('Bezier Path - 1 Int. Control Point', fontsize=16)  # Title of the plot with increased font size
+    axs[0].legend(fontsize=12)  # Show legend with increased font size
+    axs[0].grid(True)  # Show grid
+
+    # Plot for 2 control points
+    axs[1].plot(path_2[0], path_2[1], color='blue', linestyle='-', label='Path')  # Plot the path
+    axs[1].plot(control_points_2[0,:], control_points_2[1,:], color='black', linestyle="--", marker="o", alpha=0.5)  # Plot the control points
+    axs[1].scatter(control_points_2[0,[0, -1]], control_points_2[1,[0, -1]], color='black', marker='o', zorder=5, label='Int. Control Points')  # Plot the control points
+    axs[1].set_xlabel('X-axis', fontsize=14)  # Label for the x-axis with increased font size
+    axs[1].set_ylabel('Y-axis', fontsize=14)  # Label for the y-axis with increased font size
+    axs[1].set_title('Bezier Path - 2 Int. Control Points', fontsize=16)  # Title of the plot with increased font size
+    axs[1].legend(fontsize=12)  # Show legend with increased font size
+    axs[1].grid(True)  # Show grid
+
+    # Plot for 5 control points
+    axs[2].plot(path_5[0], path_5[1], color='blue', linestyle='-', label='Path')  # Plot the path
+    axs[2].plot(control_points_5[0,:], control_points_5[1,:], color='black', linestyle="--", marker="o", alpha=0.5)  # Plot the control points
+    axs[2].scatter(control_points_5[0,[0, -1]], control_points_5[1,[0, -1]], color='black', marker='o', zorder=5, label='Int. Control Points')  # Plot the control points
+    axs[2].set_xlabel('X-axis', fontsize=14)  # Label for the x-axis with increased font size
+    axs[2].set_ylabel('Y-axis', fontsize=14)  # Label for the y-axis with increased font size
+    axs[2].set_title('Bezier Path - 5 Int. Control Points', fontsize=16)  # Title of the plot with increased font size
+    axs[2].legend(fontsize=12)  # Show legend with increased font size
+    axs[2].grid(True)  # Show grid
+
+    plt.tight_layout()  # Adjust layout to prevent overlap
+
+    # Save the figure as PDF
+    plt.savefig('bezier_plots_2d.pdf', bbox_inches='tight')
+
+    plt.show()  # Display the plot
+    

@@ -34,7 +34,7 @@ class PointCloudHandler():
     
     
     @_check_multiple_run
-    def visualize(self, combined : bool = False, index : Optional[int] = None):
+    def visualize(self, combined : bool = False, index : Optional[int] = None, save_image_name : Optional[str] = None):
         """
         Visualize the point cloud.
         :param combined: If the point cloud should be combined across all indices
@@ -55,6 +55,20 @@ class PointCloudHandler():
         vis.create_window()
         vis.add_geometry(pc)
         vis.add_geometry(axis_mesh)
+
+        if save_image_name:
+            # Optionally, you can set the view point here before running the visualization
+            view_control = vis.get_view_control()
+            view_control.change_field_of_view(step=-30)
+            view_control.rotate(360, 0)
+            view_control.set_zoom(0.55)
+            
+            # Save image
+            vis.update_geometry(pc)
+            vis.poll_events()
+            vis.update_renderer()
+            vis.capture_screen_image(str(index) + "_" + save_image_name, do_render=True)
+        
         vis.run()
         vis.destroy_window()
     
@@ -215,14 +229,14 @@ class ImaginedPointCloudHandler(PointCloudHandler):
         self._transforms.append(np.eye(4))
         self._initial_transforms = self._transforms.copy()
 
-    def visualize(self, index : Optional[int] = None):
+    def visualize(self, index : Optional[int] = None, save_image_name : Optional[str] = None):
         """
         Visualize the point cloud.
         :param index: The index of the point cloud to visualize
         """
         if index == 0 or index is None:
             self.update_hand()
-        return super().visualize(index=index)
+        return super().visualize(index=index, save_image_name=save_image_name)
 
     def sample_from_meshes(self, mesh_dict : dict, total_sample_points : int = 1000):
         """
@@ -230,8 +244,13 @@ class ImaginedPointCloudHandler(PointCloudHandler):
         :param mesh_dict: Dictionary containing the mesh files, scale factors, origins, and group indices
         :param total_sample_points: The total number of points to sample
         """
-        # Calculate the number of sample points for each mesh file
-        sample_points = total_sample_points // len(mesh_dict)
+        # Get the surface areas to uniformly sample the mesh files
+        # def get_surface_areas(mesh_dict):
+        #     meshes = [o3d.io.read_triangle_mesh(mesh_values["path"]).scale(np.mean(mesh_values["scale_factors"]), np.zeros(3)) for mesh_values in mesh_dict.values()]
+            
+        #     surface_areas = np.asarray([mesh.get_surface_area() * 1000 for mesh in meshes])
+        #     return surface_areas
+        # surface_areas = get_surface_areas(mesh_dict)
         
         # Initialise the point clouds and transforms for each group
         initial_count = self.count
@@ -240,7 +259,11 @@ class ImaginedPointCloudHandler(PointCloudHandler):
         self._transforms.extend([None for _ in range(num_pc)])
         
         # Go through each mesh file in the dictionary
-        for mesh_values in mesh_dict.values():
+        for idx, mesh_values in enumerate(mesh_dict.values()):
+            # Calculate the number of sample points for each mesh file
+            sample_points = total_sample_points // len(mesh_dict)
+            # sample_points = int(surface_areas[idx] / np.sum(surface_areas) * total_sample_points)
+            
             # Sample the mesh file
             pc = self.sample_from_mesh(mesh_values["path"], sample_points)
             
@@ -349,9 +372,12 @@ if __name__ == "__main__":
 
     start_time = time()
     # Load the stl file
-    point_cloud_handler.sample_from_meshes(mesh_dict, 2000)
+    point_cloud_handler.sample_from_meshes(mesh_dict, 10000)
     #pc_plane = PointCloudHandler.sample_from_mesh("./plane.stl", 1000)
     #point_cloud_handler.add(pc_plane)
+    point_cloud_handler.visualize(index=None, save_image_name="imagined_group.png")
+    point_cloud_handler.visualize(index=0, save_image_name="imagined_hand_open.png")
+    
     
     duration = time() - start_time
     print(f"Duration: {duration:.5f} seconds")
@@ -360,16 +386,19 @@ if __name__ == "__main__":
                         [0.707, 0.707, 0, 0],
                         [0, 0, 1, 0],
                         [0, 0, 0, 1]])
-    #point_cloud_handler._transforms[3] = point_cloud_handler._transforms[3] @ transform
-    #point_cloud_handler._pc[2] = point_cloud_handler._pc[2].transform(transform)
-    start_time = time()
-    #point_cloud_handler.update_cardinality(250)
-    duration = time() - start_time
-    print(f"Duration: {duration:.5f} seconds")
+    indices = [1, 2, 3, 4, 5]
+    for index in indices:
+        point_cloud_handler._transforms[index] = point_cloud_handler._transforms[index] @ transform
     
-    print(f"Number of point clouds: {len(point_cloud_handler.points[1])}")
+    # point_cloud_handler._pc[2] = point_cloud_handler._pc[2].transform(transform)
+    # start_time = time()
+    # point_cloud_handler.update_cardinality(250)
+    # duration = time() - start_time
+    # print(f"Duration: {duration:.5f} seconds")
+    
+    # print(f"Number of points: {len(point_cloud_handler.points[1])}")
     # Visualize the point cloud
-    point_cloud_handler.visualize(index=0)
+    point_cloud_handler.visualize(index=0, save_image_name="imagined_hand_closed.png")
 
     #point_cloud_handler.transform(point_cloud_handler.pc[2], transform)
     #for i in range(point_cloud_handler.count):
