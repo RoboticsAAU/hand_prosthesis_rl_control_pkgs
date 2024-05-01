@@ -119,9 +119,8 @@ class MiaHandSetup(HandSetup):
         :param pos: Positions in the positive axis of the fingers
         """
         # Before finger position can be set, effort must be set to zero
-        for index, finger_id in enumerate(["index", "mrl", "thumb"]):
-            self.set_finger_vel(0.0, finger_id)
-        
+        self.set_action(np.zeros(6))
+            
         self._set_configuration_srv(
             model_name=self._name,
             urdf_param_name="mia_hand_description",
@@ -137,13 +136,14 @@ class MiaHandSetup(HandSetup):
         """
         # TODO: Make this general (instead of specific to velocity) to work with effort also
         
-        # Fingers
-        for index, finger_id in enumerate(["index", "mrl", "thumb"]):
-            self.set_finger_vel(vels[index], finger_id)
-
         # Wrist
         for index, wrist_id in enumerate(["rot", "exfle", "ulra"]):
             self.set_wrist_vel(vels[index], wrist_id)
+        
+        # Fingers
+        for index, finger_id in enumerate(["index", "mrl", "thumb"], start=3):
+            self.set_finger_vel(vels[index], finger_id)
+
     
     def _joints_callback(self, data : JointState):
         self.joints_pos = data.position

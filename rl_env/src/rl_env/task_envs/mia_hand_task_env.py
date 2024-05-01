@@ -74,7 +74,7 @@ class MiaHandWorldEnv(gym.Env):
                 "range": tuple(np.deg2rad([-70, 70])),
                 "rotation": np.eye(3)
             },
-            "base_link": {
+            "palm": {
                 "range": tuple(np.deg2rad([-90, 90])),
                 "rotation": np.array([[0,0,1],
                                       [0,1,0],
@@ -136,7 +136,6 @@ class MiaHandWorldEnv(gym.Env):
     
     def reset(self, seed=None):
         super().reset(seed=seed)
-        
         self._episode_count += 1
         
         rospy.logdebug("Resetting MiaHandWorldEnv")
