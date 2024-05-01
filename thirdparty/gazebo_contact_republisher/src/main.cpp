@@ -116,8 +116,10 @@ void forcesCb(ConstContactsPtr &_msg)
 
             // Sum the forces
             contact_republisher::contact_msg best_contact = contacts_buffer[filtered_contact[unique_key].first];
-            max_force = std::accumulate(best_contact.forces_1.begin(), best_contact.forces_1.end(), 0) + std::accumulate(best_contact.forces_2.begin(), best_contact.forces_2.end(), 0);
-            float force = std::accumulate(contact.forces_1.begin(), contact.forces_1.end(), 0) + std::accumulate(contact.forces_2.begin(), contact.forces_2.end(), 0);
+            max_force = std::inner_product(best_contact.forces_1.begin(), best_contact.forces_1.end(), best_contact.forces_1.begin(), 0);
+            max_force += std::inner_product(best_contact.forces_2.begin(), best_contact.forces_2.end(), best_contact.forces_2.begin(), 0);
+            float force = std::inner_product(contact.forces_1.begin(), contact.forces_1.end(), contact.forces_1.begin(), 0);
+            force += std::inner_product(contact.forces_2.begin(), contact.forces_2.end(), contact.forces_2.begin(), 0);
 
             if (force > max_force)
             {
