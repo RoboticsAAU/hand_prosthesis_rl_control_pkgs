@@ -136,13 +136,13 @@ class MiaHandSetup(HandSetup):
         """
         # TODO: Make this general (instead of specific to velocity) to work with effort also
         
-        # Wrist
-        for index, wrist_id in enumerate(["rot", "exfle", "ulra"]):
-            self.set_wrist_vel(vels[index], wrist_id)
-        
         # Fingers
-        for index, finger_id in enumerate(["index", "mrl", "thumb"], start=3):
+        for index, finger_id in enumerate(["index", "mrl", "thumb"]):
             self.set_finger_vel(vels[index], finger_id)
+            
+        # Wrist
+        for index, wrist_id in enumerate(["rot", "exfle", "ulra"], start=3):
+            self.set_wrist_vel(vels[index], wrist_id)
 
     
     def _joints_callback(self, data : JointState):
