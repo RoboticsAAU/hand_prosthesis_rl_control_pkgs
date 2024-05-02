@@ -10,7 +10,6 @@ from move_hand.path_planners import bezier_paths, navigation_function, path_plan
 # TODO: Compute trajectories for the hand
 # TODO: The hand orientation could always point towards some point, or the hand could be oriented tangent to the trajectory
 
-
 class HandController:
     def __init__(self, move_hand_config : Dict[str, Any], hand_rotation : np.array):
         # Create the gazebo interface

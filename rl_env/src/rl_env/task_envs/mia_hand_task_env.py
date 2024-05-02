@@ -96,7 +96,7 @@ class MiaHandWorldEnv(gym.Env):
         action_space_joints = ["j_index_fle", "j_mrl_fle", "j_thumb_fle", "j_wrist_rotation", "j_wrist_exfle", "j_wrist_ulra"]
         self._act_vel_lb = np.array([limit[0] for name, limit in self._rl_interface._world_interface.hand._joint_velocity_limits.items() if name in action_space_joints])
         self._act_vel_ub = np.array([limit[1] for name, limit in self._rl_interface._world_interface.hand._joint_velocity_limits.items() if name in action_space_joints])
-        
+
         # Save number of joints
         self._dof = len(self._rl_interface._world_interface.hand._joint_velocity_limits)
         
@@ -120,7 +120,7 @@ class MiaHandWorldEnv(gym.Env):
         self._finger_object_dist = np.zeros(3)
         
     
-    def step(self, action):     
+    def step(self, action):
         done = self._rl_interface.step(action)
         self.update()
         obs = self._get_obs()
@@ -128,8 +128,10 @@ class MiaHandWorldEnv(gym.Env):
         reward = self._compute_reward(obs, done)
         self._cumulated_steps += 1
 
-        if self._contacts.contacts:        
-            rospy.logwarn("Is palmar: " + str(self.check_contact(self._contacts).values()))            
+        # TODO: Remove following, as it is only for debugging
+        contact_check = self.check_contact(self._contacts)
+        if any(contact_check.values()):        
+            rospy.logwarn("Is palmar: " + str(contact_check))            
         
         return obs, reward, done, False, info
     

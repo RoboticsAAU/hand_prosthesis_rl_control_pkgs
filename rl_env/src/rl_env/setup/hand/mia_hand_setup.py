@@ -42,8 +42,6 @@ class MiaHandSetup(HandSetup):
 
         self._set_configuration_srv = rospy.ServiceProxy("/gazebo/set_model_configuration", SetModelConfiguration)
 
-        
-
         # Initialise the subscribed data variables
         self.joints_pos = [Float64()]
         self.joints_vel = [Float64()]
