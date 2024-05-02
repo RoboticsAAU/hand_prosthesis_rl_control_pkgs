@@ -1,15 +1,17 @@
 import rospy
 import numpy as np
+from threading import Thread 
 from gazebo_msgs.msg import ModelState, ModelStates
 from geometry_msgs.msg import Pose, Twist, Point, Quaternion, Vector3
 from gazebo_msgs.srv import SpawnModel, DeleteModel
 from controller_manager_msgs.srv import LoadController
 from typing import Union, Dict, List, Type
 
-from move_hand.utils.ros_helper_functions import _is_connected, wait_for_connection
-from move_hand.utils.move_helper_functions import next_pose, convert_pose, convert_velocity
-from sim_world.world_interfaces.world_interface import WorldInterface
+
+from move_hand.utils.ros_helper_functions import wait_for_connection
+from move_hand.utils.move_helper_functions import next_pose, convert_pose, convert_velocity, convert_state
 from rl_env.setup.hand.hand_setup import HandSetup
+from sim_world.world_interfaces.world_interface import WorldInterface
 from rl_env.gazebo.gazebo_connection import GazeboConnection
 from rl_env.gazebo.controllers_connection import ControllersConnection
 
@@ -56,7 +58,10 @@ class SimulationInterface(WorldInterface):
         
         # Initialize variables for saving state information
         self._model_states = ModelStates()
-
+        
+        # Hand node for handling spawning
+        self._hand_state_pub = rospy.Publisher(self.hand.name + "/poses", ModelStates, queue_size=10)
+    
     
     def get_subscriber_data(self) -> List[list]:
         """ Get all the subscriber data and return it in a dictionary. """
@@ -156,6 +161,19 @@ class SimulationInterface(WorldInterface):
         except rospy.ServiceException as e:
             rospy.logerr("Failed to delete object because: ", e)
 
+    def send_hand_poses(self, poses : Union[List[Pose], np.ndarray]):
+        num_poses = len(poses) if isinstance(poses, list) else poses.shape[1]
+        
+        states = ModelStates()
+        for i in range(num_poses):
+            pose = poses[i] if isinstance(poses, list) else poses[:,i]
+            states.name.append(self.hand.name)
+            states.pose.append(convert_pose(pose))
+            states.twist.append(convert_velocity(np.zeros(6)))
+        
+        self._hand_state_pub.publish(states)
+        
+        
     # ------------------- Private methods ------------------- #
     def _publish_velocity(self, model_name : str, velocity: Union[Twist, np.ndarray], ref_frame: str = 'world'):
         """Publish a velocity to the given model in the gazebo world. Includes metadata of the controller in the message."""
@@ -206,12 +224,13 @@ class SimulationInterface(WorldInterface):
     @property
     def obj_poses(self) -> Dict[str, Pose]:
         """ Return poses of objects in the environment. """
-        try:                 
+        try:
             obj_tuples = [(obj_name, self._model_states.name.index(obj_name)) for obj_name in self._spawned_obj_names]
             return {name : self._model_states.pose[index] for name, index in obj_tuples}
         except ValueError as e:
             rospy.logwarn(f"An index exception has occurred when indexing objects: {e}")
             return None
+
 
 if __name__ == '__main__':
     print("{} should not be run as a script...".format(__file__))

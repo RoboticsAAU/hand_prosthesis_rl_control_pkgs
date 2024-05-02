@@ -22,4 +22,7 @@
         <param name="rl_config_file"            value="$(arg rl_config_file)" />
         <param name="sim_world_config_file"     value="$(arg sim_world_config_file)" />
     </node>
+    <node name="move_hand_node" pkg="move_hand" type="move_hand_node.py" output="screen">
+        <param name="robot_namespace"           value="$(arg robot_namespace)" />
+    </node>
 </launch>

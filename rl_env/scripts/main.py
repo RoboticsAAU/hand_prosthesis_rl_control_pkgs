@@ -6,10 +6,10 @@ from stable_baselines3 import PPO
 from datetime import datetime
 
 from rl_env.task_envs.mia_hand_task_env import MiaHandWorldEnv
-from move_hand.control.move_hand_controller import HandController
 from rl_env.setup.hand.mia_hand_setup import MiaHandSetup
 from sim_world.world_interfaces.simulation_interface import SimulationInterface
 from sim_world.rl_interface.rl_interface import RLInterface
+
 
 # Load the configuration files
 rospack = rospkg.RosPack()
@@ -43,7 +43,7 @@ def main():
     )
     
     # Instantiate RL env
-    rl_env = MiaHandWorldEnv(rl_interface, rl_config)  
+    rl_env = MiaHandWorldEnv(rl_interface, rl_config)
 
     # Instantiate the PPO model
     model = PPO(

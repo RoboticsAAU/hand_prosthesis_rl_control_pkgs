@@ -1,8 +1,8 @@
 import numpy as np
 from geometry_msgs.msg import Twist, Pose, Point, Quaternion, Vector3
+from gazebo_msgs.msg import ModelState
 from typing import Union
 from tf.transformations import quaternion_from_euler, quaternion_multiply
-
 
 def next_pose(velocity: Twist, current_position: Pose, dt: float) -> Pose:
     """ Calculate the next position of the model given the current position, velocity and delta time. """
@@ -62,3 +62,11 @@ def convert_velocity(velocity : Union[np.array, Twist]) -> Twist:
         return Twist(linear=Vector3(x=velocity[0], y=velocity[1], z=velocity[2]), angular=Vector3(x=velocity[3], y=velocity[4], z=velocity[5]))
     else:
         return velocity
+
+
+def convert_state(name : str, pose : Union[np.array, Pose], vel : Union[np.array, Twist]) -> ModelState:
+    """
+    Function to convert a np.array pose to a geometry_msg.msg.Pose.
+    """
+    return ModelState(name=name, pose=convert_pose(pose), twist=convert_velocity(vel))
+    

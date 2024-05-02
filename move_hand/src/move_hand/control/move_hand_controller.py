@@ -43,13 +43,14 @@ class HandController:
         self._pose = hand_state["pose"]
 
 
-    def step(self) -> np.array:
-        
+    def step(self, num_steps : int = 1) -> np.array:
+
         if self._pose_buffer.shape[1] == 0:
             raise IndexError("Empty pose buffer")
         
-        first_pose, self._pose_buffer = self._pose_buffer[:,0], self._pose_buffer[:,1:]
-        return first_pose
+        first_poses, self._pose_buffer = self._pose_buffer[:,0:num_steps], self._pose_buffer[:,(num_steps+1):]
+        first_poses = first_poses.reshape(7, -1)
+        return first_poses
     
     
     def plan_trajectory(self, obj_center : np.array, obj_mesh) -> None:
@@ -63,7 +64,7 @@ class HandController:
             path_params = {
                 "num_way_points": random.randint(1, 5),
                 "sample_type": "constant",
-                "num_points": 100,
+                "num_points": 5000,
                 "dt" : 0.01,
             }
         elif self._config["path_planner"] == "navigation_function":
@@ -78,7 +79,8 @@ class HandController:
         self._pose_buffer = self._path_planner.plan_path(start_pose, goal_pose, path_params)
         #TODO: Appending the last element N times to the buffer to make the hand stay at the goal pose
         self._pose_buffer = np.append(self._pose_buffer, np.vstack([goal_pose] * 15).T, axis=1)
-
+        
+        # self._pose_buffer = start_pose.reshape(7,-1).repeat(self._pose_buffer.shape[1], 1)
         #self._pose_buffer[3:,:] = start_pose[3:].repeat(self._pose_buffer.shape[1]).reshape(4, -1) 
         # path_visualiser.plot_path(self._pose_buffer)
         # to_append = np.vstack([start_pose[3:].copy()] * self._pose_buffer.shape[1]).T

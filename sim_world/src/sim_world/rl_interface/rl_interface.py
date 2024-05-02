@@ -2,7 +2,7 @@ import numpy as np
 import rospy
 
 from geometry_msgs.msg import Pose, Point, Quaternion
-from typing import Dict, Callable, Any, Union
+from typing import Dict, Callable, Any, Union, List
 from scipy.spatial.transform import Rotation as R
 
 from sim_world.world_interfaces.simulation_interface import SimulationInterface
@@ -40,7 +40,9 @@ class RLInterface():
         
         # Update the world interface with the input values
         self.set_action(action)
-        self.move_hand(self._hand_controller.step())
+        # self.move_hand(self._hand_controller.step()[0])
+        self.set_hand_poses(self._hand_controller.step(num_steps=50))
+        
         
         # Extract all the values from the interface and put them in a dictionary
         # Some values may be set to none depending on the interface, need to make sure the update methods can handle this using checks. 
@@ -67,6 +69,9 @@ class RLInterface():
         """
         self._world_interface.set_pose(self._world_interface.hand.name, pose)
     
+    def set_hand_poses(self, poses : Union[List[Pose], np.ndarray]):
+        self._world_interface.send_hand_poses(poses)
+        
     
     def spawn_objects_in_grid(self, offset : np.array = np.zeros(2)):
         """
@@ -121,7 +126,8 @@ class RLInterface():
         
         # Update the current object
         if self._object_handler.curr_obj is not None:
-            self.move_hand(self.default_pose)
+            # self.move_hand(self.default_pose)
+            self.set_hand_poses([self.default_pose])
             self.reset_object(self._object_handler.curr_obj)
             
         self._object_handler.update_current_object()
