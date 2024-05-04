@@ -4,6 +4,7 @@ import rospkg
 import open3d as o3d
 import gymnasium as gym
 import glob
+from time import time
 from gymnasium.utils import seeding
 from gymnasium.envs.registration import register
 from pathlib import Path
@@ -100,6 +101,9 @@ class MiaHandWorldEnv(gym.Env):
         # Save number of joints
         self._dof = len(self._rl_interface._world_interface.hand._joint_velocity_limits)
         
+        # Timestamp used to wait at end pose
+        self._prev_pose_ts = time()
+        
         # Parameters for the state and observation space
         self._joints = None
         self._joints_vel = None
@@ -118,14 +122,21 @@ class MiaHandWorldEnv(gym.Env):
         self._cumulated_steps = 0
         self._episode_count = 0
         self._finger_object_dist = np.zeros(3)
-        
+    
     
     def step(self, action):
-        done = self._rl_interface.step(action)
+        
+        done = False
+        if self._rl_interface._hand_controller.buffer_empty:
+            done = (time() - self._prev_pose_ts) > self._rl_config["general"]["dur_at_obj"]
+        else:
+            self._prev_pose_ts = time()
+        
+        self._rl_interface.step(action)
         self.update()
         obs = self._get_obs()
         info = {}
-        reward = self._compute_reward(obs, done)
+        reward = self._compute_reward(obs)
         self._cumulated_steps += 1
 
             
@@ -134,7 +145,7 @@ class MiaHandWorldEnv(gym.Env):
         # TODO: Remove following, as it is only for debugging
         contact_check = self.check_contact(self._contacts)
         if any(contact_check.values()):        
-            rospy.logwarn("Is palmar: " + str(contact_check))            
+            rospy.logwarn("Is palmar: " + str(contact_check))     
         
         return obs, reward, done, False, info
     
@@ -222,14 +233,15 @@ class MiaHandWorldEnv(gym.Env):
         return observation
 
 
-    def _compute_reward(self, observation, done):
+    def _compute_reward(self, observation):
         """
         Compute the reward for the given rl step
         :return: reward
         """
+        # TODO: consider if we need end episode points
         # Check if episode is done
-        if done:
-            return self._end_episode_points
+        # if done:
+        #     return self._end_episode_points
         
         # Obtain the combined joint velocity
         combined_joint_vel = np.sum(np.abs(observation["joints_vel"]))

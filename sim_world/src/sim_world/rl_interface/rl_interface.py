@@ -1,6 +1,7 @@
 import numpy as np
 import rospy
 
+from time import time
 from geometry_msgs.msg import Pose, Point, Quaternion
 from std_msgs.msg import Bool
 from typing import Dict, Callable, Any, Union, List
@@ -28,18 +29,15 @@ class RLInterface():
         self._object_poses = {}
         self.spawn_objects_in_grid(np.array([1.0, 0.0]))
         
-        # Spawn hand in an appropriate position
         self.default_pose = Pose(position=Point(0, 0, 0), orientation=Quaternion(0.7071, 0, 0, 0.7071))
-        self.move_hand(self.default_pose)
         
         # Initialise subscriber data container
         self._subscriber_data = {}
         
 
-    def step(self, action : np.array) -> bool:
+    def step(self, action : np.array):
         """
         Function to step the RL interface.
-        Returns True if the episode is done.
         """
         
         # Update the world interface with the input values
@@ -53,10 +51,6 @@ class RLInterface():
 
         # Update move_hand_controller with new pose
         self._hand_controller.update(self._subscriber_data["move_hand_data"])
-        
-        # TODO: Remove later
-        # Check if episode is done
-        return self._hand_controller._pose_buffer.shape[1] == 0
         
     
     def set_action(self, action : np.array):

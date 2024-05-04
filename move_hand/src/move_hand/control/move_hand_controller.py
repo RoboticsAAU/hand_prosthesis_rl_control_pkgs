@@ -44,7 +44,7 @@ class HandController:
 
     def step(self, num_steps : int = 1) -> np.array:
 
-        if self._pose_buffer.shape[1] == 0:
+        if self.buffer_empty:
             raise IndexError("Empty pose buffer")
         
         first_poses, self._pose_buffer = self._pose_buffer[:,0:num_steps], self._pose_buffer[:,(num_steps+1):]
@@ -77,7 +77,7 @@ class HandController:
         
         self._pose_buffer = self._path_planner.plan_path(start_pose, goal_pose, path_params)
         #TODO: Appending the last element N times to the buffer to make the hand stay at the goal pose
-        self._pose_buffer = np.append(self._pose_buffer, np.vstack([goal_pose] * 15).T, axis=1)
+        # self._pose_buffer = np.append(self._pose_buffer, np.vstack([goal_pose] * 15).T, axis=1)
         
         # self._pose_buffer = start_pose.reshape(7,-1).repeat(self._pose_buffer.shape[1], 1)
         #self._pose_buffer[3:,:] = start_pose[3:].repeat(self._pose_buffer.shape[1]).reshape(4, -1) 
@@ -315,6 +315,11 @@ class HandController:
         goal_orientation = R.from_matrix(rotation_matrix).as_quat()
         
         return np.concatenate([goal_position, goal_orientation])
+
+    @property
+    def buffer_empty(self) -> bool:
+        return self._pose_buffer.shape[1] == 0
+
 
 if __name__ == '__main__':
     # Test move hand controller class
