@@ -68,5 +68,5 @@ def convert_state(name : str, pose : Union[np.array, Pose], vel : Union[np.array
     """
     Function to convert a np.array pose to a geometry_msg.msg.Pose.
     """
-    return ModelState(name=name, pose=convert_pose(pose), twist=convert_velocity(vel))
+    return ModelState(model_name=name, pose=convert_pose(pose), twist=convert_velocity(vel))
     
