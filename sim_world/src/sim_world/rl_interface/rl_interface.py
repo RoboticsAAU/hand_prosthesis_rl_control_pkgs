@@ -2,6 +2,7 @@ import numpy as np
 import rospy
 
 from geometry_msgs.msg import Pose, Point, Quaternion
+from std_msgs.msg import Bool
 from typing import Dict, Callable, Any, Union, List
 from scipy.spatial.transform import Rotation as R
 
@@ -19,6 +20,9 @@ class RLInterface():
         
         # Instantiate the hand controller
         self._hand_controller = HandController(sim_config["move_hand"], self._world_interface.hand.hand_rotation)
+        
+        # Publisher for whether episode is done or not
+        self._pub_episode_done = rospy.Publisher(self._world_interface.hand.name + "/episode_done", Bool)
         
         # Spawn objects in the gazebo world
         self._object_poses = {}
@@ -41,8 +45,7 @@ class RLInterface():
         # Update the world interface with the input values
         self.set_action(action)
         # self.move_hand(self._hand_controller.step()[0])
-        self.set_hand_poses(self._hand_controller.step(num_steps=50))
-        
+        if not self._hand_controller.buffer_empty: self.set_hand_poses(self._hand_controller.step(num_steps=50))
         
         # Extract all the values from the interface and put them in a dictionary
         # Some values may be set to none depending on the interface, need to make sure the update methods can handle this using checks. 
@@ -126,8 +129,7 @@ class RLInterface():
         
         # Update the current object
         if self._object_handler.curr_obj is not None:
-            # self.move_hand(self.default_pose)
-            self.set_hand_poses([self.default_pose])
+            self.move_hand(self.default_pose)
             self.reset_object(self._object_handler.curr_obj)
             
         self._object_handler.update_current_object()

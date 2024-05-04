@@ -128,6 +128,9 @@ class MiaHandWorldEnv(gym.Env):
         reward = self._compute_reward(obs, done)
         self._cumulated_steps += 1
 
+            
+        self._rl_interface._pub_episode_done.publish(done)
+
         # TODO: Remove following, as it is only for debugging
         contact_check = self.check_contact(self._contacts)
         if any(contact_check.values()):        

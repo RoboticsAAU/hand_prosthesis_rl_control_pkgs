@@ -1,15 +1,14 @@
 import rospy
 import numpy as np
-from threading import Thread 
 from gazebo_msgs.msg import ModelState, ModelStates
-from geometry_msgs.msg import Pose, Twist, Point, Quaternion, Vector3
+from geometry_msgs.msg import Pose, Twist
 from gazebo_msgs.srv import SpawnModel, DeleteModel
 from controller_manager_msgs.srv import LoadController
 from typing import Union, Dict, List, Type
 
 
 from move_hand.utils.ros_helper_functions import wait_for_connection
-from move_hand.utils.move_helper_functions import next_pose, convert_pose, convert_velocity, convert_state
+from move_hand.utils.move_helper_functions import next_pose, convert_pose, convert_velocity
 from rl_env.setup.hand.hand_setup import HandSetup
 from sim_world.world_interfaces.world_interface import WorldInterface
 from rl_env.gazebo.gazebo_connection import GazeboConnection
@@ -26,7 +25,7 @@ class SimulationInterface(WorldInterface):
         self._spawned_obj_names = set()
 
         # Model state publisher and subscriber
-        self._pub_state = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=10)
+        self._pub_state = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=1)
         self._sub_state = rospy.Subscriber('/gazebo/model_states', ModelStates, self._state_callback, buff_size=1000)
 
         # Storing the urdf of the hand
@@ -87,6 +86,7 @@ class SimulationInterface(WorldInterface):
         try:
             pose = convert_pose(pose)
             self._publish_pose(model_name, pose, reference_frame)
+            rospy.sleep(0.05) # Delay is needed, as it takes time to teleport in gazebo
         except Exception as e:
             rospy.logwarn("Failed to set position because: ", e)
 
