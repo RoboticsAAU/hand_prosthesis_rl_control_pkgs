@@ -2,11 +2,11 @@ import rospy
 import numpy as np
 import rospkg
 import open3d as o3d
-import gymnasium as gym
+import gym
 import glob
 from time import time
-from gymnasium.utils import seeding
-from gymnasium.envs.registration import register
+from gym.utils import seeding
+from gym.envs.registration import register
 from pathlib import Path
 from functools import cached_property
 from typing import Dict, List, Any, Optional
@@ -17,8 +17,6 @@ from sim_world.rl_interface.rl_interface import RLInterface
 from rl_env.utils.tf_handler import TFHandler
 from rl_env.utils.point_cloud_handler import PointCloudHandler, ImaginedPointCloudHandler
 from rl_env.utils.urdf_handler import URDFHandler
-
-OBJECT_LIFT_LOWER_LIMIT = 0.03
 
 # The path is __init__.py of openai_ros, where we import the TurtleBot2MazeEnv directly
 timestep_limit_per_episode = 10000 # Can be any Value
@@ -97,6 +95,10 @@ class MiaHandWorldEnv(gym.Env):
         action_space_joints = ["j_index_fle", "j_mrl_fle", "j_thumb_fle", "j_wrist_rotation", "j_wrist_exfle", "j_wrist_ulra"]
         self._act_vel_lb = np.array([limit[0] for name, limit in self._rl_interface._world_interface.hand._joint_velocity_limits.items() if name in action_space_joints])
         self._act_vel_ub = np.array([limit[1] for name, limit in self._rl_interface._world_interface.hand._joint_velocity_limits.items() if name in action_space_joints])
+        
+        # state bounds
+        self._state_lb = np.concatenate((self._obs_pos_lb, self._obs_vel_lb))
+        self._state_ub = np.concatenate((self._obs_pos_ub, self._obs_vel_ub))
 
         # Save number of joints
         self._dof = len(self._rl_interface._world_interface.hand._joint_velocity_limits)
@@ -224,10 +226,7 @@ class MiaHandWorldEnv(gym.Env):
         :return: observation
         """
 
-        observation = {
-            "joints" : self._joints,
-            "joints_vel" : self._joints_vel,
-        }
+        observation = {"state" : np.concatenate((self._joints, self._joints_vel))}
         
         rospy.logdebug("Observations: "+str(observation))
         return observation
@@ -277,10 +276,8 @@ class MiaHandWorldEnv(gym.Env):
 
     @cached_property
     def observation_space(self):
-        pos_space = gym.spaces.Box(self._obs_pos_lb, self._obs_pos_ub, dtype = np.float32)
-        vel_space = gym.spaces.Box(self._obs_vel_lb, self._obs_vel_ub, dtype = np.float32)
-        obs_dict = {"joints": pos_space, "joints_vel": vel_space}
-        rospy.logwarn(f"OBSERVATION SPACE: {obs_dict}")
+        state_space = gym.spaces.Box(self._state_lb, self._state_ub, dtype = np.float32)
+        obs_dict = {"state": state_space}
         
         for cam_name, cam_config in self._config_cameras.items():
             for modality_name in cam_config.keys():
@@ -306,6 +303,7 @@ class MiaHandWorldEnv(gym.Env):
         if self._config_imagined is not None:
             obs_dict["imagined"] = gym.spaces.Box(low=-np.inf, high=np.inf, shape=((self._config_imagined["num_points"],) + (3,)))
             
+        rospy.logwarn(f"OBSERVATION SPACE: {obs_dict}")
         return gym.spaces.Dict(obs_dict)
     
     def _get_obs(self):

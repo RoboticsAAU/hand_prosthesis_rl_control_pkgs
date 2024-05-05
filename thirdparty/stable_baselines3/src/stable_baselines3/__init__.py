@@ -1,11 +1,11 @@
 import os
-
+import rospkg
 from stable_baselines3.a2c import A2C
 from stable_baselines3.common.utils import get_system_info
 from stable_baselines3.ppo import PPO
 
 # Read version from file
-version_file = os.path.join(os.path.dirname(__file__), "version.txt")
+version_file = os.path.join(rospkg.RosPack().get_path("stable_baselines3"), "src/stable_baselines3/version.txt")
 with open(version_file) as file_handler:
     __version__ = file_handler.read().strip()
 
