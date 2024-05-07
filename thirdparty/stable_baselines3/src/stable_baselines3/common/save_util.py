@@ -2,6 +2,7 @@
 Save util taken from stable_baselines
 used to serialize data (class parameters) of model classes
 """
+
 import base64
 import functools
 import io
@@ -37,7 +38,7 @@ def recursive_getattr(obj: Any, attr: str, *args) -> Any:
     def _getattr(obj: Any, attr: str) -> Any:
         return getattr(obj, attr, *args)
 
-    return functools.reduce(_getattr, [obj] + attr.split("."))
+    return functools.reduce(_getattr, [obj, *attr.split(".")])
 
 
 def recursive_setattr(obj: Any, attr: str, val: Any) -> None:
@@ -162,13 +163,15 @@ def json_to_data(json_string: str, custom_objects: Optional[Dict[str, Any]] = No
             try:
                 base64_object = base64.b64decode(serialization.encode())
                 deserialized_object = cloudpickle.loads(base64_object)
-            except (RuntimeError, TypeError):
+            except (RuntimeError, TypeError, AttributeError) as e:
                 warnings.warn(
                     f"Could not deserialize object {data_key}. "
-                    + "Consider using `custom_objects` argument to replace "
-                    + "this object."
+                    "Consider using `custom_objects` argument to replace "
+                    "this object.\n"
+                    f"Exception: {e}"
                 )
-            return_data[data_key] = deserialized_object
+            else:
+                return_data[data_key] = deserialized_object
         else:
             # Read as it is
             return_data[data_key] = data_item
@@ -176,7 +179,9 @@ def json_to_data(json_string: str, custom_objects: Optional[Dict[str, Any]] = No
 
 
 @functools.singledispatch
-def open_path(path: Union[str, pathlib.Path, io.BufferedIOBase], mode: str, verbose: int = 0, suffix: Optional[str] = None):
+def open_path(
+    path: Union[str, pathlib.Path, io.BufferedIOBase], mode: str, verbose: int = 0, suffix: Optional[str] = None
+) -> Union[io.BufferedWriter, io.BufferedReader, io.BytesIO]:
     """
     Opens a path for reading or writing with a preferred suffix and raises debug information.
     If the provided path is a derivative of io.BufferedIOBase it ensures that the file
@@ -186,31 +191,34 @@ def open_path(path: Union[str, pathlib.Path, io.BufferedIOBase], mode: str, verb
     If the provided path is a string or a pathlib.Path, it ensures that it exists. If the mode is "read"
     it checks that it exists, if it doesn't exist it attempts to read path.suffix if a suffix is provided.
     If the mode is "write" and the path does not exist, it creates all the parent folders. If the path
-    points to a folder, it changes the path to path_2. If the path already exists and verbose == 2,
+    points to a folder, it changes the path to path_2. If the path already exists and verbose >= 2,
     it raises a warning.
 
     :param path: the path to open.
         if save_path is a str or pathlib.Path and mode is "w", single dispatch ensures that the
         path actually exists. If path is a io.BufferedIOBase the path exists.
     :param mode: how to open the file. "w"|"write" for writing, "r"|"read" for reading.
-    :param verbose: Verbosity level, 0 means only warnings, 2 means debug information.
+    :param verbose: Verbosity level: 0 for no output, 1 for info messages, 2 for debug messages
     :param suffix: The preferred suffix. If mode is "w" then the opened file has the suffix.
         If mode is "r" then we attempt to open the path. If an error is raised and the suffix
         is not None, we attempt to open the path with the suffix.
     :return:
     """
-    if not isinstance(path, io.BufferedIOBase):
-        raise TypeError("Path parameter has invalid type.", io.BufferedIOBase)
+    # Note(antonin): the true annotation should be IO[bytes]
+    # but there is not easy way to check that
+    allowed_types = (io.BufferedWriter, io.BufferedReader, io.BytesIO, io.BufferedRandom)
+    if not isinstance(path, allowed_types):
+        raise TypeError(f"Path {path} parameter has invalid type: expected one of {allowed_types}.")
     if path.closed:
-        raise ValueError("File stream is closed.")
+        raise ValueError(f"File stream {path} is closed.")
     mode = mode.lower()
     try:
         mode = {"write": "w", "read": "r", "w": "w", "r": "r"}[mode]
-    except KeyError:
-        raise ValueError("Expected mode to be either 'w' or 'r'.")
+    except KeyError as e:
+        raise ValueError("Expected mode to be either 'w' or 'r'.") from e
     if ("w" == mode) and not path.writable() or ("r" == mode) and not path.readable():
-        e1 = "writable" if "w" == mode else "readable"
-        raise ValueError(f"Expected a {e1} file.")
+        error_msg = "writable" if "w" == mode else "readable"
+        raise ValueError(f"Expected a {error_msg} file.")
     return path
 
 
@@ -223,13 +231,13 @@ def open_path_str(path: str, mode: str, verbose: int = 0, suffix: Optional[str] 
     :param path: the path to open. If mode is "w" then it ensures that the path exists
         by creating the necessary folders and renaming path if it points to a folder.
     :param mode: how to open the file. "w" for writing, "r" for reading.
-    :param verbose: Verbosity level, 0 means only warnings, 2 means debug information.
+    :param verbose: Verbosity level: 0 for no output, 1 for info messages, 2 for debug messages
     :param suffix: The preferred suffix. If mode is "w" then the opened file has the suffix.
         If mode is "r" then we attempt to open the path. If an error is raised and the suffix
         is not None, we attempt to open the path with the suffix.
     :return:
     """
-    return open_path(pathlib.Path(path), mode, verbose, suffix)
+    return open_path_pathlib(pathlib.Path(path), mode, verbose, suffix)
 
 
 @open_path.register(pathlib.Path)
@@ -242,7 +250,7 @@ def open_path_pathlib(path: pathlib.Path, mode: str, verbose: int = 0, suffix: O
         ensures that the path exists by creating the necessary folders and
         renaming path if it points to a folder.
     :param mode: how to open the file. "w" for writing, "r" for reading.
-    :param verbose: Verbosity level, 0 means only warnings, 2 means debug information.
+    :param verbose: Verbosity level: 0 for no output, 2 for indicating if path without suffix is not found when mode is "r"
     :param suffix: The preferred suffix. If mode is "w" then the opened file has the suffix.
         If mode is "r" then we attempt to open the path. If an error is raised and the suffix
         is not None, we attempt to open the path with the suffix.
@@ -253,11 +261,11 @@ def open_path_pathlib(path: pathlib.Path, mode: str, verbose: int = 0, suffix: O
 
     if mode == "r":
         try:
-            path = path.open("rb")
+            return open_path(path.open("rb"), mode, verbose, suffix)
         except FileNotFoundError as error:
             if suffix is not None and suffix != "":
                 newpath = pathlib.Path(f"{path}.{suffix}")
-                if verbose == 2:
+                if verbose >= 2:
                     warnings.warn(f"Path '{path}' not found. Attempting {newpath}.")
                 path, suffix = newpath, None
             else:
@@ -266,9 +274,9 @@ def open_path_pathlib(path: pathlib.Path, mode: str, verbose: int = 0, suffix: O
         try:
             if path.suffix == "" and suffix is not None and suffix != "":
                 path = pathlib.Path(f"{path}.{suffix}")
-            if path.exists() and path.is_file() and verbose == 2:
+            if path.exists() and path.is_file() and verbose >= 2:
                 warnings.warn(f"Path '{path}' exists, will overwrite it.")
-            path = path.open("wb")
+            return open_path(path.open("wb"), mode, verbose, suffix)
         except IsADirectoryError:
             warnings.warn(f"Path '{path}' is a folder. Will save instead to {path}_2")
             path = pathlib.Path(f"{path}_2")
@@ -276,12 +284,11 @@ def open_path_pathlib(path: pathlib.Path, mode: str, verbose: int = 0, suffix: O
             warnings.warn(f"Path '{path.parent}' does not exist. Will create it.")
             path.parent.mkdir(exist_ok=True, parents=True)
 
-    # if opening was successful uses the identity function
+    # if opening was successful uses the open_path() function
     # if opening failed with IsADirectory|FileNotFound, calls open_path_pathlib
     #   with corrections
     # if reading failed with FileNotFoundError, calls open_path_pathlib with suffix
-
-    return open_path(path, mode, verbose, suffix)
+    return open_path_pathlib(path, mode, verbose, suffix)
 
 
 def save_to_zip_file(
@@ -300,16 +307,16 @@ def save_to_zip_file(
     :param params: Model parameters being stored expected to contain an entry for every
                    state_dict with its name and the state_dict.
     :param pytorch_variables: Other PyTorch variables expected to contain name and value of the variable.
-    :param verbose: Verbosity level, 0 means only warnings, 2 means debug information
+    :param verbose: Verbosity level: 0 for no output, 1 for info messages, 2 for debug messages
     """
-    save_path = open_path(save_path, "w", verbose=0, suffix="zip")
+    file = open_path(save_path, "w", verbose=0, suffix="zip")
     # data/params can be None, so do not
     # try to serialize them blindly
     if data is not None:
         serialized_data = data_to_json(data)
 
     # Create a zip-archive and write our objects there.
-    with zipfile.ZipFile(save_path, mode="w") as archive:
+    with zipfile.ZipFile(file, mode="w") as archive:
         # Do not try to save "None" elements
         if data is not None:
             archive.writestr("data", serialized_data)
@@ -323,7 +330,10 @@ def save_to_zip_file(
         # Save metadata: library version when file was saved
         archive.writestr("_stable_baselines3_version", sb3.__version__)
         # Save system info about the current python env
-        #  archive.writestr("system_info.txt", get_system_info(print_info=False)[1])
+        archive.writestr("system_info.txt", get_system_info(print_info=False)[1])
+
+    if isinstance(save_path, (str, pathlib.Path)):
+        file.close()
 
 
 def save_to_pkl(path: Union[str, pathlib.Path, io.BufferedIOBase], obj: Any, verbose: int = 0) -> None:
@@ -336,12 +346,14 @@ def save_to_pkl(path: Union[str, pathlib.Path, io.BufferedIOBase], obj: Any, ver
         if save_path is a str or pathlib.Path and mode is "w", single dispatch ensures that the
         path actually exists. If path is a io.BufferedIOBase the path exists.
     :param obj: The object to save.
-    :param verbose: Verbosity level, 0 means only warnings, 2 means debug information.
+    :param verbose: Verbosity level: 0 for no output, 1 for info messages, 2 for debug messages
     """
-    with open_path(path, "w", verbose=verbose, suffix="pkl") as file_handler:
-        # Use protocol>=4 to support saving replay buffers >= 4Gb
-        # See https://docs.python.org/3/library/pickle.html
-        pickle.dump(obj, file_handler, protocol=pickle.HIGHEST_PROTOCOL)
+    file = open_path(path, "w", verbose=verbose, suffix="pkl")
+    # Use protocol>=4 to support saving replay buffers >= 4Gb
+    # See https://docs.python.org/3/library/pickle.html
+    pickle.dump(obj, file, protocol=pickle.HIGHEST_PROTOCOL)
+    if isinstance(path, (str, pathlib.Path)):
+        file.close()
 
 
 def load_from_pkl(path: Union[str, pathlib.Path, io.BufferedIOBase], verbose: int = 0) -> Any:
@@ -352,10 +364,13 @@ def load_from_pkl(path: Union[str, pathlib.Path, io.BufferedIOBase], verbose: in
     :param path: the path to open.
         if save_path is a str or pathlib.Path and mode is "w", single dispatch ensures that the
         path actually exists. If path is a io.BufferedIOBase the path exists.
-    :param verbose: Verbosity level, 0 means only warnings, 2 means debug information.
+    :param verbose: Verbosity level: 0 for no output, 1 for info messages, 2 for debug messages
     """
-    with open_path(path, "r", verbose=verbose, suffix="pkl") as file_handler:
-        return pickle.load(file_handler)
+    file = open_path(path, "r", verbose=verbose, suffix="pkl")
+    obj = pickle.load(file)
+    if isinstance(path, (str, pathlib.Path)):
+        file.close()
+    return obj
 
 
 def load_from_zip_file(
@@ -365,7 +380,7 @@ def load_from_zip_file(
     device: Union[th.device, str] = "auto",
     verbose: int = 0,
     print_system_info: bool = False,
-) -> (Tuple[Optional[Dict[str, Any]], Optional[TensorDict], Optional[TensorDict]]):
+) -> Tuple[Optional[Dict[str, Any]], TensorDict, Optional[TensorDict]]:
     """
     Load model data from a .zip archive
 
@@ -379,20 +394,20 @@ def load_from_zip_file(
         ``keras.models.load_model``. Useful when you have an object in
         file that can not be deserialized.
     :param device: Device on which the code should run.
-    :param verbose: Verbosity level, 0 means only warnings, 2 means debug information.
+    :param verbose: Verbosity level: 0 for no output, 1 for info messages, 2 for debug messages
     :param print_system_info: Whether to print or not the system info
         about the saved model.
     :return: Class parameters, model state_dicts (aka "params", dict of state_dict)
         and dict of pytorch variables
     """
-    load_path = open_path(load_path, "r", verbose=verbose, suffix="zip")
+    file = open_path(load_path, "r", verbose=verbose, suffix="zip")
 
     # set device to cpu if cuda is not available
     device = get_device(device=device)
 
     # Open the zip archive and load data
     try:
-        with zipfile.ZipFile(load_path) as archive:
+        with zipfile.ZipFile(file) as archive:
             namelist = archive.namelist()
             # If data or parameters is not in the
             # zip archive, assume they were stored
@@ -432,7 +447,8 @@ def load_from_zip_file(
                     file_content.seek(0)
                     # Load the parameters with the right ``map_location``.
                     # Remove ".pth" ending with splitext
-                    th_object = th.load(file_content, map_location=device)
+                    # Note(antonin): we cannot use weights_only=True, as it breaks with PyTorch 1.13, see GH#1911
+                    th_object = th.load(file_content, map_location=device, weights_only=False)
                     # "tensors.pth" was renamed "pytorch_variables.pth" in v0.9.0, see PR #138
                     if file_path == "pytorch_variables.pth" or file_path == "tensors.pth":
                         # PyTorch variables (not state_dicts)
@@ -441,7 +457,10 @@ def load_from_zip_file(
                         # State dicts. Store into params dictionary
                         # with same name as in .zip file (without .pth)
                         params[os.path.splitext(file_path)[0]] = th_object
-    except zipfile.BadZipFile:
+    except zipfile.BadZipFile as e:
         # load_path wasn't a zip file
-        raise ValueError(f"Error: the file {load_path} wasn't a zip-file")
+        raise ValueError(f"Error: the file {load_path} wasn't a zip-file") from e
+    finally:
+        if isinstance(load_path, (str, pathlib.Path)):
+            file.close()
     return data, params, pytorch_variables

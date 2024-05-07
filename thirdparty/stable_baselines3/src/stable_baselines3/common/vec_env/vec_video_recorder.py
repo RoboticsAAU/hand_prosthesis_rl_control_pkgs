@@ -1,7 +1,7 @@
 import os
 from typing import Callable
 
-from gym.wrappers.monitoring import video_recorder
+from gymnasium.wrappers.monitoring import video_recorder
 
 from stable_baselines3.common.vec_env.base_vec_env import VecEnv, VecEnvObs, VecEnvStepReturn, VecEnvWrapper
 from stable_baselines3.common.vec_env.dummy_vec_env import DummyVecEnv
@@ -22,6 +22,8 @@ class VecVideoRecorder(VecEnvWrapper):
     :param name_prefix: Prefix to the video name
     """
 
+    video_recorder: video_recorder.VideoRecorder
+
     def __init__(
         self,
         venv: VecEnv,
@@ -30,7 +32,6 @@ class VecVideoRecorder(VecEnvWrapper):
         video_length: int = 200,
         name_prefix: str = "rl-video",
     ):
-
         VecEnvWrapper.__init__(self, venv)
 
         self.env = venv
@@ -48,10 +49,9 @@ class VecVideoRecorder(VecEnvWrapper):
             metadata = temp_env.metadata
 
         self.env.metadata = metadata
+        assert self.env.render_mode == "rgb_array", f"The render_mode must be 'rgb_array', not {self.env.render_mode}"
 
         self.record_video_trigger = record_video_trigger
-        self.video_recorder = None
-
         self.video_folder = os.path.abspath(video_folder)
         # Create output folder if needed
         os.makedirs(self.video_folder, exist_ok=True)
@@ -110,4 +110,4 @@ class VecVideoRecorder(VecEnvWrapper):
         self.close_video_recorder()
 
     def __del__(self):
-        self.close()
+        self.close_video_recorder()
