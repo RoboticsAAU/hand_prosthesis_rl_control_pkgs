@@ -1,6 +1,7 @@
 import rospy
 import numpy as np
 from gazebo_msgs.msg import ModelState, ModelStates
+from std_msgs.msg import Float64
 from geometry_msgs.msg import Pose, Twist, Point, Quaternion, Vector3
 from gazebo_msgs.srv import SpawnModel, DeleteModel
 from controller_manager_msgs.srv import LoadController
@@ -27,6 +28,11 @@ class SimulationInterface(WorldInterface):
         self._pub_state = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=10)
         self._sub_state = rospy.Subscriber('/gazebo/model_states', ModelStates, self._state_callback, buff_size=1000)
 
+        # Position publisher
+        self._pub_x_pose = rospy.Publisher('/mia_hand/j_x_cart_position_controller/command', Float64, queue_size=1)
+        self._pub_y_pose = rospy.Publisher('/mia_hand/j_y_cart_position_controller/command', Float64, queue_size=1)
+        self._pub_z_pose = rospy.Publisher('/mia_hand/j_z_cart_position_controller/command', Float64, queue_size=1)
+
         # Storing the urdf of the hand
         self._hand_urdf = rospy.get_param("~/robot_description")
         
@@ -44,7 +50,7 @@ class SimulationInterface(WorldInterface):
         self._rate = rospy.Rate(self.hz)  # 1000hz
         
         # Wait for the publishers and subscribers to connect before returning from the constructor. Supply them in a list.
-        wait_for_connection([self._pub_state, self._sub_state])
+        wait_for_connection([self._pub_state, self._pub_x_pose, self._pub_y_pose, self._pub_z_pose, self._sub_state])
         
         # Wait for the services to spawn and delete objects in the gazebo world
         rospy.wait_for_service('/gazebo/spawn_sdf_model')
@@ -82,6 +88,20 @@ class SimulationInterface(WorldInterface):
         try:
             pose = convert_pose(pose)
             self._publish_pose(model_name, pose, reference_frame)
+        except Exception as e:
+            rospy.logwarn("Failed to set position because: ", e)
+    
+    def set_cartesian_position(self, position: Union[Point, np.ndarray]):
+        """ Set the pose of the hand using cartesian controllers. XYZ only. No orientation is needed. """
+        try:
+            if type(position) == np.ndarray and len(position) == 3:
+                self.pub_x_pose.publish(position[0])
+                self.pub_y_pose.publish(position[1])
+                self.pub_z_pose.publish(position[1])
+            elif type(position) == Point:
+                self.pub_x_pose.publish(position.x)
+                self.pub_y_pose.publish(position.y)
+                self.pub_z_pose.publish(position.z)
         except Exception as e:
             rospy.logwarn("Failed to set position because: ", e)
 

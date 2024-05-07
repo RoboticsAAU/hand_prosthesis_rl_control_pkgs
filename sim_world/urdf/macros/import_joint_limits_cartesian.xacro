@@ -1,0 +1,27 @@
+
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+
+  <xacro:macro name="read_joint_limits_cartesian" params="joint_limits_parameters_file">
+   <!-- Read .yaml files from disk, load content into properties -->
+   <xacro:property name="config_joint_limit_parameters" value="${xacro.load_yaml(joint_limits_parameters_file)}"/>
+
+   <!-- Extract subsections from yaml dictionaries -->
+   <xacro:property name="sec_limits" value="${config_joint_limit_parameters['joint_limits']}"/>
+
+   <!-- JOINTS LIMIT PARAMETERS -->
+
+    <!-- x-axis -->
+   <xacro:property name="j_x_cart_lower_limit" value="${sec_limits['j_x_cart']['min_position']}" scope="parent"/>
+   <xacro:property name="j_x_cart_upper_limit" value="${sec_limits['j_x_cart']['max_position']}" scope="parent"/>
+
+    <!-- y-axis -->
+   <xacro:property name="j_y_cart_lower_limit" value="${sec_limits['j_y_cart']['min_position']}" scope="parent"/>
+   <xacro:property name="j_y_cart_upper_limit" value="${sec_limits['j_y_cart']['max_position']}" scope="parent"/>
+
+   <!-- z-axis -->
+   <xacro:property name="j_z_cart_lower_limit" value="${sec_limits['j_z_cart']['min_position']}" scope="parent"/>
+   <xacro:property name="j_z_cart_upper_limit" value="${sec_limits['j_z_cart']['max_position']}" scope="parent"/>
+
+ </xacro:macro>
+
+</robot>

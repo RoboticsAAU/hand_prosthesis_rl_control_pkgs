@@ -10,6 +10,9 @@ topics:
     wrist_rot_controller_topic: /j_wrist_rotation_eff_controller/command
     wrist_exfle_controller_topic: /j_wrist_exfle_eff_controller/command
     wrist_ulra_controller_topic: /j_wrist_ulra_eff_controller/command
+    x_cart_controller_topic: /j_x_cart_position_controller/command
+    y_cart_controller_topic: /j_y_cart_position_controller/command
+    z_cart_controller_topic: /j_z_cart_position_controller/command
 
 # Camera configuration
 visual_sensors:
@@ -41,9 +44,16 @@ limits:
     thumb_fle_range: [-1.0, 1.0]
     thumb_opp_range: [-1.0, 1.0]
 
-
 # General parameters
 general:
   # TODO: Use urdf_handler instead of joint_names
-  joint_names: ["j_index_fle", "j_little_fle", "j_mrl_fle", "j_ring_fle", "j_thumb_fle", "j_thumb_opp"]
+  joint_names:
+    [
+      "j_index_fle",
+      "j_little_fle",
+      "j_mrl_fle",
+      "j_ring_fle",
+      "j_thumb_fle",
+      "j_thumb_opp",
+    ]
   right_hand: true

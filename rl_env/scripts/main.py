@@ -29,6 +29,10 @@ with open(rospack.get_path("sim_world") + "/urdf/calibration/joint_limits_wrist.
 with open(rospack.get_path("sim_world") + "/urdf/calibration/joint_limits_fingers.yaml", 'r') as file:
     finger_limits = yaml.safe_load(file)
 
+# with open(rospack.get_path("sim_world") + "/urdf/calibration/joint_limits_cartesian.yaml", 'r') as file:
+#     cartesian_limits = yaml.safe_load(file)
+
+
 # Current date as a string in the format "ddmmyyyy"
 algorithm_name = "PPO"
 env_name= "mia_hand_rl"

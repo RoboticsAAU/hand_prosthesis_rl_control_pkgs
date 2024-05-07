@@ -113,7 +113,7 @@ class MiaHandSetup(HandSetup):
         :param pos: Positions in the positive axis of the fingers
         """
         # Before finger position can be set, effort must be set to zero
-        for index, finger_id in enumerate(["index", "mrl", "thumb"]):
+        for _ , finger_id in enumerate(["index", "mrl", "thumb"]):
             self.set_finger_vel(0.0, finger_id)
         
         self._set_configuration_srv(

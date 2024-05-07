@@ -4,17 +4,26 @@
     <xacro:arg name="default_mia_model"             default="false" />
     <xacro:arg name="right_hand"                    default="true" />
     <xacro:arg name="robotNamespace"                default="mia_hand_camera"/> <!-- /mia_hand_camera -->
+    <xacro:arg name="camera_name"                   default="camera" />
+    <xacro:arg name="camera_topic_ns"               default="camera" />
+
+    <!-- Fingers -->
     <xacro:arg name="joint_limits_config_filename"  default="joint_limits.yaml" />
     <xacro:arg name="hw_interface_thumb_fle"        default="EffortJointInterface"/>
     <xacro:arg name="hw_interface_index_fle"        default="EffortJointInterface"/>
     <xacro:arg name="hw_interface_mrl_fle"          default="EffortJointInterface"/>
+
+    <!-- Wrist -->
+    <xacro:arg name="wrist_rotation"                default="true" />
     <xacro:arg name="hw_interface_wrist_rotation"   default="EffortJointInterface"/>
     <xacro:arg name="hw_interface_wrist_exfle"      default="EffortJointInterface"/>
     <xacro:arg name="hw_interface_wrist_ulra"       default="EffortJointInterface"/>
-    <xacro:arg name="camera_name"                   default="camera" />
-    <xacro:arg name="camera_topic_ns"               default="camera" />
-    <xacro:arg name="wrist_rotation"                default="true" />
 
+    <!-- Cartesian -->
+    <xacro:arg name="cartesian_control"             default="true" />
+    <xacro:arg name="hw_interface_x_cart"           default="PositionJointInterface"/>
+    <xacro:arg name="hw_interface_y_cart"           default="PositionJointInterface"/>
+    <xacro:arg name="hw_interface_z_cart"           default="PositionJointInterface"/>
 
 
     <!-- Materials -->
@@ -22,7 +31,6 @@
 
     <!-- Wrist -->
     <xacro:include filename="$(find sim_world)/urdf/macros/wrist_gazebo.urdf.xacro"/>
-
     <xacro:wrist_gazebo hw_interface_wrist_rotation="$(arg hw_interface_wrist_rotation)"
                         hw_interface_wrist_exfle="$(arg hw_interface_wrist_exfle)"
                         hw_interface_wrist_ulra= "$(arg hw_interface_wrist_ulra)"
@@ -31,13 +39,19 @@
     
     <!-- Import Transmission and all Gazebo-customization elements, including Gazebo colors and teh Gazebo plugin-->
     <xacro:include filename="$(find mia_hand_description)/urdf/mia_hand_gazebo.urdf.xacro" />
-
     <xacro:mia_gazebo hw_interface_thumb_fle="$(arg hw_interface_thumb_fle)"
                         hw_interface_index_fle="$(arg hw_interface_index_fle)"
                         hw_interface_mrl_fle= "$(arg hw_interface_mrl_fle)"
                         robotNamespace= "$(arg robotNamespace)"
                         LoadGZPlugin="true"/>
 
+    <!-- Cartesian -->
+    <xacro:include filename="$(find sim_world)/urdf/macros/cartesian_gazebo.urdf.xacro"/>
+    <xacro:cartesian_gazebo hw_interface_x_cart="$(arg hw_interface_x_cart)"
+                            hw_interface_y_cart="$(arg hw_interface_y_cart)"
+                            hw_interface_z_cart="$(arg hw_interface_z_cart)"
+                            robotNamespace= "$(arg robotNamespace)"
+                            LoadGZPlugin="true"/>
     
 
     <!-- Import default robot model -->
@@ -68,6 +82,15 @@
         </xacro:unless>
     </xacro:unless>
 
+    <xacro:if value="$(arg cartesian_control)">
+        <!-- Fix the hand to the world -->
+        <link name="world"/>
+        <joint name="world_interface" type="fixed">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <parent link="world"/>
+            <child link="base_link"/>
+        </joint>
+    </xacro:if>
 
     <!-- base_link to palm transform-->
     <link name="base_link"/>
@@ -76,23 +99,90 @@
         <joint name="j_palm" type="fixed">
         <origin xyz="0 0 0" rpy="0 0 0"/> <!-- origin xyz="0 0 1" rpy="1.57 0 0""/ -->
         <parent link="base_link"/>
-        <child link="wrist_link"/>
+        <child link="cart_link"/>
         </joint>
     </xacro:if>
     <xacro:unless value="$(arg right_hand)">
         <joint name="j_palm" type="fixed">
         <origin xyz="0 0 0" rpy="0 0 0"/> <!-- origin xyz="0 0 1" rpy="1.57 3.14 0""/ -->
         <parent link="base_link"/>
-        <child link="wrist_link"/>
+        <child link="cart_link"/>
         </joint>
     </xacro:unless>
-    <link name="wrist_link">
+    <link name="cart_link">
         <inertial>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <mass value="0.1"/>
             <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
         </inertial>
     </link>
+
+    <xacro:if value="$(arg cartesian_control)">
+
+        <!-- Include the macro to read the cartesian joint limits -->
+        <xacro:include filename="$(find sim_world)/urdf/macros/import_joint_limits_cartesian.xacro"/>
+        <!-- Read the cartesian joint limits and extract them into xacro:properties -->
+        <xacro:read_joint_limits_cartesian joint_limits_parameters_file="$(find sim_world)/urdf/calibration/joint_limits_cartesian.yaml"/>
+
+        <!-- x-axis -->
+        <joint name="j_x_cart" type="prismatic">
+            <limit lower="${j_x_cart_lower_limit}" upper="${j_x_cart_upper_limit}" effort="10.0" velocity="100.0"/>
+            <origin xyz="0 0.0 0" rpy="0 0 0"/>
+            <parent link="cart_link"/>
+            <child link="x_link"/>
+            <axis xyz="1.0 0.0 0.0"/>
+        </joint>
+        <link name="x_link">
+            <inertial>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <mass value="0.0001"/>
+                <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+            </inertial>
+        </link>
+
+
+        <!-- y-axis -->
+        <joint name="j_y_cart" type="prismatic">
+            <limit lower="${j_y_cart_lower_limit}" upper="${j_y_cart_upper_limit}" effort="10.0" velocity="100.0"/>
+            <origin xyz="0 0.0 0" rpy="0 0 0"/>
+            <parent link="x_link"/>
+            <child link="y_link"/>
+            <axis xyz="0.0 1.0 0.0"/>
+        </joint>
+        <link name="y_link">
+            <inertial>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <mass value="0.0001"/>
+                <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+            </inertial>
+        </link>
+
+        <!-- z-axis -->
+        <joint name="j_z_cart" type="prismatic">
+            <limit lower="${j_z_cart_lower_limit}" upper="${j_z_cart_upper_limit}" effort="10.0" velocity="100.0"/>
+            <origin xyz="0 0.0 0" rpy="0 0 0"/>
+            <parent link="y_link"/>
+            <child link="wrist_link"/>
+            <axis xyz="0.0 0.0 1.0"/>
+        </joint>
+    </xacro:if>
+    <xacro:unless value="$(arg cartesian_control)">
+        <joint name="j_cart" type="fixed">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <parent link="base_link"/>
+            <child link="wrist_link"/>
+        </joint>
+    </xacro:unless> 
+
+
+    <link name="wrist_link">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="0.0001"/>
+            <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+        </inertial>
+    </link>
+
 
     <xacro:if value="$(arg wrist_rotation)">
         <!-- Include the macro to read the wrist joint limits -->

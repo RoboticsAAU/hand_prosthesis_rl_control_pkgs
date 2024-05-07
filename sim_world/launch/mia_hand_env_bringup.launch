@@ -15,6 +15,7 @@
      <arg name="wrist_rotation" default="true" doc="True to add wrist rotation to the hand" /> <!-- Params to set rotation of the wrist of the Mia hand  -->
      <arg name="joint_limits_config_filename" default="joint_limits.yaml" doc="name of the yaml file to calibrate joints limit of URDF file" />
      <arg name="transmission_config_filename" default="transmission_config.yaml" doc="name of the yaml file to calibrate transmissions of MiaHand" />
+     <arg name="cartesian_control" default="true" doc="True to enable cartesian control of the position of the hand" />
 
 
      <!-- Arguments to upload hardware interface and controllers of each finger -->
@@ -25,13 +26,21 @@
           doc="type of hardware interface for index flexion. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
      <arg name="hw_interface_mrl_fle" default="EffortJointInterface"
           doc="type of hardware interface for mrl flexion. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
-     <!-- Wrist interfaces: -->
+     <!-- Wrist Interfaces: -->
      <arg name="hw_interface_wrist_rotation" default="EffortJointInterface"
           doc="type of hardware interface for wrist rotation. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
      <arg name="hw_interface_wrist_exfle" default="EffortJointInterface"
           doc="type of hardware interface for wrist extension and flexion. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
      <arg name="hw_interface_wrist_ulra" default="EffortJointInterface"
           doc="type of hardware interface for wrist ulnar and radial motion. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
+     <!-- Cartesian Interfaces -->
+     <arg name="hw_interface_x_cart" default="PositionJointInterface"
+          doc="type of hardware interface for cartesian movement along the x-axis. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
+     <arg name="hw_interface_y_cart" default="PositionJointInterface"
+          doc="type of hardware interface for cartesian movement along the y-axis. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
+     <arg name="hw_interface_z_cart" default="PositionJointInterface"
+          doc="type of hardware interface for cartesian movement along the z-axis. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
+
 
      <arg name="controller_thumb_fle" default="eff"
           doc="type of controller for thumb flexion. Values: position, velocity, eff, eff_position, (eff_velocity has not been tuned)"/>
@@ -46,6 +55,13 @@
           doc="type of controller for wrist flexion and extension. Values: position,velocity,eff, eff_position, (eff_velocity has not been tuned)"/>
      <arg name="controller_wrist_ulra"   default="eff"
           doc="type of controller for ulnar and radial motion. Values: position, velocity, eff, eff_position,(eff_velocity has not been tuned)"/>
+     <!-- Cartesian Controllers -->
+     <arg name="controller_x_cart" default="position"
+          doc="type of controller for cartesian movement along the x-axis. Values: position, velocity, eff, eff_position, (eff_velocity has not been tuned)"/>
+     <arg name="controller_y_cart" default="position"
+          doc="type of controller for cartesian movement along the y-axis. Values: position,velocity,eff, eff_position, (eff_velocity has not been tuned)"/>
+     <arg name="controller_z_cart"   default="position"
+          doc="type of controller for cartesian movement along the z-axis. Values: position, velocity, eff, eff_position,(eff_velocity has not been tuned)"/>
 
      <!-- Gazebo empty_world.launch -->
      <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -60,13 +76,23 @@
      <include file="$(find sim_world)/launch/mia_view_hand_env.launch">
           <arg name="Rviz_on" value="$(arg Rviz_on)"/>
           <arg name="use_joint_gui" value="$(arg use_joint_gui)"/>
-          <arg name="hw_interface_thumb_fle" value="$(arg hw_interface_thumb_fle)"/>
-          <arg name="hw_interface_index_fle" value="$(arg hw_interface_index_fle)"/>
-          <arg name="hw_interface_mrl_fle" value="$(arg hw_interface_mrl_fle)"/>
           <arg name="robotNamespace"   value="$(arg robotNamespace)"/> <!-- /mia_hand_camera -->
           <arg name="load_default_mia_model"   value="$(arg load_default_mia_model)"/>
           <arg name="right_hand"   value="$(arg right_hand)"/>
-          <arg name="wrist_rotation" value="$(arg wrist_rotation)"/>
+
+          <arg name="hw_interface_thumb_fle" value="$(arg hw_interface_thumb_fle)"/>
+          <arg name="hw_interface_index_fle" value="$(arg hw_interface_index_fle)"/>
+          <arg name="hw_interface_mrl_fle"   value="$(arg hw_interface_mrl_fle)"/>
+
+          <arg name="wrist_rotation"              value="$(arg wrist_rotation)"/>
+          <arg name="hw_interface_wrist_rotation" value="$(arg hw_interface_wrist_rotation)"/>
+          <arg name="hw_interface_wrist_exfle"    value="$(arg hw_interface_wrist_exfle)"/>
+          <arg name="hw_interface_wrist_ulra"     value="$(arg hw_interface_wrist_ulra)"/>
+
+          <arg name="cartesian_control"      value="$(arg cartesian_control)"/>
+          <arg name="hw_interface_x_cart"    value="$(arg hw_interface_x_cart)"/>
+          <arg name="hw_interface_y_cart"    value="$(arg hw_interface_y_cart)"/>
+          <arg name="hw_interface_z_cart"    value="$(arg hw_interface_z_cart)"/>
           
           <arg name="joint_limits_config_filename" default="joint_limits.yaml" doc="name of the yaml file to calibrate joints limit of URDF file" />
           <arg name="transmission_config_filename" default="transmission_config.yaml" doc="name of the yaml file to calibrate transmissions of MiaHand" />
@@ -83,10 +109,14 @@
                hw_interface_thumb_fle:=$(arg hw_interface_thumb_fle)
                hw_interface_index_fle:=$(arg hw_interface_index_fle)
                hw_interface_mrl_fle:=$(arg hw_interface_mrl_fle)
+               wrist_rotation:=$(arg wrist_rotation)
                hw_interface_wrist_rotation:=$(arg hw_interface_wrist_rotation)
                hw_interface_wrist_exfle:=$(arg hw_interface_wrist_exfle)
                hw_interface_wrist_ulra:=$(arg hw_interface_wrist_ulra)
-               wrist_rotation:=$(arg wrist_rotation)"
+               cartesian_control:=$(arg cartesian_control)
+               hw_interface_x_cart:=$(arg hw_interface_x_cart)
+               hw_interface_y_cart:=$(arg hw_interface_y_cart)
+               hw_interface_z_cart:=$(arg hw_interface_z_cart)"
           />
 
           <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
@@ -99,6 +129,7 @@
           <rosparam file="$(find mia_hand_gazebo)/config/mia_hand_controllers.yaml" command="load"/>
           <rosparam file="$(find mia_hand_gazebo)/config/gazebo_pid_thumb_opp.yaml" command="load"/>
           <rosparam file="$(find sim_world)/config/wrist_controllers.yaml" command="load"/>
+          <rosparam file="$(find sim_world)/config/cartesian_controllers.yaml" command="load"/>
      </group>
 
      <!-- load and start the controllers torso_controller -->
@@ -109,6 +140,9 @@
                                                        j_wrist_rotation_$(arg controller_wrist_rotation)_controller
                                                        j_wrist_exfle_$(arg controller_wrist_exfle)_controller
                                                        j_wrist_ulra_$(arg controller_wrist_ulra)_controller
+                                                       j_x_cart_$(arg controller_x_cart)_controller
+                                                       j_y_cart_$(arg controller_y_cart)_controller
+                                                       j_z_cart_$(arg controller_z_cart)_controller
                                                        joint_state_controller"/>  <!-- j_thumb_opp_$(arg controller_index_fle)_controller -->
 
 

@@ -7,6 +7,7 @@
     <!-- Params to set right or left Mia hand version  -->
     <arg name="right_hand" default="true" doc="True to for right hand False otherwise" />
     <arg name="wrist_rotation" default="true" doc="True to add wrist rotation to the hand" />
+    <arg name="cartesian_control" default="true" doc="True to add cartesian control to the hand" />
     <arg name="load_default_mia_model" default="false" />
     <arg name="joint_limits_config_filename" default="joint_limits.yaml" doc="name of the config yaml file to calibrate joints limit of URDF file" />
     <arg name="transmission_config_filename" default="transmission_config.yaml" doc="name of the config yaml file to calibrate transmissions of MiaHand" />
@@ -22,23 +23,32 @@
     <arg name="hw_interface_wrist_rotation" default="EffortJointInterface"/>
     <arg name="hw_interface_wrist_exfle"    default="EffortJointInterface"/>
     <arg name="hw_interface_wrist_ulra"     default="EffortJointInterface"/>
+    <!-- Cartesian control -->
+    <arg name="hw_interface_x_cart"         default="PositionJointInterface"/>
+    <arg name="hw_interface_y_cart"         default="PositionJointInterface"/>
+    <arg name="hw_interface_z_cart"         default="PositionJointInterface"/>
 
     <arg name="robotNamespace"              default="mia_hand_camera"/> <!-- /mia_hand_camera -->
 
     <!-- Load urdf as robot description -->
     <group>
         <param name="robot_description" command="$(find xacro)/xacro '$(find sim_world)/urdf/hands/mia_hand_camera_launch.urdf.xacro'
-          right_hand:=$(arg right_hand)
-          default_mia_model:=$(arg load_default_mia_model)
-          hw_interface_thumb_fle:=$(arg hw_interface_thumb_fle)
-          hw_interface_index_fle:=$(arg hw_interface_index_fle)
-          hw_interface_mrl_fle:=$(arg hw_interface_mrl_fle)
-          hw_interface_wrist_rotation:=$(arg hw_interface_wrist_rotation)
-          hw_interface_wrist_exfle:=$(arg hw_interface_wrist_exfle)
-          hw_interface_wrist_ulra:=$(arg hw_interface_wrist_ulra)
-          robotNamespace:=$(arg robotNamespace)
-          joint_limits_config_filename:=$(arg joint_limits_config_filename)
-          wrist_rotation:=$(arg wrist_rotation)" />
+            right_hand:=$(arg right_hand)
+            default_mia_model:=$(arg load_default_mia_model)
+            hw_interface_thumb_fle:=$(arg hw_interface_thumb_fle)
+            hw_interface_index_fle:=$(arg hw_interface_index_fle)
+            hw_interface_mrl_fle:=$(arg hw_interface_mrl_fle)
+            wrist_rotation:=$(arg wrist_rotation)
+            hw_interface_wrist_rotation:=$(arg hw_interface_wrist_rotation)
+            hw_interface_wrist_exfle:=$(arg hw_interface_wrist_exfle)
+            hw_interface_wrist_ulra:=$(arg hw_interface_wrist_ulra)
+            cartesian_control:=$(arg cartesian_control)
+            hw_interface_x_cart:=$(arg hw_interface_x_cart)
+            hw_interface_y_cart:=$(arg hw_interface_y_cart)
+            hw_interface_z_cart:=$(arg hw_interface_z_cart)
+            robotNamespace:=$(arg robotNamespace)
+            joint_limits_config_filename:=$(arg joint_limits_config_filename)
+          " />
     </group>
 
     <!-- Load thumb opp transmission config file-->

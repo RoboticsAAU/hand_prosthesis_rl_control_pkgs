@@ -1,0 +1,11 @@
+# Joint limits of the cartesian prismatic joints
+joint_limits:
+  j_x_cart:
+    min_position: 0.0
+    max_position: 10000.0
+  j_y_cart:
+    min_position: 0.0
+    max_position: 10000.0
+  j_z_cart:
+    min_position: 0.0
+    max_position: 10000.0

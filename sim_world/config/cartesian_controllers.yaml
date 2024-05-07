@@ -1,0 +1,141 @@
+---
+#---------------------------------------------------------------------
+# Controllers v1.1
+#---------------------------------------------------------------------
+
+#---------------------------------------------------------------------
+# Publish all joint states -----------------------------------
+#---------------------------------------------------------------------
+
+# joint_state_controller:
+#   type: joint_state_controller/JointStateController
+#   publish_rate: 50
+#   pid: { p: 100.0, i: 0.01, d: 3.0 }
+
+#---------------------------------------------------------------------
+# Effort- Controllers ---------------------------------------
+#---------------------------------------------------------------------
+
+j_x_cart_eff_controller:
+  type: effort_controllers/JointEffortController
+  joint: j_x_cart
+  pid: { p: 100.0, i: 0.01, d: 3.0 }
+j_y_cart_eff_controller:
+  type: effort_controllers/JointEffortController
+  joint: j_y_cart
+  pid: { p: 100.0, i: 0.01, d: 3.0 }
+j_z_cart_eff_controller:
+  type: effort_controllers/JointEffortController
+  joint: j_z_cart
+  pid: { p: 100.0, i: 0.01, d: 3.0 }
+
+#---------------------------------------------------------------------
+# Effort-Position Controllers ---------------------------------------
+#---------------------------------------------------------------------
+
+j_x_cart_eff_position_controller:
+  type: effort_controllers/JointPositionController
+  joint: j_x_cart
+  pid:
+    d: 0.005
+    i: 0.001
+    i_clamp: 5
+    p: 1.5
+    position_deadband: 0.0
+    friction_deadband: 0.0
+    max_force: 3.0
+
+j_y_cart_eff_position_controller:
+  type: effort_controllers/JointPositionController
+  joint: j_y_cart
+  pid:
+    d: 0.005
+    i: 0.001
+    i_clamp: 0.4
+    p: 1.5
+    position_deadband: 0.0
+    friction_deadband: 0.0
+    max_force: 3.0
+
+j_z_cart_eff_position_controller:
+  type: effort_controllers/JointPositionController
+  joint: j_z_cart
+  pid:
+    d: 0.005
+    i: 0.1
+    i_clamp: 0.05
+    p: 0.5
+    position_deadband: 0.0
+    friction_deadband: 0.0
+    max_force: 1.0
+
+#---------------------------------------------------------------------
+# Effort-Velocity Controllers -- NOT TUNED-----------------------------
+#---------------------------------------------------------------------
+
+j_x_cart_eff_velocity_controller:
+  type: effort_controllers/JointVelocityController
+  joint: j_x_cart
+  pid:
+    d: 0.005
+    i: 0.001
+    i_clamp: 5
+    p: 1.5
+    position_deadband: 0.0
+    friction_deadband: 0.0
+    max_force: 3.0
+
+j_y_cart_eff_velocity_controller:
+  type: effort_controllers/JointVelocityController
+  joint: j_y_cart
+  pid:
+    d: 0.005
+    i: 0.001
+    i_clamp: 0.4
+    p: 1.5
+    position_deadband: 0.0
+    friction_deadband: 0.0
+    max_force: 3.0
+j_z_cart_eff_velocity_controller:
+  type: effort_controllers/JointVelocityController
+  joint: j_z_cart
+  pid:
+    d: 0.005
+    i: 0.1
+    i_clamp: 0.05
+    p: 0.5
+    position_deadband: 0.0
+    friction_deadband: 0.0
+    max_force: 1.0
+
+#------------------------------------------------------------------
+# JointPosition Controllers ---------------------------------------
+#---------------------------------------------------------------------
+
+j_x_cart_position_controller:
+  type: position_controllers/JointPositionController
+  joint: j_x_cart
+
+j_y_cart_position_controller:
+  type: position_controllers/JointPositionController
+  joint: j_y_cart
+
+j_z_cart_position_controller:
+  type: position_controllers/JointPositionController
+  joint: j_z_cart
+
+#------------------------------------------------------------------
+# JointVelocity Controllers ---------------------------------------
+#---------------------------------------------------------------------
+
+j_x_cart_velocity_controller:
+  type: velocity_controllers/JointVelocityController
+  joint: j_x_cart
+
+j_y_cart_velocity_controller:
+  type: velocity_controllers/JointVelocityController
+  joint: j_y_cart
+
+j_z_cart_velocity_controller:
+  type: velocity_controllers/JointVelocityController
+  joint: j_z_cart
