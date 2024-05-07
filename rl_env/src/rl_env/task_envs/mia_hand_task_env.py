@@ -326,6 +326,7 @@ class MiaHandWorldEnv(gym.Env):
                     # TODO: Decide whether to include table or not
                     # Remove table and enforce cardinality
                     self._pc_cam_handler.pc[0].paint_uniform_color(np.array([0.4745, 0.8353, 0.9922]))
+                    self._pc_cam_handler.remove_plane()
                     self._pc_cam_handler.update_cardinality(modality_config["num_points"])
 
                     # Transform point cloud to reference frame
