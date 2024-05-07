@@ -161,6 +161,7 @@ class PointCloudHandler():
         
         # Sample the mesh file based on the given number of points
         pc =  mesh.sample_points_uniformly(number_of_points=sample_points)
+        pc.paint_uniform_color(np.array([0.8784, 0.3098, 0.3098]))
         
         # Apply transformation if it is provided
         if transformation is not None:
