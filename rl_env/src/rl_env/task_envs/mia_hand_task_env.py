@@ -237,29 +237,30 @@ class MiaHandWorldEnv(gym.Env):
         Compute the reward for the given rl step
         :return: reward
         """
-        # TODO: consider if we need end episode points
-        # Check if episode is done
-        # if done:
-        #     return self._end_episode_points
+        
+        reward = 0
         
         # Obtain the combined joint velocity
-        combined_joint_vel = np.sum(np.abs(observation["joints_vel"]))
+        combined_joint_vel = np.sum(np.abs(observation["state"][self._dof:]))
         
         # Check if at least three fingers are in contact with object
         hand_contacts = self.check_contact(self._contacts)
         fingers_in_contact = list(hand_contacts.values()).count(True)
         
-        # Reward for energy expenditure (based on distance to object)
-        reward = -0.01 * combined_joint_vel * min(1, 150/self._episode_count)
         
         #TODO: Penalise hitting ground plane?
         
-        reward = 0.1 * fingers_in_contact / self._episode_count
+        # Soft reward for contact (requires at least one finger in contact)
+        reward += 0.1 * max(0, fingers_in_contact*(1 - (self._episode_count/200))) 
         
+        # Strict reward for contact (requires thumb and at least one other finger)
         if hand_contacts["thumb_fle"] and fingers_in_contact >= 2:
             # Reward for contact
             reward += 0.5 * fingers_in_contact
 
+        # Reward for effort expenditure
+        reward += -0.05*combined_joint_vel/sum(self._act_vel_ub) * min(1, max(0, 0.01*(self._episode_count - 100)))
+        
         rospy.logdebug("reward=" + str(reward))
         self.cumulated_reward += reward
         rospy.logdebug("Cumulated_reward=" + str(self.cumulated_reward))
