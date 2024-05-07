@@ -9,7 +9,7 @@ class MoveHandNode():
         self._pose_buffer = []
         self._episode_done = False # Flag used to indicate if the episode is done
         self._name = rospy.get_param('~robot_namespace', None)
-        self._r = rospy.Rate(1000)
+        self._r = rospy.Rate(100)
         
         self._sub_poses = rospy.Subscriber(self._name + "/poses", ModelStates, self._poses_cb, queue_size=1000)
         self._sub_episode_done = rospy.Subscriber(self._name + "/episode_done", Bool, self._episode_done_cb, queue_size=10)
