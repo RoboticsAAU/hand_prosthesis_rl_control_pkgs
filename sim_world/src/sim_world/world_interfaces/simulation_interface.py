@@ -147,7 +147,7 @@ class SimulationInterface(WorldInterface):
         try:
             self._delete_model(model_name)
             rospy.loginfo(f"Model {model_name} deleted successfully.")
-            rospy.sleep(0.01)
+            rospy.sleep(0.1)
         except rospy.ServiceException as e:
             rospy.logerr("Failed to delete object because: ", e)
     
@@ -157,7 +157,7 @@ class SimulationInterface(WorldInterface):
             self._delete_model(model_name)
             self._spawned_obj_names.remove(model_name)
             rospy.loginfo(f"Model {model_name} deleted successfully.")
-            rospy.sleep(0.01)
+            rospy.sleep(0.1)
         except rospy.ServiceException as e:
             rospy.logerr("Failed to delete object because: ", e)
 

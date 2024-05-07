@@ -18,14 +18,6 @@ from rl_env.utils.tf_handler import TFHandler
 from rl_env.utils.point_cloud_handler import PointCloudHandler, ImaginedPointCloudHandler
 from rl_env.utils.urdf_handler import URDFHandler
 
-# The path is __init__.py of openai_ros, where we import the TurtleBot2MazeEnv directly
-timestep_limit_per_episode = 10000 # Can be any Value
-
-register(
-        id='MiaHandWorld-v0',
-        entry_point='rl_env.task_envs.mia_hand_task_env:MiaHandWorldEnv',
-        #timestep_limit=timestep_limit_per_episode,
-    )
 
 class MiaHandWorldEnv(gym.Env):
     def __init__(self, rl_interface : RLInterface, rl_config : Dict[str, Any]):
@@ -33,6 +25,7 @@ class MiaHandWorldEnv(gym.Env):
         This Task Env is designed for having the Mia hand in the hand grasping world.
         It will learn how to move around without crashing.
         """
+        
         # Here we will add any init functions prior to starting the MyRobotEnv
         super(MiaHandWorldEnv, self).__init__()        
         
@@ -177,13 +170,14 @@ class MiaHandWorldEnv(gym.Env):
     def _reset_hand(self):
         """Resets the hand completely. This is used when the hand becomes unstable due to exceeded joint bounds.
         """
-        rospy.logdebug("RESET HAND START")
+
+        rospy.loginfo("RESET HAND START")
         self._rl_interface._world_interface._controllers_connection.reset_controllers()
         self._rl_interface._world_interface.check_system_ready()
         self._rl_interface._world_interface.respawn_hand(self._rl_interface.default_pose)
         self._rl_interface._world_interface._controllers_connection.reset_controllers()
         self._rl_interface._world_interface.check_system_ready()
-        rospy.logdebug("RESET HAND END")
+        rospy.loginfo("RESET HAND END\n")
     
     
     def update(self):

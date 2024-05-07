@@ -23,7 +23,7 @@ class RLInterface():
         self._hand_controller = HandController(sim_config["move_hand"], self._world_interface.hand.hand_rotation)
         
         # Publisher for whether episode is done or not
-        self._pub_episode_done = rospy.Publisher(self._world_interface.hand.name + "/episode_done", Bool)
+        self._pub_episode_done = rospy.Publisher(self._world_interface.hand.name + "/episode_done", Bool, queue_size=None)
         
         # Spawn objects in the gazebo world
         self._object_poses = {}
