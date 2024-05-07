@@ -18,6 +18,9 @@
 
     <!-- Materials -->
     <xacro:include filename="$(find mia_hand_description)/materials/materials.xacro"/>
+    <material name="B">
+      <color rgba="0.015019833 0.015019833 0.015019833 1.0"/>
+    </material>
 
     <!-- Wrist -->
     <xacro:include filename="$(find sim_world)/urdf/macros/wrist_gazebo.urdf.xacro"/>
@@ -92,6 +95,52 @@
             <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
         </inertial>
     </link>
+    <!-- Lower arm resemblence -->
+    <joint name="j_lower_arm" type="fixed">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <parent link="wrist_link"/>
+        <child link="lower_arm"/>
+    </joint>
+    <link name="lower_arm">
+        <inertial>
+            <origin xyz="0 -0.1 0" rpy="1.57079632679 0 0"/>
+            <mass value="0.01"/>
+            <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+        </inertial>
+        <visual>
+            <origin xyz="0 -0.1 0" rpy="1.57079632679 0 0"/>
+            <geometry>
+                <!-- <box size="0.05 0.2 0.05"/> -->
+                <cylinder radius="0.03" length="0.2"/>
+            </geometry>
+            <material name="B"/>
+            <!-- <material name="black"/> -->
+                <!-- <color rgba="0.0 0.0 0.0 1.0"/>
+            </material> -->
+        </visual>
+    </link>
+    <joint name="j_elevator" type="fixed">
+        <origin xyz="0 -0.15 0" rpy="0 0 0"/>
+        <parent link="lower_arm"/>
+        <child link="elavator"/>
+    </joint>
+    <link name="elavator">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="0.0001"/>
+            <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+        </inertial>
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.1 0.02 0.01"/>
+            </geometry>
+            <material name="B"/>
+                <!-- <color rgba="0.0 0.0 0.0 1.0"/>
+            </material> -->
+        </visual>
+    </link>
+
 
     <xacro:if value="$(arg wrist_rotation)">
         <!-- Include the macro to read the wrist joint limits -->
