@@ -81,8 +81,10 @@ class PointCloudHandler():
         # Isolate the plane in the point cloud
         (plane_coeffs, plane_indices) = self._pc[index].segment_plane(distance_threshold=0.005, ransac_n=3, num_iterations=1000)
         
-        # Remove the plane from the point cloud
-        self._pc[index] = self._pc[index].select_by_index(plane_indices, invert=True)
+        # Segment plane only ratio of points exceeds 10%
+        if len(plane_indices)/len(self.points[index]) > 0.1:
+            # Remove the plane from the point cloud
+            self._pc[index] = self._pc[index].select_by_index(plane_indices, invert=True)
     
     @_check_multiple_run
     def update_cardinality(self, num_points : int, voxel_size : float = 0.003, index : Optional[int] = None):
