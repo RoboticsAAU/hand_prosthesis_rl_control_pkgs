@@ -331,7 +331,8 @@ class MiaHandWorldEnv(gym.Env):
 
                     # Transform point cloud to reference frame
                     transform = self._tf_handler.get_transform_matrix(modality_config["optical_frame"], modality_config["ref_frame"])
-                    obs_dict[key_name] = self._pc_cam_handler.transform(self._pc_cam_handler.pc[0], transform).points
+                    self._pc_cam_handler.pc[0] = self._pc_cam_handler.transform(self._pc_cam_handler.pc[0], transform)
+                    obs_dict[key_name] = self._pc_cam_handler.pc[0].points
                     
                 else:
                     raise RuntimeError("Modality not supported")
