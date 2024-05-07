@@ -86,7 +86,7 @@ class SimulationInterface(WorldInterface):
         try:
             pose = convert_pose(pose)
             self._publish_pose(model_name, pose, reference_frame)
-            rospy.sleep(0.05) # Delay is needed, as it takes time to teleport in gazebo
+            rospy.sleep(0.1) # Delay is needed, as it takes time to teleport in gazebo
         except Exception as e:
             rospy.logwarn("Failed to set position because: ", e)
 
