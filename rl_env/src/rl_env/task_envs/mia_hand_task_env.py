@@ -4,7 +4,7 @@ import rospkg
 import open3d as o3d
 import gymnasium as gym
 import glob
-from time import time
+from time import time, sleep
 from gymnasium.utils import seeding
 from gymnasium.envs.registration import register
 from pathlib import Path
@@ -18,16 +18,6 @@ from rl_env.utils.tf_handler import TFHandler
 from rl_env.utils.point_cloud_handler import PointCloudHandler, ImaginedPointCloudHandler
 from rl_env.utils.urdf_handler import URDFHandler
 
-OBJECT_LIFT_LOWER_LIMIT = 0.03
-
-# The path is __init__.py of openai_ros, where we import the TurtleBot2MazeEnv directly
-timestep_limit_per_episode = 10000 # Can be any Value
-
-register(
-        id='MiaHandWorld-v0',
-        entry_point='rl_env.task_envs.mia_hand_task_env:MiaHandWorldEnv',
-        #timestep_limit=timestep_limit_per_episode,
-    )
 
 class MiaHandWorldEnv(gym.Env):
     def __init__(self, rl_interface : RLInterface, rl_config : Dict[str, Any]):
@@ -35,6 +25,7 @@ class MiaHandWorldEnv(gym.Env):
         This Task Env is designed for having the Mia hand in the hand grasping world.
         It will learn how to move around without crashing.
         """
+        
         # Here we will add any init functions prior to starting the MyRobotEnv
         super(MiaHandWorldEnv, self).__init__()        
         
@@ -77,8 +68,8 @@ class MiaHandWorldEnv(gym.Env):
             },
             "palm": {
                 "range": tuple(np.deg2rad([-90, 90])),
-                "rotation": np.array([[0,0,1],
-                                      [0,1,0],
+                "rotation": np.array([[0,0,-1],
+                                      [0,-1,0],
                                       [-1,0,0]], dtype=np.float64)
             }
         }
@@ -97,6 +88,10 @@ class MiaHandWorldEnv(gym.Env):
         action_space_joints = ["j_index_fle", "j_mrl_fle", "j_thumb_fle", "j_wrist_rotation", "j_wrist_exfle", "j_wrist_ulra"]
         self._act_vel_lb = np.array([limit[0] for name, limit in self._rl_interface._world_interface.hand._joint_velocity_limits.items() if name in action_space_joints])
         self._act_vel_ub = np.array([limit[1] for name, limit in self._rl_interface._world_interface.hand._joint_velocity_limits.items() if name in action_space_joints])
+        
+        # state bounds
+        self._state_lb = np.concatenate((self._obs_pos_lb, self._obs_vel_lb))
+        self._state_ub = np.concatenate((self._obs_pos_ub, self._obs_vel_ub))
 
         # Save number of joints
         self._dof = len(self._rl_interface._world_interface.hand._joint_velocity_limits)
@@ -175,13 +170,14 @@ class MiaHandWorldEnv(gym.Env):
     def _reset_hand(self):
         """Resets the hand completely. This is used when the hand becomes unstable due to exceeded joint bounds.
         """
-        rospy.logdebug("RESET HAND START")
+
+        rospy.loginfo("RESET HAND START")
         self._rl_interface._world_interface._controllers_connection.reset_controllers()
         self._rl_interface._world_interface.check_system_ready()
         self._rl_interface._world_interface.respawn_hand(self._rl_interface.default_pose)
         self._rl_interface._world_interface._controllers_connection.reset_controllers()
         self._rl_interface._world_interface.check_system_ready()
-        rospy.logdebug("RESET HAND END")
+        rospy.loginfo("RESET HAND END\n")
     
     
     def update(self):
@@ -224,10 +220,7 @@ class MiaHandWorldEnv(gym.Env):
         :return: observation
         """
 
-        observation = {
-            "joints" : self._joints,
-            "joints_vel" : self._joints_vel,
-        }
+        observation = {"state" : np.concatenate((self._joints, self._joints_vel))}
         
         rospy.logdebug("Observations: "+str(observation))
         return observation
@@ -238,29 +231,30 @@ class MiaHandWorldEnv(gym.Env):
         Compute the reward for the given rl step
         :return: reward
         """
-        # TODO: consider if we need end episode points
-        # Check if episode is done
-        # if done:
-        #     return self._end_episode_points
+        
+        reward = 0
         
         # Obtain the combined joint velocity
-        combined_joint_vel = np.sum(np.abs(observation["joints_vel"]))
+        combined_joint_vel = np.sum(np.abs(observation["state"][self._dof:]))
         
         # Check if at least three fingers are in contact with object
         hand_contacts = self.check_contact(self._contacts)
         fingers_in_contact = list(hand_contacts.values()).count(True)
         
-        # Reward for energy expenditure (based on distance to object)
-        reward = -0.01 * combined_joint_vel * min(1, 150/self._episode_count)
         
         #TODO: Penalise hitting ground plane?
         
-        reward = 0.1 * fingers_in_contact / self._episode_count
+        # Soft reward for contact (requires at least one finger in contact)
+        reward += 0.1 * max(0, fingers_in_contact*(1 - (self._episode_count/200))) 
         
+        # Strict reward for contact (requires thumb and at least one other finger)
         if hand_contacts["thumb_fle"] and fingers_in_contact >= 2:
             # Reward for contact
             reward += 0.5 * fingers_in_contact
 
+        # Reward for effort expenditure
+        reward += -0.05*combined_joint_vel/sum(self._act_vel_ub) * min(1, max(0, 0.01*(self._episode_count - 100)))
+        
         rospy.logdebug("reward=" + str(reward))
         self.cumulated_reward += reward
         rospy.logdebug("Cumulated_reward=" + str(self.cumulated_reward))
@@ -277,10 +271,8 @@ class MiaHandWorldEnv(gym.Env):
 
     @cached_property
     def observation_space(self):
-        pos_space = gym.spaces.Box(self._obs_pos_lb, self._obs_pos_ub, dtype = np.float32)
-        vel_space = gym.spaces.Box(self._obs_vel_lb, self._obs_vel_ub, dtype = np.float32)
-        obs_dict = {"joints": pos_space, "joints_vel": vel_space}
-        rospy.logwarn(f"OBSERVATION SPACE: {obs_dict}")
+        state_space = gym.spaces.Box(self._state_lb, self._state_ub, dtype = np.float32)
+        obs_dict = {"state": state_space}
         
         for cam_name, cam_config in self._config_cameras.items():
             for modality_name in cam_config.keys():
@@ -306,6 +298,7 @@ class MiaHandWorldEnv(gym.Env):
         if self._config_imagined is not None:
             obs_dict["imagined"] = gym.spaces.Box(low=-np.inf, high=np.inf, shape=((self._config_imagined["num_points"],) + (3,)))
             
+        rospy.logwarn(f"OBSERVATION SPACE: {obs_dict}")
         return gym.spaces.Dict(obs_dict)
     
     def _get_obs(self):
@@ -471,6 +464,7 @@ class MiaHandWorldEnv(gym.Env):
             finger_force = self.force_config[link_name]["rotation"] @ finger_force
             
             # Compute angle of force vector w.r.t. x-axis in the xz-plane
+            # Note that x is not taken to be negative, since the finger force points inside the hand/finger
             y_rot = np.arctan2(finger_force[2], finger_force[0])
             
             # Check if the force vector is pointing out of the hand and within the bounds (indicating palmar contact)

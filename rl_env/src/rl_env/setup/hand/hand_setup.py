@@ -5,6 +5,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any
 from contact_republisher.msg import contacts_msg
+from move_hand.utils.ros_helper_functions import wait_for_connection
 
 class HandSetup(ABC):
     def __init__(self):
@@ -17,7 +18,8 @@ class HandSetup(ABC):
         self.rospack = rospkg.RosPack()
         
         # Starting ros subscriber to get contacts from contact_republisher_node
-        rospy.Subscriber(self._name + "/contact", contacts_msg, self._contact_callback)
+        self._sub_contact = rospy.Subscriber(self._name + "/contact", contacts_msg, self._contact_callback)
+        wait_for_connection([self._sub_contact])
     
     @abstractmethod
     def set_action(self, action: np.array) -> None:

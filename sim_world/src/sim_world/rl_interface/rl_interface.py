@@ -23,7 +23,7 @@ class RLInterface():
         self._hand_controller = HandController(sim_config["move_hand"], self._world_interface.hand.hand_rotation)
         
         # Publisher for whether episode is done or not
-        self._pub_episode_done = rospy.Publisher(self._world_interface.hand.name + "/episode_done", Bool)
+        self._pub_episode_done = rospy.Publisher(self._world_interface.hand.name + "/episode_done", Bool, queue_size=None)
         
         # Spawn objects in the gazebo world
         self._object_poses = {}
@@ -43,7 +43,8 @@ class RLInterface():
         # Update the world interface with the input values
         self.set_action(action)
         # self.move_hand(self._hand_controller.step()[0])
-        if not self._hand_controller.buffer_empty: self.set_hand_poses(self._hand_controller.step(num_steps=50))
+        if not self._hand_controller.buffer_empty:
+            self.set_hand_poses(self._hand_controller.step(num_steps=self._hand_controller._config["traj_buffer_size"]))
         
         # Extract all the values from the interface and put them in a dictionary
         # Some values may be set to none depending on the interface, need to make sure the update methods can handle this using checks. 

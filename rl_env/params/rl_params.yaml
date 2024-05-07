@@ -8,14 +8,25 @@ general:
   log_interval: 10
   checkpoint_dir: "checkpoints/"
   dur_at_obj: 3.0 # Duration to be at the object once reached before terminating episode (in seconds)
-
+  num_episodes: 1000
+  
 # Learning parameters
 hyper_params:
-  num_episodes: 1000
-  max_episode_steps: 10000
-  step_size: 0.1 # seconds
-  learning_rate: 0.005
-  end_episode_points: 50.0 # Points to add at the end of the episode
+  learning_rate: 0.0003
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  clip_range_vf: null # IMPORTANT: this clipping depends on the reward scaling.
+  normalize_advantage: True
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  use_sde: False
+  sde_sample_freq: -1
+
 
 # Camera configuration
 visual_sensors:

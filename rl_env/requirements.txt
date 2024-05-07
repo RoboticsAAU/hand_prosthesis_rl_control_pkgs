@@ -4,6 +4,5 @@ open3d[cpu]
 tf2_ros
 scipy
 urdfpy
-stable-baselines3 #[extra]
 tensorboard
 shimmy
