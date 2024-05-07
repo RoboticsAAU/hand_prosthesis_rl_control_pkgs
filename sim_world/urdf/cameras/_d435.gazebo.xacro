@@ -42,7 +42,7 @@ This is the Gazebo URDF model for an rgbd camera adapted from the Intel RealSens
           <noise>
             <type>gaussian</type>
             <mean>0.0</mean>
-            <stddev>0.05</stddev>
+            <stddev>0.0</stddev>
           </noise>
         </camera>
         <always_on>1</always_on>
@@ -64,7 +64,7 @@ This is the Gazebo URDF model for an rgbd camera adapted from the Intel RealSens
           <noise>
             <type>gaussian</type>
             <mean>0.0</mean>
-            <stddev>0.05</stddev>
+            <stddev>0.0</stddev>
           </noise>
         </camera>
         <always_on>1</always_on>
@@ -85,7 +85,7 @@ This is the Gazebo URDF model for an rgbd camera adapted from the Intel RealSens
           <noise>
             <type>gaussian</type>
             <mean>0.0</mean>
-            <stddev>0.100</stddev>
+            <stddev>0.0</stddev>
           </noise>
         </camera>
         <always_on>1</always_on>
@@ -98,8 +98,8 @@ This is the Gazebo URDF model for an rgbd camera adapted from the Intel RealSens
     <gazebo>
       <plugin name="${topics_ns}" filename="libdepth_camera_gazebo_plugin.so">
         <prefix>${camera_name}</prefix>
-        <depthUpdateRate>30.0</depthUpdateRate>
-        <infraredUpdateRate>30.0</infraredUpdateRate>
+        <depthUpdateRate>90.0</depthUpdateRate>
+        <infraredUpdateRate>90.0</infraredUpdateRate>
         <depthTopicName>depth/image_raw</depthTopicName>
         <depthCameraInfoTopicName>depth/camera_info</depthCameraInfoTopicName>
         <infrared1TopicName>infra1/image_raw</infrared1TopicName>
@@ -133,12 +133,12 @@ This is the Gazebo URDF model for an rgbd camera adapted from the Intel RealSens
           <noise>
             <type>gaussian</type>
             <mean>0.0</mean>
-            <stddev>0.007</stddev>
+            <stddev>0.00</stddev>
           </noise>
         </camera>
-        <update_rate>30</update_rate>
+        <update_rate>90</update_rate>
         <plugin name="${topics_ns}_color_controller" filename="libgazebo_ros_camera.so">
-          <updateRate>30.0</updateRate>
+          <updateRate>90.0</updateRate>
           <cameraName>${camera_name}/color</cameraName>
           <imageTopicName>image_raw</imageTopicName>
           <frameName>${color_optical_frame}</frameName>
