@@ -18,6 +18,7 @@ from rl_env.utils.tf_handler import TFHandler
 from rl_env.utils.point_cloud_handler import PointCloudHandler, ImaginedPointCloudHandler
 from rl_env.utils.urdf_handler import URDFHandler
 
+# from std_msgs.msg import Bool
 
 class MiaHandWorldEnv(gym.Env):
     def __init__(self, rl_interface : RLInterface, rl_config : Dict[str, Any]):
@@ -37,6 +38,11 @@ class MiaHandWorldEnv(gym.Env):
         self._pc_imagine_handler = ImaginedPointCloudHandler()
         self._tf_handler = TFHandler()
         self._rl_interface = rl_interface
+        
+        # self.visualise = False
+        # def vis_cb(data : Bool):
+        #     self.visualise = data.data
+        # rospy.Subscriber("/visualise", Bool, vis_cb, queue_size=1)
         
         # Get the configurations for the cameras and the imagined point clouds
         self._config_imagined = rl_config["visual_sensors"]["config_imagined"]
@@ -134,8 +140,14 @@ class MiaHandWorldEnv(gym.Env):
         reward = self._compute_reward(obs)
         self._cumulated_steps += 1
 
-            
         self._rl_interface._pub_episode_done.publish(done)
+
+        # if self.visualise:
+        #     self._pc_imagine_handler._pc.extend([self._pc_cam_handler.pc[0]])
+        #     self._pc_imagine_handler._transforms.extend([np.eye(4)])
+        #     self._pc_imagine_handler.visualize(index=0)
+        #     input("Press Enter to continue...")
+        #     self.visualise = False
 
         # TODO: Remove following, as it is only for debugging
         contact_check = self.check_contact(self._contacts)
