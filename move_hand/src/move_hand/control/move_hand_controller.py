@@ -63,8 +63,7 @@ class HandController:
             path_params = {
                 "num_way_points": random.randint(1, 5),
                 "sample_type": "constant",
-                "num_points": 5000,
-                "dt" : 0.01,
+                "num_points": self._config["num_points"],
             }
         elif self._config["path_planner"] == "navigation_function":
             path_params = {

@@ -81,7 +81,8 @@ def main():
     )
     
     # Train the model
-    model.learn(total_timesteps=100000, tb_log_name=log_name)
+    timesteps = rl_config["general"]["num_episodes"]*sim_config["move_hand"]["num_points"]/sim_config["move_hand"]["traj_buffer_size"]
+    model.learn(total_timesteps=timesteps, tb_log_name=log_name)
         
 
 if __name__ == "__main__":

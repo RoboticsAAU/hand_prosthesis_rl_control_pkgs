@@ -43,7 +43,8 @@ class RLInterface():
         # Update the world interface with the input values
         self.set_action(action)
         # self.move_hand(self._hand_controller.step()[0])
-        if not self._hand_controller.buffer_empty: self.set_hand_poses(self._hand_controller.step(num_steps=50))
+        if not self._hand_controller.buffer_empty:
+            self.set_hand_poses(self._hand_controller.step(num_steps=self._hand_controller._config["traj_buffer_size"]))
         
         # Extract all the values from the interface and put them in a dictionary
         # Some values may be set to none depending on the interface, need to make sure the update methods can handle this using checks. 
