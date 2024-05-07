@@ -98,12 +98,12 @@
         <!-- Include the macro to read the wrist joint limits -->
         <xacro:include filename="$(find sim_world)/urdf/macros/import_joint_limits_wrist.xacro"/>
         <!-- Read the wrist joint limits and extract them into xacro:properties -->
-        <xacro:read_joint_limits_wrist joint_limits_parameters_file="$(find sim_world)/config/joint_limits.yaml"/>
+        <xacro:read_joint_limits_wrist joint_limits_parameters_file="$(find sim_world)/config/joint_limits.yaml" hand_params_file="$(find rl_env)/params/hand/mia_hand_params.yaml"/>
 
         <!-- Motions for a right hand: -->
         <!-- Pronation (inwards so the palm is down) /suppination (palm up) = Rotation -->
         <joint name="j_wrist_rotation" type="revolute">
-            <limit lower="${j_wrist_rotation_lower_limit}" upper="${j_wrist_rotation_upper_limit}" effort="1.75" velocity="3.140000105"/>
+            <limit lower="${j_wrist_rotation_lower_limit}" upper="${j_wrist_rotation_upper_limit}" effort="100" velocity="${j_wrist_rotation_vel_upper_limit}"/>
             <origin xyz="0 0.0 0" rpy="0 0 0"/>
             <parent link="wrist_link"/>
             <child link="rot_link"/>
@@ -120,7 +120,7 @@
 
         <!-- Extension (up) / flexion (down) = up/down  -->
         <joint name="j_wrist_exfle" type="revolute">
-            <limit lower="${j_wrist_exfle_lower_limit}" upper="${j_wrist_exfle_upper_limit}" effort="1.75" velocity="3.140000105"/>
+            <limit lower="${j_wrist_exfle_lower_limit}" upper="${j_wrist_exfle_upper_limit}" effort="100" velocity="${j_wrist_exfle_vel_upper_limit}"/>
             <origin xyz="0.0 0 0" rpy="0 0 0"/>
             <parent link="rot_link"/>
             <child link="exfle_link"/>
@@ -137,7 +137,7 @@
         
         <!-- Ulnar (outwards) / Radial (inwards)-->
         <joint name="j_wrist_ulra" type="revolute">
-            <limit lower="${j_wrist_ulra_lower_limit}" upper="${j_wrist_ulra_upper_limit}" effort="1.75" velocity="3.140000105"/>
+            <limit lower="${j_wrist_ulra_lower_limit}" upper="${j_wrist_ulra_upper_limit}" effort="100" velocity="${j_wrist_ulra_vel_upper_limit}"/>
             <origin xyz="0 0 0.0" rpy="0 0 0"/>
             <parent link="exfle_link"/>
             <child link="palm"/>

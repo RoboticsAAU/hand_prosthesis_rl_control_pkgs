@@ -22,7 +22,6 @@ general:
     j_ring_fle: [-1.0, 1.0]
     j_thumb_fle: [-1.0, 1.0]
     j_thumb_opp: [-1.0, 1.0]
-    j_wrist_rotation: [-3.0, 3.0]
-    j_wrist_exfle: [-3.0, 3.0]
-    j_wrist_ulra: [-3.0, 3.0]
-  
+    j_wrist_rotation: [-100.0, 100.0]
+    j_wrist_exfle: [-100.0, 100.0]
+    j_wrist_ulra: [-100.0, 100.0]
