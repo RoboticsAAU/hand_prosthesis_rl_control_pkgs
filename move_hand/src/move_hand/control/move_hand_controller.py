@@ -61,7 +61,7 @@ class HandController:
         # Plan trajectory with the given path planner and parameters
         if self._config["path_planner"] == "bezier":
             path_params = {
-                "num_way_points": random.randint(1, 5),
+                "num_way_points": 1,
                 "sample_type": "constant",
                 "num_points": self._config["num_points"],
             }
