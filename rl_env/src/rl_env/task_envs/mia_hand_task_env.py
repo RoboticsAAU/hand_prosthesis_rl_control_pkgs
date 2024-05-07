@@ -75,8 +75,8 @@ class MiaHandWorldEnv(gym.Env):
             },
             "palm": {
                 "range": tuple(np.deg2rad([-90, 90])),
-                "rotation": np.array([[0,0,1],
-                                      [0,1,0],
+                "rotation": np.array([[0,0,-1],
+                                      [0,-1,0],
                                       [-1,0,0]], dtype=np.float64)
             }
         }
@@ -469,6 +469,7 @@ class MiaHandWorldEnv(gym.Env):
             finger_force = self.force_config[link_name]["rotation"] @ finger_force
             
             # Compute angle of force vector w.r.t. x-axis in the xz-plane
+            # Note that x is not taken to be negative, since the finger force points inside the hand/finger
             y_rot = np.arctan2(finger_force[2], finger_force[0])
             
             # Check if the force vector is pointing out of the hand and within the bounds (indicating palmar contact)
