@@ -107,7 +107,7 @@
             <origin xyz="0 0.0 0" rpy="0 0 0"/>
             <parent link="wrist_link"/>
             <child link="rot_link"/>
-            <!-- <dynamics damping="0.0" friction="0.0"/> -->
+            <dynamics damping="0.0" friction="0.0"/>
             <axis xyz="0.0 1.0 0.0"/>
         </joint>
         <link name="rot_link">
@@ -124,7 +124,7 @@
             <origin xyz="0.0 0 0" rpy="0 0 0"/>
             <parent link="rot_link"/>
             <child link="exfle_link"/>
-            <!-- <dynamics damping="0.0" friction="0.0"/> -->
+            <dynamics damping="0.0" friction="0.0"/>
             <axis xyz="1.0 0.0 0.0"/>
         </joint>
         <link name="exfle_link">
@@ -141,7 +141,7 @@
             <origin xyz="0 0 0.0" rpy="0 0 0"/>
             <parent link="exfle_link"/>
             <child link="palm"/>
-            <!-- <dynamics damping="0.0" friction="0.0"/> -->
+            <dynamics damping="0.0" friction="0.0"/>
             <axis xyz="0.0 0.0 1.0"/>
         </joint>
     </xacro:if>
