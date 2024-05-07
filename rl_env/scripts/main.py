@@ -65,15 +65,14 @@ def main():
     # Instantiate RL env
     rl_env = MiaHandWorldEnv(rl_interface, rl_config)
 
+    ppo_kwargs = rl_config["hyper_params"]
     # Instantiate the PPO model
     model = PPO(
         policy = "MultiInputPolicy",
-        env = SubprocVecEnv([rl_env]),
-        verbose = 1,
-        batch_size = 64,
-        policy_kwargs = get_3d_policy_kwargs(extractor_name="smallpn"), # Can either be "smallpn", "mediumpn" or "largepn". See sb3.common.torch_layers.py 
+        env = rl_env,
+        verbose = 1, 
         tensorboard_log = rospack.get_path("rl_env") + "/logs",
-        device = 'cuda:0'
+        **ppo_kwargs
     )
     
     # Train the model
