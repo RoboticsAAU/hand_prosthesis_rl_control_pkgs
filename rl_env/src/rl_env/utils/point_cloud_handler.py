@@ -248,12 +248,12 @@ class ImaginedPointCloudHandler(PointCloudHandler):
         :param total_sample_points: The total number of points to sample
         """
         # Get the surface areas to uniformly sample the mesh files
-        # def get_surface_areas(mesh_dict):
-        #     meshes = [o3d.io.read_triangle_mesh(mesh_values["path"]).scale(np.mean(mesh_values["scale_factors"]), np.zeros(3)) for mesh_values in mesh_dict.values()]
+        def get_surface_areas(mesh_dict):
+            meshes = [o3d.io.read_triangle_mesh(mesh_values["path"]).scale(np.mean(mesh_values["scale_factors"]), np.zeros(3)) for mesh_values in mesh_dict.values()]
             
-        #     surface_areas = np.asarray([mesh.get_surface_area() * 1000 for mesh in meshes])
-        #     return surface_areas
-        # surface_areas = get_surface_areas(mesh_dict)
+            surface_areas = np.asarray([mesh.get_surface_area() * 1000 for mesh in meshes])
+            return surface_areas
+        surface_areas = get_surface_areas(mesh_dict)
         
         # Initialise the point clouds and transforms for each group
         initial_count = self.count
@@ -264,8 +264,8 @@ class ImaginedPointCloudHandler(PointCloudHandler):
         # Go through each mesh file in the dictionary
         for idx, mesh_values in enumerate(mesh_dict.values()):
             # Calculate the number of sample points for each mesh file
-            sample_points = total_sample_points // len(mesh_dict)
-            # sample_points = int(surface_areas[idx] / np.sum(surface_areas) * total_sample_points)
+            # sample_points = total_sample_points // len(mesh_dict)
+            sample_points = int(surface_areas[idx] / np.sum(surface_areas) * total_sample_points)
             
             # Sample the mesh file
             pc = self.sample_from_mesh(mesh_values["path"], sample_points)
