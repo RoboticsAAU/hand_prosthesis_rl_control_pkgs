@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>stablebaselines3</name>
+  <name>stable_baselines3</name>
   <version>0.1.0</version>
   <description>Python client for RPS GraspitInterface</description>
 

@@ -4,9 +4,11 @@ seed: 75995
 move_hand:
   # What type of path planner to use for the approach trajectory
   path_planner: "bezier" # "nav_function" or "bezier"
+  num_points: 5000 # Number of points in trajectory
+  traj_buffer_size: 50 # Number of points to extracts for each rl step
 
   # Starting position of the hand constraints. The hand will start in the interior of the sphere defined by the following parameters
-  outer_radius: 0.7
+  outer_radius: 0.5
   inner_radius: 0.1
 
 objects:
@@ -15,5 +17,5 @@ objects:
   # Mode in which objects are selected each episode
   selection_mode: "sequential" # "random" or "sequential"
   # How many objects to train on
-  num_objects: 2
+  num_objects: 1
   inter_object_dist: 2.0

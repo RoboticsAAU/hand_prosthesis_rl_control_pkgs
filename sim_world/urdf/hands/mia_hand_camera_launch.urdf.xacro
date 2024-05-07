@@ -12,7 +12,6 @@
     <xacro:arg name="hw_interface_wrist_exfle"      default="EffortJointInterface"/>
     <xacro:arg name="hw_interface_wrist_ulra"       default="EffortJointInterface"/>
     <xacro:arg name="camera_name"                   default="camera" />
-    <xacro:arg name="camera_topic_ns"               default="camera" />
     <xacro:arg name="wrist_rotation"                default="true" />
 
 
@@ -170,7 +169,7 @@
     <xacro:include filename="$(find sim_world)/urdf/cameras/_d435.gazebo.xacro"/>
     <xacro:gazebo_d435 camera_name="$(arg camera_name)" 
                     reference_link="$(arg camera_name)_link" 
-                    topics_ns="$(arg camera_topic_ns)"
+                    topics_ns="$(arg camera_name)"
                     depth_optical_frame="$(arg camera_name)_depth_optical_frame" 
                     color_optical_frame="$(arg camera_name)_color_optical_frame" 
                     infrared1_optical_frame="$(arg camera_name)_left_ir_optical_frame" 
