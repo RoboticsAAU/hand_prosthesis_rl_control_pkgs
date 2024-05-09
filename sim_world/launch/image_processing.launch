@@ -2,7 +2,7 @@
 <launch>
 	
 	<arg name="robotNamespace" default="mia_hand"/> 
-
+	<arg name="queue_size" default="2"/>
 	<!-- input topics -->
 	<arg name="rgb_camera_info"               default="$(arg robotNamespace)/camera/color/camera_info"/>
 	<arg name="rgb_image_raw"                 default="$(arg robotNamespace)/camera/color/image_raw"/>
@@ -23,6 +23,7 @@
 	<!-- Takes an unrectified image stream and its associated calibration parameters, and produces rectified images. -->
 	<node pkg="nodelet" type="nodelet" name="color_image_proc_rectify" args="manager" />
 		<node pkg="nodelet" type="nodelet" name="color_image_rectification" args="load image_proc/rectify image_proc_nodelet_manager">
+		<param name="queue_size" value="$(arg queue_size)" />
         <remap from="camera_info"                        to="$(arg rgb_camera_info)"/>
 		<remap from="image_mono"                         to="$(arg rgb_image_raw)"/>
 
@@ -32,6 +33,7 @@
 	<!-- Takes an unrectified image stream and its associated calibration parameters, and produces rectified images. -->
 	<node pkg="nodelet" type="nodelet" name="depth_image_proc_rectify" args="manager" />
 		<node pkg="nodelet" type="nodelet" name="depth_image_rectification" args="load image_proc/rectify image_proc_nodelet_manager">
+		<param name="queue_size" value="$(arg queue_size)" />
         <remap from="camera_info"                        to="$(arg depth_camera_info)"/>
 		<remap from="image_mono"                         to="$(arg depth_image_raw)"/>
 
@@ -40,7 +42,8 @@
 
 	<!-- "register" depth image to rgb camera frame. Reprojecting the depths requires the calibration parameters of both cameras and, from tf, the extrinsic transform between them. -->
 	<node pkg="nodelet" type="nodelet" name="image_registration" args="load depth_image_proc/register image_proc_nodelet_manager">
-        <remap from="rgb/camera_info"                    to="$(arg rgb_camera_info)"/>
+        <param name="queue_size" value="$(arg queue_size)" />
+		<remap from="rgb/camera_info"                    to="$(arg rgb_camera_info)"/>
 		<remap from="depth/camera_info"                  to="$(arg depth_camera_info)"/>
 		<remap from="depth/image_rect"                   to="$(arg depth_image_rect)"/>
 
@@ -50,6 +53,7 @@
 
 	<!-- combine registered depth image and RGB image into XYZRGB point cloud. -->
 	<node pkg="nodelet" type="nodelet" name="image_proc_pointcloud_xyzrgb" args="load depth_image_proc/point_cloud_xyzrgb image_proc_nodelet_manager">
+		<param name="queue_size" value="$(arg queue_size)" />
 		<remap from="rgb/camera_info"                    to="$(arg rgb_camera_info)"/>
 		<remap from="rgb/image_rect_color"               to="$(arg rgb_image_rect)"/>
 		<remap from="depth_registered/image_rect"        to="$(arg depth_registered_image_rect)"/>

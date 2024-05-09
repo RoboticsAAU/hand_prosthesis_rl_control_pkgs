@@ -5,7 +5,7 @@ import yaml
 import torch as th
 from stable_baselines3.ppo import PPO
 from stable_baselines3.common.torch_layers import PointNetImaginationExtractorGP
-from stable_baselines3.common.vec_env.subproc_vec_env import SubprocVecEnv
+from stable_baselines3.common.callbacks import CheckpointCallback
 from datetime import datetime
 
 from rl_env.task_envs.mia_hand_task_env import MiaHandWorldEnv
@@ -33,8 +33,18 @@ with open(rospack.get_path("sim_world") + "/config/joint_limits.yaml", 'r') as f
 algorithm_name = "PPO"
 env_name= "mia_hand_rl"
 date_string = datetime.now().strftime("%d%m%Y")
-log_name = f"{env_name}_{algorithm_name}_{date_string}" 
+tb_log_name = package_path + "/logging/tb_events/" + f"{env_name}_{algorithm_name}_{date_string}" 
 
+steps_per_episode = sim_config["move_hand"]["num_points"]/sim_config["move_hand"]["traj_buffer_size"]
+
+# Save a checkpoint every 1000 steps
+checkpoint_callback = CheckpointCallback(
+    save_freq = 10*steps_per_episode,
+    save_path = package_path + "/logging/checkpoints",
+    name_prefix = "rl_model" + f"_{date_string}",
+    save_replay_buffer = False,
+    save_vecnormalize = False,
+)
 
 def get_3d_policy_kwargs(extractor_name) -> dict:
     feature_extractor_class = PointNetImaginationExtractorGP
@@ -65,10 +75,10 @@ def main():
     # Instantiate RL env
     rl_env = MiaHandWorldEnv(rl_interface, rl_config)
 
-    ppo_kwargs = rl_config["hyper_params"]
     # setting device on GPU if available, else CPU
     device = th.device('cuda' if th.cuda.is_available() else 'cpu')
     
+        
     # Instantiate the PPO model
     model = PPO(
         policy = "MultiInputPolicy",
@@ -77,13 +87,13 @@ def main():
         tensorboard_log = rospack.get_path("rl_env") + "/logs",
         device = device,
         policy_kwargs=get_3d_policy_kwargs(extractor_name="smallpn"), # Can either be "smallpn", "mediumpn" or "largepn". See sb3.common.torch_layers.py 
-        **ppo_kwargs
+        **rl_config["hyper_params"]
     )
     
     # Train the model
-    timesteps = rl_config["general"]["num_episodes"]*sim_config["move_hand"]["num_points"]/sim_config["move_hand"]["traj_buffer_size"]
-    model.learn(total_timesteps=timesteps, tb_log_name=log_name)
-        
+    timesteps = rl_config["general"]["num_episodes"]*steps_per_episode
+    model.learn(total_timesteps=timesteps, tb_log_name=tb_log_name, callback=checkpoint_callback)
+    
 
 if __name__ == "__main__":
     rospy.init_node("rl_env", log_level=rospy.INFO)
