@@ -247,7 +247,7 @@ class MiaHandWorldEnv(gym.Env):
         reward = 0
         
         # Obtain the combined joint velocity
-        combined_joint_vel = np.sum(np.abs(observation["state"][self._dof:]))
+        combined_normalised_joint_vel = np.sum(np.abs(observation["state"][self._dof:]) / self._obs_vel_ub)
         
         # Check if at least three fingers are in contact with object
         hand_contacts = self.check_contact(self._contacts)
@@ -257,7 +257,7 @@ class MiaHandWorldEnv(gym.Env):
         #TODO: Penalise hitting ground plane?
         
         # Soft reward for contact (requires at least one finger in contact)
-        reward += 0.1 * max(0, fingers_in_contact*(1 - (self._episode_count/200))) 
+        reward += 0.1 * max(0, fingers_in_contact*(1 - (self._episode_count/(self._rl_config["general"]["num_episodes"]/2))))
         
         # Strict reward for contact (requires thumb and at least one other finger)
         if hand_contacts["thumb_fle"] and fingers_in_contact >= 2:
@@ -265,7 +265,7 @@ class MiaHandWorldEnv(gym.Env):
             reward += 0.5 * fingers_in_contact
 
         # Reward for effort expenditure
-        reward += -0.05*combined_joint_vel/sum(self._act_vel_ub) * min(1, max(0, 0.01*(self._episode_count - 100)))
+        reward -= 0.05 * combined_normalised_joint_vel * min(1, max(0, 0.01*(self._episode_count - self._rl_config["general"]["num_episodes"]/2)))
         
         rospy.logdebug("reward=" + str(reward))
         self.cumulated_reward += reward
