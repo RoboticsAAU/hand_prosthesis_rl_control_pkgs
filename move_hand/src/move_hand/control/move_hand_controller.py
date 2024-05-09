@@ -7,8 +7,6 @@ from typing import Dict, Any, Union
 from scipy.spatial.transform import Rotation as R
 from move_hand.path_planners import bezier_paths, navigation_function, path_planner, path_visualiser
 
-# TODO: Compute trajectories for the hand
-# TODO: The hand orientation could always point towards some point, or the hand could be oriented tangent to the trajectory
 
 class HandController:
     def __init__(self, move_hand_config : Dict[str, Any], hand_rotation : np.array):
@@ -63,7 +61,7 @@ class HandController:
             path_params = {
                 "num_way_points": 1,
                 "sample_type": "constant",
-                "num_points": self._config["num_points"],
+                "num_points": self._config["num_points"] - self._config["points_at_obj"],
             }
         elif self._config["path_planner"] == "navigation_function":
             path_params = {
@@ -76,7 +74,7 @@ class HandController:
         
         self._pose_buffer = self._path_planner.plan_path(start_pose, goal_pose, path_params)
         #TODO: Appending the last element N times to the buffer to make the hand stay at the goal pose
-        # self._pose_buffer = np.append(self._pose_buffer, np.vstack([goal_pose] * 15).T, axis=1)
+        self._pose_buffer = np.append(self._pose_buffer, np.vstack([goal_pose] * self._config["points_at_obj"]).T, axis=1)
         
         # self._pose_buffer = start_pose.reshape(7,-1).repeat(self._pose_buffer.shape[1], 1)
         #self._pose_buffer[3:,:] = start_pose[3:].repeat(self._pose_buffer.shape[1]).reshape(4, -1) 
