@@ -16,12 +16,12 @@ general:
   right_hand: true
 
   joint_velocity_limits:
-    j_index_fle: [-0.5, 0.5]
-    j_little_fle: [-0.5, 0.5]
-    j_mrl_fle: [-0.5, 0.5]
-    j_ring_fle: [-0.5, 0.5]
-    j_thumb_fle: [-0.5, 0.5]
-    j_thumb_opp: [-0.5, 0.5]
+    j_index_fle: [-0.1, 0.1]
+    j_little_fle: [-0.1, 0.1]
+    j_mrl_fle: [-0.1, 0.1]
+    j_ring_fle: [-0.1, 0.1]
+    j_thumb_fle: [-0.1, 0.1]
+    j_thumb_opp: [-0.1, 0.1]
     j_wrist_rotation: [-0.5, 0.5]
     j_wrist_exfle: [-0.5, 0.5]
     j_wrist_ulra: [-0.5, 0.5]
