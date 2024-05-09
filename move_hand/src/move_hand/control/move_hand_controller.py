@@ -55,8 +55,8 @@ class HandController:
     def plan_trajectory(self, obj_center : np.array, obj_mesh) -> None:
         # Obtain the start and goal pose
         #TODO: z-offset should be a parameter in yaml
-        start_pose = self._sample_start_pose(obj_center, 0.1)
-        goal_pose = self._sample_goal_pose(obj_center, start_pose, obj_mesh, 0.1)
+        start_pose = self._sample_start_pose(obj_center, 0.2)
+        goal_pose = self._sample_goal_pose(obj_center, start_pose, obj_mesh, 0.12)
         
         # Plan trajectory with the given path planner and parameters
         if self._config["path_planner"] == "bezier":
@@ -89,7 +89,7 @@ class HandController:
         self._pose_buffer = []
     
     
-    def _sample_start_pose(self, obj_center : np.array, z_offset : float) -> np.array:
+    def _sample_start_pose(self, obj_center : np.array, z_offset : float = 0.0) -> np.array:
         """
         Sample a start pose for the hand. The start pose is sampled on the upper hemisphere.
         obj_center: The center of the object
