@@ -186,6 +186,7 @@ class MiaHandWorldEnv(gym.Env):
         self._rl_interface._world_interface.respawn_hand(self._rl_interface.default_pose)
         self._rl_interface._world_interface._controllers_connection.reset_controllers()
         self._rl_interface._world_interface.check_system_ready()
+        rospy.sleep(0.1)
         rospy.loginfo("RESET HAND END\n")
     
     
