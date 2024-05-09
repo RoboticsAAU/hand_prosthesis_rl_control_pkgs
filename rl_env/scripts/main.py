@@ -43,7 +43,7 @@ tb_log_to_load = tensorboard_log + log_to_load
 # Current date as a string in the format "ddmmyyyy"
 algorithm_name = "PPO"
 env_name= "mia_hand_rl"
-datetime_string = datetime.now().strftime("%Y%M%D_%H%M%S")
+datetime_string = datetime.now().strftime("%Y%m%D_%H%M%S")
 tb_log_name = package_path + "/logging/tb_events/" + f"{env_name}_{algorithm_name}_{datetime_string}" 
 
 steps_per_episode = sim_config["move_hand"]["num_points"]/sim_config["move_hand"]["traj_buffer_size"]
