@@ -128,11 +128,7 @@ class MiaHandWorldEnv(gym.Env):
     def step(self, action):
         rospy.sleep(0.01)
         
-        done = False
-        if self._rl_interface._hand_controller.buffer_empty:
-            done = (time() - self._prev_pose_ts) > self._rl_config["general"]["dur_at_obj"]
-        else:
-            self._prev_pose_ts = time()
+        done = self._rl_interface._hand_controller.buffer_empty
         
         self._rl_interface.step(action)
         self.update()

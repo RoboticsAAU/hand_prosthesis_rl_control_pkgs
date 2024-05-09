@@ -32,8 +32,8 @@ with open(rospack.get_path("sim_world") + "/config/joint_limits.yaml", 'r') as f
 # Current date as a string in the format "ddmmyyyy"
 algorithm_name = "PPO"
 env_name= "mia_hand_rl"
-date_string = datetime.now().strftime("%d%m%Y")
-tb_log_name = package_path + "/logging/tb_events/" + f"{env_name}_{algorithm_name}_{date_string}" 
+datetime_string = datetime.now().strftime("%Y%M%D_%H%M%S")
+tb_log_name = package_path + "/logging/tb_events/" + f"{env_name}_{algorithm_name}_{datetime_string}" 
 
 steps_per_episode = sim_config["move_hand"]["num_points"]/sim_config["move_hand"]["traj_buffer_size"]
 
@@ -41,7 +41,7 @@ steps_per_episode = sim_config["move_hand"]["num_points"]/sim_config["move_hand"
 checkpoint_callback = CheckpointCallback(
     save_freq = 10*steps_per_episode,
     save_path = package_path + "/logging/checkpoints",
-    name_prefix = "rl_model" + f"_{date_string}",
+    name_prefix = "rl_model" + f"_{datetime_string}",
     save_replay_buffer = False,
     save_vecnormalize = False,
 )
@@ -84,7 +84,6 @@ def main():
         policy = "MultiInputPolicy",
         env = rl_env,
         verbose = 1, 
-        tensorboard_log = rospack.get_path("rl_env") + "/logs",
         device = device,
         policy_kwargs=get_3d_policy_kwargs(extractor_name="smallpn"), # Can either be "smallpn", "mediumpn" or "largepn". See sb3.common.torch_layers.py 
         **rl_config["hyper_params"]
