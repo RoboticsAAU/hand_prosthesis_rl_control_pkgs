@@ -17,7 +17,7 @@
      <arg name="transmission_config_filename" default="transmission_config.yaml" doc="name of the yaml file to calibrate transmissions of MiaHand" />
      <arg name="finger_controller_type" default="eff" doc="type of controller for fingers. Values: position, velocity, eff, eff_position, (eff_velocity has not been tuned), Remember to change the controller topics in mia_hand_params.yaml"/>
      <arg name="wrist_controller_type" default="eff" doc="type of controller for wrist joints. Values: position, velocity, eff, eff_position, (eff_velocity has not been tuned)"/>
-
+     <arg name="rgb_pointcloud" default="false" doc="Whether the point cloud includes rgb information or not" />
 
 
      <!-- Arguments to upload hardware interface and controllers of each finger -->
@@ -115,10 +115,18 @@
                                                        joint_state_controller"/>  <!-- j_thumb_opp_$(arg controller_index_fle)_controller -->
 
 
-     <!-- Run image processing (rectification and registration) -->
-     <include file="$(find sim_world)/launch/image_processing.launch">
-          <arg name="robotNamespace" value="$(arg robotNamespace)"/>
-     </include>
+     <group if="$(arg rgb_pointcloud)">
+          <!-- Run image processing with rgb data (rectification and registration) -->
+          <include file="$(find sim_world)/launch/image_processing.launch">
+               <arg name="robotNamespace" value="$(arg robotNamespace)"/>
+          </include>
+     </group>
+     <group unless="$(arg rgb_pointcloud)">
+          <!-- Run image processing with no rgb data -->
+          <include file="$(find sim_world)/launch/image_processing_simple.launch">
+               <arg name="robotNamespace" value="$(arg robotNamespace)"/>
+          </include>
+     </group>
 
      <!-- Run image_view to visualize the rectified and registered images -->
      <node if="$(arg image_view)" name="image_view_rgb" pkg="image_view" type="image_view" respawn="false" output="screen">
