@@ -336,9 +336,9 @@ class MiaHandWorldEnv(gym.Env):
                     # TODO: Decide whether to include table or not
                     # Remove table and enforce cardinality
                     self._pc_cam_handler.remove_plane()
-                    # rgb_lb = np.array([10, 80, 30])/255
-                    # rgb_ub = np.array([40, 255, 90])/255
-                    # self._pc_cam_handler.filter_by_color(rgb_lb, rgb_ub)
+                    rgb_lb = np.array([10, 80, 30])/255
+                    rgb_ub = np.array([40, 255, 90])/255
+                    self._pc_cam_handler.filter_by_color(rgb_lb, rgb_ub)
                     self._pc_cam_handler.pc[0].paint_uniform_color(np.array([0.4745, 0.8353, 0.9922]))
                     self._pc_cam_handler.update_cardinality(modality_config["num_points"])
 
