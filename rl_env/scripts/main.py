@@ -84,7 +84,6 @@ def main():
         policy = "MultiInputPolicy",
         env = rl_env,
         verbose = 1, 
-        tensorboard_log = rospack.get_path("rl_env") + "/logs",
         device = device,
         policy_kwargs=get_3d_policy_kwargs(extractor_name="smallpn"), # Can either be "smallpn", "mediumpn" or "largepn". See sb3.common.torch_layers.py 
         **rl_config["hyper_params"]
