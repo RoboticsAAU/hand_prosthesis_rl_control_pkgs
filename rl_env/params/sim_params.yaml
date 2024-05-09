@@ -6,10 +6,9 @@ move_hand:
   path_planner: "bezier" # "nav_function" or "bezier"
   num_points: 500 # Number of points in trajectory
   traj_buffer_size: 10 # Number of points to extracts for each rl step
-
+  
   # Starting position of the hand constraints. The hand will start in the interior of the sphere defined by the following parameters
-  outer_radius: 0.5
-  inner_radius: 0.1
+  outer_radius: 0.3
 
 objects:
   # The selected object dataset folder from the assets package
