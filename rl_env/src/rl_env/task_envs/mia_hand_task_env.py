@@ -158,6 +158,8 @@ class MiaHandWorldEnv(gym.Env):
         super().reset(seed=seed)
         self._episode_count += 1
         
+        rospy.sleep(0.01)
+        
         rospy.logdebug("Resetting MiaHandWorldEnv")
         self._init_env_variables()
         if self._joints is not None and np.any(np.logical_or(self._joints < self._obs_pos_lb - 0.1, self._obs_pos_ub + 0.1 < self._joints)):

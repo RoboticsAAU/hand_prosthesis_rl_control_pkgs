@@ -86,7 +86,7 @@ class SimulationInterface(WorldInterface):
         try:
             pose = convert_pose(pose)
             self._publish_pose(model_name, pose, reference_frame)
-            rospy.sleep(0.1) # Delay is needed, as it takes time to teleport in gazebo
+            rospy.sleep(0.15) # Delay is needed, as it takes time to teleport in gazebo
         except Exception as e:
             rospy.logwarn("Failed to set position because: ", e)
 
@@ -125,7 +125,7 @@ class SimulationInterface(WorldInterface):
             
             self._spawn_urdf_model(model_name, model_urdf, namespace, pose, "world")
             rospy.loginfo(f"Model {model_name} spawned successfully.")
-            rospy.sleep(0.1)
+            rospy.sleep(0.15)
         except Exception as e:
             rospy.logerr("Failed to spawn object because: ", e)
     
@@ -138,7 +138,7 @@ class SimulationInterface(WorldInterface):
             self._spawn_model(model_name, model_sdf, "", pose, "world")
             self._spawned_obj_names.add(model_name)
             rospy.loginfo(f"Model {model_name} spawned successfully.")
-            rospy.sleep(0.1)
+            rospy.sleep(0.15)
         except Exception as e:
             rospy.logerr("Failed to spawn object because: ", e)
         
@@ -147,7 +147,7 @@ class SimulationInterface(WorldInterface):
         try:
             self._delete_model(model_name)
             rospy.loginfo(f"Model {model_name} deleted successfully.")
-            rospy.sleep(0.1)
+            rospy.sleep(0.15)
         except rospy.ServiceException as e:
             rospy.logerr("Failed to delete object because: ", e)
     
@@ -157,7 +157,7 @@ class SimulationInterface(WorldInterface):
             self._delete_model(model_name)
             self._spawned_obj_names.remove(model_name)
             rospy.loginfo(f"Model {model_name} deleted successfully.")
-            rospy.sleep(0.1)
+            rospy.sleep(0.15)
         except rospy.ServiceException as e:
             rospy.logerr("Failed to delete object because: ", e)
 
