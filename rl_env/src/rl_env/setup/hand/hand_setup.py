@@ -64,7 +64,7 @@ class HandSetup(ABC):
         return filt_contacts        
     
     def _check_all_sensors_ready(self) -> None:
-        rospy.logdebug("START ALL SENSORS READY")
+        rospy.loginfo("START ALL SENSORS READY")
         
         for subscriber_info in self._get_subscribers_info():
             subscriber_data = None
@@ -78,12 +78,12 @@ class HandSetup(ABC):
         rospy.loginfo("ALL SENSORS READY")
     
     def _wait_for_publishers_connection(self) -> None:
-        rospy.logdebug("START ALL PUBLISHERS READY")
+        rospy.loginfo("START ALL PUBLISHERS READY")
         
         rate = rospy.Rate(10)  # 10hz
         for publisher in self._get_publishers():
             while publisher.get_num_connections() == 0 and not rospy.is_shutdown():
-                rospy.logdebug(f"No susbribers to {publisher} yet so we wait and try again")
+                rospy.logwarn_throttle(2, f"No susbribers to {publisher} yet so we wait and try again")
                 try:
                     rate.sleep()
                 except rospy.ROSInterruptException:
