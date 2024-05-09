@@ -1,8 +1,10 @@
+import rospy
 import open3d as o3d
 import numpy as np
-from typing import List, Optional, Dict
 import rospkg
 import glob
+
+from typing import List, Optional, Dict
 from time import time
 from pathlib import Path
 from rl_env.utils.urdf_handler import URDFHandler
@@ -117,6 +119,28 @@ class PointCloudHandler():
         if num_points != len(self._pc[index].points):
             raise ValueError("Cardinality update failed. The number of points is not equal to the specified number of points.")   
 
+    @_check_multiple_run
+    def filter_by_color(self, rgb_lb : np.array = np.array([0.0, 0.0, 0.0]), rgb_ub : np.array = np.array([1.0, 1.0, 1.0]), index : int = None) -> None:
+        """
+        Color threshold the point cloud.
+        :param rgb_lb: The lower bound of the RGB color
+        :param rgb_ub: The upper bound of the RGB color
+        """
+        # Extract rgb colors for each point. Dimension is (n,3)
+        colors = np.asarray(self._pc[index].colors)
+        # Get list of bools for whether each row is within bound
+        in_bound = np.logical_and(rgb_lb.reshape(1,3) < colors, colors < rgb_ub.reshape(1,3))
+        in_bound = np.logical_and.reduce(in_bound, axis=1)
+        # Extract indicies for elements within bound
+        in_bound_idx = np.nonzero(in_bound)[0].tolist()
+        
+        if in_bound_idx:
+            # Update pointcloud
+            self._pc[index] = self._pc[index].select_by_index(in_bound_idx)
+        else:
+            rospy.logwarn_throttle(2, "Pointcloud is empty after thresholding. Appending a point with zeros")
+            self._pc[index].points = o3d.utility.Vector3dVector(np.zeros((1, 3)))
+            
     
     @_check_multiple_run
     def add(self, point_cloud : o3d.geometry.PointCloud, index : int = None):
