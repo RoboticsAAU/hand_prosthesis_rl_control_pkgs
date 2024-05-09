@@ -153,7 +153,7 @@ class MiaHandSetup(HandSetup):
         # callback_time = rospy.Time.now().to_sec()
         # message_stamp = data.header.stamp.to_sec()
         # difference = callback_time - message_stamp
-        # rospy.log_warn("Camera point cloud callback timestamp: {}, and post pipeline message header timestamp: {} and difference: {}".format(callback_time, message_stamp, difference ))
+        # rospy.logwarn("Camera point cloud callback timestamp: {}, and post pipeline message header timestamp: {} and difference: {}".format(callback_time, message_stamp, difference ))
     
         self.point_cloud = o3d_ros.convertCloudFromRosToOpen3d(data)
     

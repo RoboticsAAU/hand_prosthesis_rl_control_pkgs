@@ -2,7 +2,7 @@
 <launch>
 	
 	<arg name="robotNamespace" default="mia_hand"/> 
-	<arg name="queue_size" default="2"/>
+	<arg name="queue_size" default="5"/>
 	<!-- input topics -->
 	<arg name="rgb_camera_info"               default="$(arg robotNamespace)/camera/color/camera_info"/>
 	<arg name="rgb_image_raw"                 default="$(arg robotNamespace)/camera/color/image_raw"/>

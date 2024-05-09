@@ -17,7 +17,7 @@
      <arg name="transmission_config_filename" default="transmission_config.yaml" doc="name of the yaml file to calibrate transmissions of MiaHand" />
      <arg name="finger_controller_type" default="eff" doc="type of controller for fingers. Values: position, velocity, eff, eff_position, (eff_velocity has not been tuned), Remember to change the controller topics in mia_hand_params.yaml"/>
      <arg name="wrist_controller_type" default="eff" doc="type of controller for wrist joints. Values: position, velocity, eff, eff_position, (eff_velocity has not been tuned)"/>
-     <arg name="rgb_pointcloud" default="false" doc="Whether the point cloud includes rgb information or not" />
+     <arg name="rgb_pointcloud" default="true" doc="Whether the point cloud includes rgb information or not" />
 
 
      <!-- Arguments to upload hardware interface and controllers of each finger -->

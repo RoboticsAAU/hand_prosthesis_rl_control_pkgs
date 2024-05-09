@@ -128,11 +128,7 @@ class MiaHandWorldEnv(gym.Env):
     def step(self, action):
         rospy.sleep(0.01)
         
-        done = False
-        if self._rl_interface._hand_controller.buffer_empty:
-            done = (time() - self._prev_pose_ts) > self._rl_config["general"]["dur_at_obj"]
-        else:
-            self._prev_pose_ts = time()
+        done = self._rl_interface._hand_controller.buffer_empty
         
         self._rl_interface.step(action)
         self.update()
@@ -190,6 +186,7 @@ class MiaHandWorldEnv(gym.Env):
         self._rl_interface._world_interface.respawn_hand(self._rl_interface.default_pose)
         self._rl_interface._world_interface._controllers_connection.reset_controllers()
         self._rl_interface._world_interface.check_system_ready()
+        rospy.sleep(0.1)
         rospy.loginfo("RESET HAND END\n")
     
     
@@ -338,11 +335,10 @@ class MiaHandWorldEnv(gym.Env):
                 elif modality_name == 'point_cloud':
                     # TODO: Decide whether to include table or not
                     # Remove table and enforce cardinality
-                    # self._pc_cam_handler.remove_plane()
-                    rgb_lb = np.array([10, 80, 30])/255
-                    rgb_ub = np.array([40, 255, 90])/255
-                    # [17, 92, 41], [33, 248, 81]
-                    self._pc_cam_handler.filter_by_color(rgb_lb, rgb_ub)
+                    self._pc_cam_handler.remove_plane()
+                    # rgb_lb = np.array([10, 80, 30])/255
+                    # rgb_ub = np.array([40, 255, 90])/255
+                    # self._pc_cam_handler.filter_by_color(rgb_lb, rgb_ub)
                     self._pc_cam_handler.pc[0].paint_uniform_color(np.array([0.4745, 0.8353, 0.9922]))
                     self._pc_cam_handler.update_cardinality(modality_config["num_points"])
 

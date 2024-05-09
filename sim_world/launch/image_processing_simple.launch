@@ -7,7 +7,7 @@
 	<!-- depth topics -->
 	<arg name="depth_camera_info"             default="/camera/depth/camera_info"/>
 	<arg name="depth_image_raw"   	          default="/camera/depth/image_raw"/>
-	<arg name="depth_image_rect"   	          default="$(arg robotNamespace)/camera/depth/image_rect"/>
+	<arg name="depth_image_rect"   	          default="/camera/depth/image_rect"/>
 
 	<!-- point cloud topics -->
 	<arg name="depth_points"       			  default="$(arg robotNamespace)/camera/depth_registered/points"/> 
@@ -15,7 +15,7 @@
 	<node pkg="nodelet" type="nodelet" name="image_proc_nodelet_manager" args="manager" />
 
 	<!-- take an unrectified image stream and its associated calibration parameters, and produces rectified images. -->
-	<!-- <node pkg="nodelet" type="nodelet" name="depth_image_proc_rectify" args="manager" />
+	<node pkg="nodelet" type="nodelet" name="depth_image_proc_rectify" args="manager" />
 		<node pkg="nodelet" type="nodelet" name="depth_image_rectification" args="load image_proc/rectify image_proc_nodelet_manager">
 		<param name="queue_size" 						 value="$(arg queue_size)" />
         
@@ -23,14 +23,14 @@
 		<remap from="image_mono"                         to="$(arg depth_image_raw)"/>
 
 		<remap from="image_rect"                         to="$(arg depth_image_rect)"/>
-	</node> -->
+	</node>
 
 	<!-- convert depth image into XYZ point cloud. -->
 	<node pkg="nodelet" type="nodelet" name="image_proc_pointcloud_xyz" args="load depth_image_proc/point_cloud_xyz image_proc_nodelet_manager">
 		<param name="queue_size" 						 value="$(arg queue_size)" />
 		
 		<remap from="camera_info"                    	 to="$(arg depth_camera_info)"/>
-		<remap from="image_rect"        			 	 to="$(arg depth_image_raw)"/>
+		<remap from="image_rect"        			 	 to="$(arg depth_image_rect)"/>
 		
 		<remap from="points"         	 				 to="$(arg depth_points)"/>
 	</node>
