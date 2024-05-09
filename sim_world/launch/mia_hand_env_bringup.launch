@@ -15,6 +15,9 @@
      <arg name="wrist_rotation" default="true" doc="True to add wrist rotation to the hand" /> <!-- Params to set rotation of the wrist of the Mia hand  -->
      <arg name="joint_limits_config_filename" default="joint_limits.yaml" doc="name of the yaml file to calibrate joints limit of URDF file" />
      <arg name="transmission_config_filename" default="transmission_config.yaml" doc="name of the yaml file to calibrate transmissions of MiaHand" />
+     <arg name="finger_controller_type" default="eff" doc="type of controller for fingers. Values: position, velocity, eff, eff_position, (eff_velocity has not been tuned), Remember to change the controller topics in mia_hand_params.yaml"/>
+     <arg name="wrist_controller_type" default="eff" doc="type of controller for wrist joints. Values: position, velocity, eff, eff_position, (eff_velocity has not been tuned)"/>
+
 
 
      <!-- Arguments to upload hardware interface and controllers of each finger -->
@@ -33,18 +36,18 @@
      <arg name="hw_interface_wrist_ulra" default="EffortJointInterface"
           doc="type of hardware interface for wrist ulnar and radial motion. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
 
-     <arg name="controller_thumb_fle" default="eff"
+     <arg name="controller_thumb_fle" default="$(arg finger_controller_type)"
           doc="type of controller for thumb flexion. Values: position, velocity, eff, eff_position, (eff_velocity has not been tuned)"/>
-     <arg name="controller_index_fle" default="eff"
+     <arg name="controller_index_fle" default="$(arg finger_controller_type)"
           doc="type of controller for index flexion + thumb abd. Values: position,velocity,eff, eff_position, (eff_velocity has not been tuned)"/>
-     <arg name="controller_mrl_fle"   default="eff"
+     <arg name="controller_mrl_fle"   default="$(arg finger_controller_type)"
           doc="type of controller for mrl fingers flexion. Values: position, velocity, eff, eff_position,(eff_velocity has not been tuned)"/>
      <!-- Wrist Controller types -->
-     <arg name="controller_wrist_rotation" default="eff"
+     <arg name="controller_wrist_rotation" default="$(arg wrist_controller_type)"
           doc="type of controller for wrist rotation. Values: position, velocity, eff, eff_position, (eff_velocity has not been tuned)"/>
-     <arg name="controller_wrist_exfle" default="eff"
+     <arg name="controller_wrist_exfle" default="$(arg wrist_controller_type)"
           doc="type of controller for wrist flexion and extension. Values: position,velocity,eff, eff_position, (eff_velocity has not been tuned)"/>
-     <arg name="controller_wrist_ulra"   default="eff"
+     <arg name="controller_wrist_ulra"   default="$(arg wrist_controller_type)"
           doc="type of controller for ulnar and radial motion. Values: position, velocity, eff, eff_position,(eff_velocity has not been tuned)"/>
 
      <!-- Gazebo empty_world.launch -->

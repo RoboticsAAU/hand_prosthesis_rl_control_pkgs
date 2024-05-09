@@ -40,8 +40,8 @@ void GazeboRosDepthCamera::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) 
 
   // set 'png' compression format for depth images
   // default functional parameters for compressed_image_transport to have lossless png compression
-  rosnode_->setParam(rosnode_->resolveName(cameraParamsMap_[DEPTH_CAMERA_NAME].topic_name) + "/compressed/format", "png");
-  rosnode_->setParam(rosnode_->resolveName(cameraParamsMap_[DEPTH_CAMERA_NAME].topic_name) + "/compressed/png_level", 1);
+  rosnode_->setParam(rosnode_->resolveName(cameraParamsMap_[DEPTH_CAMERA_NAME].topic_name) + "/compressed/format", "cbor");
+  rosnode_->setParam(rosnode_->resolveName(cameraParamsMap_[DEPTH_CAMERA_NAME].topic_name) + "/compressed/cbor_level", 1);
 
   //this->color_pub_ = this->itnode_->advertiseCamera(
   this->ir1_pub_ = this->itnode_->advertiseCamera(

@@ -13,7 +13,7 @@ class MoveHandNode():
         
         self._sub_poses = rospy.Subscriber(self._name + "/poses", ModelStates, self._poses_cb, queue_size=1000)
         self._sub_episode_done = rospy.Subscriber(self._name + "/episode_done", Bool, self._episode_done_cb, queue_size=10)
-        self._pub_model_state = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=None)
+        self._pub_model_state = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=1)
         wait_for_connection([self._sub_poses, self._sub_episode_done, self._pub_model_state])
      
     def run(self):
