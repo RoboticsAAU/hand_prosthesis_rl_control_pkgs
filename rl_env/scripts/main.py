@@ -75,10 +75,10 @@ def main():
     # Instantiate RL env
     rl_env = MiaHandWorldEnv(rl_interface, rl_config)
 
-    ppo_kwargs = rl_config["hyper_params"]
     # setting device on GPU if available, else CPU
     device = th.device('cuda' if th.cuda.is_available() else 'cpu')
     
+        
     # Instantiate the PPO model
     model = PPO(
         policy = "MultiInputPolicy",
@@ -87,13 +87,13 @@ def main():
         tensorboard_log = rospack.get_path("rl_env") + "/logs",
         device = device,
         policy_kwargs=get_3d_policy_kwargs(extractor_name="smallpn"), # Can either be "smallpn", "mediumpn" or "largepn". See sb3.common.torch_layers.py 
-        **ppo_kwargs
+        **rl_config["hyper_params"]
     )
     
     # Train the model
-    timesteps = rl_config["general"]["num_episodes"]*sim_config["move_hand"]["num_points"]/sim_config["move_hand"]["traj_buffer_size"]
+    timesteps = rl_config["general"]["num_episodes"]*steps_per_episode
     model.learn(total_timesteps=timesteps, tb_log_name=tb_log_name, callback=checkpoint_callback)
-        
+    
 
 if __name__ == "__main__":
     rospy.init_node("rl_env", log_level=rospy.INFO)

@@ -18,7 +18,7 @@ from rl_env.utils.tf_handler import TFHandler
 from rl_env.utils.point_cloud_handler import PointCloudHandler, ImaginedPointCloudHandler
 from rl_env.utils.urdf_handler import URDFHandler
 
-# from std_msgs.msg import Bool
+from std_msgs.msg import Bool
 
 class MiaHandWorldEnv(gym.Env):
     def __init__(self, rl_interface : RLInterface, rl_config : Dict[str, Any]):
@@ -39,10 +39,10 @@ class MiaHandWorldEnv(gym.Env):
         self._tf_handler = TFHandler()
         self._rl_interface = rl_interface
         
-        # self.visualise = False
-        # def vis_cb(data : Bool):
-        #     self.visualise = data.data
-        # rospy.Subscriber("/visualise", Bool, vis_cb, queue_size=1)
+        self.visualise = False
+        def vis_cb(data : Bool):
+            self.visualise = data.data
+        rospy.Subscriber("/visualise", Bool, vis_cb, queue_size=1)
         
         # Get the configurations for the cameras and the imagined point clouds
         self._config_imagined = rl_config["visual_sensors"]["config_imagined"]
@@ -126,6 +126,7 @@ class MiaHandWorldEnv(gym.Env):
     
     
     def step(self, action):
+        rospy.sleep(0.01)
         
         done = False
         if self._rl_interface._hand_controller.buffer_empty:
@@ -142,12 +143,12 @@ class MiaHandWorldEnv(gym.Env):
 
         self._rl_interface._pub_episode_done.publish(done)
 
-        # if self.visualise:
-        #     self._pc_imagine_handler._pc.extend([self._pc_cam_handler.pc[0]])
-        #     self._pc_imagine_handler._transforms.extend([np.eye(4)])
-        #     self._pc_imagine_handler.visualize(index=0)
-        #     input("Press Enter to continue...")
-        #     self.visualise = False
+        if self.visualise:
+            self._pc_imagine_handler._pc.extend([self._pc_cam_handler.pc[0]])
+            self._pc_imagine_handler._transforms.extend([np.eye(4)])
+            self._pc_imagine_handler.visualize(index=0)
+            input("Press Enter to continue...")
+            self.visualise = False
 
         # TODO: Remove following, as it is only for debugging
         contact_check = self.check_contact(self._contacts)
@@ -348,7 +349,7 @@ class MiaHandWorldEnv(gym.Env):
                     # Transform point cloud to reference frame
                     transform = self._tf_handler.get_transform_matrix(modality_config["optical_frame"], modality_config["ref_frame"])
                     self._pc_cam_handler.pc[0] = self._pc_cam_handler.transform(self._pc_cam_handler.pc[0], transform)
-                    obs_dict[key_name] = self._pc_cam_handler.pc[0].points
+                    obs_dict[key_name] = self._pc_cam_handler.points[0]
                     
                 else:
                     raise RuntimeError("Modality not supported")
@@ -430,7 +431,7 @@ class MiaHandWorldEnv(gym.Env):
         for index, group_links in enumerate(self._imagined_groups.values()):
             # Set frame and group index
             frame = group_links[0]
-            group_index = index + 1
+            group_index = index + 1 # +1 because index 0 is entire hand
             
             # Get the transform to the reference frame and convert it to a transformation matrix
             transform = self._tf_handler.get_transform_matrix(frame, self._config_imagined["ref_frame"])            
