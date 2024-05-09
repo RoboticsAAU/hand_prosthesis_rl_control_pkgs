@@ -31,19 +31,20 @@ with open(rospack.get_path("sim_world") + "/config/joint_limits.yaml", 'r') as f
 
 
 # Continue Learning with the this model: If no model should be loaded, set model_to_load to None
-model_to_load = 'rl_model_09052024_8500_steps.zip'
-# model_to_load = None
-log_to_load = 'mia_hand_rl_PPO_09052024_1'
+# model_to_load = 'rl_model_09052024_8500_steps'
+model_to_load = 'rl_model_20243305/09/24_123313_5000_steps'
+log_to_load = 'mia_hand_rl_PPO_20243305/09/24_123313_1/events.out.tfevents.1715258009.rog-laptop.139411.0'
 
 
 checkpoint_location = package_path + "/logging/checkpoints"
 tensorboard_log = package_path + "/logging/tb_events/"
+
 tb_log_to_load = tensorboard_log + log_to_load
 
 # Current date as a string in the format "ddmmyyyy"
 algorithm_name = "PPO"
 env_name= "mia_hand_rl"
-datetime_string = datetime.now().strftime("%Y%m%D_%H%M%S")
+datetime_string = datetime.now().strftime("%Y%m%d_%H%M%S")
 tb_log_name = package_path + "/logging/tb_events/" + f"{env_name}_{algorithm_name}_{datetime_string}" 
 
 steps_per_episode = sim_config["move_hand"]["num_points"]/sim_config["move_hand"]["traj_buffer_size"]
@@ -110,7 +111,7 @@ def main():
     
     # Train the model
     timesteps = rl_config["general"]["num_episodes"]*steps_per_episode
-    model.learn(total_timesteps=timesteps, tb_log_name=tb_log_name, callback=checkpoint_callback)
+    model.learn(total_timesteps=timesteps, tb_log_name=tb_log_name, reset_num_timesteps=False, callback=checkpoint_callback)
     
 
 if __name__ == "__main__":
