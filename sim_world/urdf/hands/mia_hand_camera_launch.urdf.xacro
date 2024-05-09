@@ -205,12 +205,12 @@
     <xacro:include filename="$(find realsense2_description)/urdf/_d435.urdf.xacro"/>
     <xacro:if value="$(arg right_hand)">
         <xacro:sensor_d435 parent="palm" name="$(arg camera_name)" use_nominal_extrinsics="true">
-            <origin xyz="0 0 -0.05" rpy="3.1416 0 1.5708"/>
+            <origin xyz="0 0 0.04" rpy="3.1416 0 1.5708"/>
         </xacro:sensor_d435>
     </xacro:if>
     <xacro:unless value="$(arg right_hand)">
         <xacro:sensor_d435 parent="palm" name="$(arg camera_name)" use_nominal_extrinsics="true">
-            <origin xyz="0 0 -0.05" rpy="0 3.1416 1.5708"/>
+            <origin xyz="0 0 0.04" rpy="0 3.1416 1.5708"/>
         </xacro:sensor_d435>
     </xacro:unless>
     
