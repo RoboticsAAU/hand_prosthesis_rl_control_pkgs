@@ -3,10 +3,11 @@ import rospkg
 import numpy as np
 import yaml
 import torch as th
+from datetime import datetime
+from pathlib import Path
 from stable_baselines3.ppo import PPO
 from stable_baselines3.common.torch_layers import PointNetImaginationExtractorGP
 from stable_baselines3.common.callbacks import CheckpointCallback
-from datetime import datetime
 
 from rl_env.task_envs.mia_hand_task_env import MiaHandWorldEnv
 from rl_env.setup.hand.mia_hand_setup import MiaHandSetup
@@ -16,44 +17,39 @@ from sim_world.rl_interface.rl_interface import RLInterface
 
 # Load the configuration files
 rospack = rospkg.RosPack()
-package_path = rospack.get_path("rl_env")
-with open(package_path + "/params/rl_params.yaml", 'r') as file:
+package_path = Path(rospack.get_path("rl_env"))
+with open(package_path.joinpath("params/rl_params.yaml"), 'r') as file:
     rl_config = yaml.safe_load(file)
 
-with open(package_path + "/params/sim_params.yaml", 'r') as file:
+with open(package_path.joinpath("params/sim_params.yaml"), 'r') as file:
     sim_config = yaml.safe_load(file)
 
-with open(package_path + "/params/hand/mia_hand_params.yaml", 'r') as file:
+with open(package_path.joinpath("params/hand/mia_hand_params.yaml"), 'r') as file:
     hand_config = yaml.safe_load(file)
 
-with open(rospack.get_path("sim_world") + "/config/joint_limits.yaml", 'r') as file:
+with open(Path(rospack.get_path("sim_world")).joinpath("config/joint_limits.yaml"), 'r') as file:
     joint_limits = yaml.safe_load(file)
 
 
-# Continue Learning with the this model: If no model should be loaded, set model_to_load to None
-# model_to_load = 'rl_model_09052024_8500_steps'
-model_to_load = 'rl_model_20243305/09/24_123313_5000_steps'
-log_to_load = 'mia_hand_rl_PPO_20243305/09/24_123313_1/events.out.tfevents.1715258009.rog-laptop.139411.0'
+# Continue learning with this model: If no model should be loaded, set model_to_load to None
+model_to_load = None
+log_to_load = None
 
-
-checkpoint_location = package_path + "/logging/checkpoints"
-tensorboard_log = package_path + "/logging/tb_events/"
-
-tb_log_to_load = tensorboard_log + log_to_load
+checkpoint_dir = package_path.joinpath("logging/checkpoints")
+tensorboard_dir = package_path.joinpath("logging/tb_events")
 
 # Current date as a string in the format "ddmmyyyy"
-algorithm_name = "PPO"
-env_name= "mia_hand_rl"
+env_name= "mia_hand_rl_PPO"
 datetime_string = datetime.now().strftime("%Y%m%d_%H%M%S")
-tb_log_name = package_path + "/logging/tb_events/" + f"{env_name}_{algorithm_name}_{datetime_string}" 
+model_identifier = f"{env_name}_{datetime_string}"
 
-steps_per_episode = sim_config["move_hand"]["num_points"]/sim_config["move_hand"]["traj_buffer_size"]
+steps_per_episode = sim_config["move_hand"]["num_points"] / sim_config["move_hand"]["traj_buffer_size"]
 
 # Save a checkpoint every 1000 steps
 checkpoint_callback = CheckpointCallback(
     save_freq = 10*steps_per_episode,
-    name_prefix = "rl_model" + f"_{datetime_string}",
-    save_path = checkpoint_location,
+    name_prefix = model_identifier,
+    save_path = checkpoint_dir,
     save_replay_buffer = False,
     save_vecnormalize = False,
 )
@@ -94,24 +90,29 @@ def main():
     # Instantiate the PPO model
     if model_to_load is not None:
         model = PPO.load(
-            path=checkpoint_location + "/" + model_to_load,
-            tensorboard_log=tb_log_to_load
+            path = checkpoint_dir.joinpath(model_to_load),
+            tensorboard_log = tensorboard_dir.joinpath(log_to_load)
             )
         model.set_env(env=rl_env)
     else:
         model = PPO(
             policy = "MultiInputPolicy",
-            tensorboard_log=tensorboard_log,
+            tensorboard_log = tensorboard_dir,
             env = rl_env,
             verbose = 1, 
             device = device,
-            policy_kwargs=get_3d_policy_kwargs(extractor_name="smallpn"), # Can either be "smallpn", "mediumpn" or "largepn". See sb3.common.torch_layers.py 
+            policy_kwargs = get_3d_policy_kwargs(extractor_name="smallpn"), # Can either be "smallpn", "mediumpn" or "largepn". See sb3.common.torch_layers.py 
             **rl_config["hyper_params"]
         )
     
     # Train the model
     timesteps = rl_config["general"]["num_episodes"]*steps_per_episode
-    model.learn(total_timesteps=timesteps, tb_log_name=tb_log_name, reset_num_timesteps=False, callback=checkpoint_callback)
+    model.learn(
+        total_timesteps = timesteps,
+        tb_log_name = tensorboard_dir.joinpath(model_identifier),
+        reset_num_timesteps = False,
+        callback = checkpoint_callback
+    )
     
 
 if __name__ == "__main__":
