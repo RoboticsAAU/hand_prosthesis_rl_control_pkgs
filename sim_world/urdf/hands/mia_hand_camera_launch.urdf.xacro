@@ -8,11 +8,13 @@
     <xacro:arg name="hw_interface_thumb_fle"        default="EffortJointInterface"/>
     <xacro:arg name="hw_interface_index_fle"        default="EffortJointInterface"/>
     <xacro:arg name="hw_interface_mrl_fle"          default="EffortJointInterface"/>
-    <xacro:arg name="hw_interface_wrist_rotation"   default="EffortJointInterface"/>
+    <xacro:arg name="hw_interface_wrist_rot"        default="EffortJointInterface"/>
     <xacro:arg name="hw_interface_wrist_exfle"      default="EffortJointInterface"/>
     <xacro:arg name="hw_interface_wrist_ulra"       default="EffortJointInterface"/>
     <xacro:arg name="camera_name"                   default="camera" />
-    <xacro:arg name="wrist_rotation"                default="true" />
+    <xacro:arg name="wrist_rot"                     default="true" />
+    <xacro:arg name="wrist_exfle"                   default="true" />
+    <xacro:arg name="wrist_ulra"                    default="true" />
 
 
 
@@ -25,22 +27,24 @@
     <!-- Wrist -->
     <xacro:include filename="$(find sim_world)/urdf/macros/wrist_gazebo.urdf.xacro"/>
 
-    <xacro:wrist_gazebo hw_interface_wrist_rotation="$(arg hw_interface_wrist_rotation)"
+    <xacro:wrist_gazebo hw_interface_wrist_rot="$(arg hw_interface_wrist_rot)"
                         hw_interface_wrist_exfle="$(arg hw_interface_wrist_exfle)"
                         hw_interface_wrist_ulra= "$(arg hw_interface_wrist_ulra)"
+                        wrist_rot= "$(arg wrist_rot)"
+                        wrist_exfle= "$(arg wrist_exfle)"
+                        wrist_ulra= "$(arg wrist_ulra)"
                         robotNamespace= "$(arg robotNamespace)"
                         LoadGZPlugin="false"/>
     
     <!-- Import Transmission and all Gazebo-customization elements, including Gazebo colors and teh Gazebo plugin-->
     <xacro:include filename="$(find mia_hand_description)/urdf/mia_hand_gazebo.urdf.xacro" />
 
-    <xacro:mia_gazebo hw_interface_thumb_fle="$(arg hw_interface_thumb_fle)"
+    <xacro:mia_gazebo   hw_interface_thumb_fle="$(arg hw_interface_thumb_fle)"
                         hw_interface_index_fle="$(arg hw_interface_index_fle)"
                         hw_interface_mrl_fle= "$(arg hw_interface_mrl_fle)"
                         robotNamespace= "$(arg robotNamespace)"
                         LoadGZPlugin="true"/>
 
-    
 
     <!-- Import default robot model -->
     <xacro:if value="$(arg right_hand)">
@@ -141,51 +145,70 @@
         </visual>
     </link>
 
+    <!-- Include the macro to read the wrist joint limits -->
+    <xacro:include filename="$(find sim_world)/urdf/macros/import_joint_limits_wrist.xacro"/>
+    <!-- Read the wrist joint limits and extract them into xacro:properties -->
+    <xacro:read_joint_limits_wrist joint_limits_parameters_file="$(find sim_world)/config/joint_limits.yaml" hand_params_file="$(find rl_env)/params/hand/mia_hand_params.yaml"/>
 
-    <xacro:if value="$(arg wrist_rotation)">
-        <!-- Include the macro to read the wrist joint limits -->
-        <xacro:include filename="$(find sim_world)/urdf/macros/import_joint_limits_wrist.xacro"/>
-        <!-- Read the wrist joint limits and extract them into xacro:properties -->
-        <xacro:read_joint_limits_wrist joint_limits_parameters_file="$(find sim_world)/config/joint_limits.yaml" hand_params_file="$(find rl_env)/params/hand/mia_hand_params.yaml"/>
-
+    <xacro:if value="$(arg wrist_rot)">
         <!-- Motions for a right hand: -->
         <!-- Pronation (inwards so the palm is down) /suppination (palm up) = Rotation -->
-        <joint name="j_wrist_rotation" type="revolute">
-            <limit lower="${j_wrist_rotation_lower_limit}" upper="${j_wrist_rotation_upper_limit}" effort="100" velocity="${j_wrist_rotation_vel_upper_limit}"/>
+        <joint name="j_wrist_rot" type="revolute">
+            <limit lower="${j_wrist_rot_lower_limit}" upper="${j_wrist_rot_upper_limit}" effort="100" velocity="3.14"/>
             <origin xyz="0 0.0 0" rpy="0 0 0"/>
             <parent link="wrist_link"/>
             <child link="rot_link"/>
             <dynamics damping="0.0" friction="0.0"/>
             <axis xyz="0.0 1.0 0.0"/>
         </joint>
-        <link name="rot_link">
-            <inertial>
-                <origin xyz="0 0 0" rpy="0 0 0"/>
-                <mass value="0.001"/>
-                <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
-            </inertial>
-        </link>
+    </xacro:if>
+    <xacro:unless value="$(arg wrist_rot)">
+        <joint name="j_wrist_rot" type="fixed">
+            <origin xyz="0 0.0 0" rpy="0 0 0"/>
+            <parent link="wrist_link"/>
+            <child link="rot_link"/>
+        </joint>
+    </xacro:unless>
 
+    <link name="rot_link">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="0.001"/>
+            <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+        </inertial>
+    </link>
+
+    <xacro:if value="$(arg wrist_exfle)">
         <!-- Extension (up) / flexion (down) = up/down  -->
         <joint name="j_wrist_exfle" type="revolute">
-            <limit lower="${j_wrist_exfle_lower_limit}" upper="${j_wrist_exfle_upper_limit}" effort="100" velocity="${j_wrist_exfle_vel_upper_limit}"/>
+            <limit lower="${j_wrist_exfle_lower_limit}" upper="${j_wrist_exfle_upper_limit}" effort="100" velocity="3.14"/>
             <origin xyz="0.0 0 0" rpy="0 0 0"/>
             <parent link="rot_link"/>
             <child link="exfle_link"/>
             <dynamics damping="0.0" friction="0.0"/>
             <axis xyz="1.0 0.0 0.0"/>
         </joint>
-        <link name="exfle_link">
-            <inertial>
-                <origin xyz="0 0 0" rpy="0 0 0"/>
-                <mass value="0.001"/>
-                <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
-            </inertial>
-        </link>
-        
+    </xacro:if>
+    <xacro:unless value="$(arg wrist_exfle)">
+        <joint name="j_wrist_exfle" type="fixed">
+            <origin xyz="0 0.0 0" rpy="0 0 0"/>
+            <parent link="rot_link"/>
+            <child link="exfle_link"/>
+        </joint>
+    </xacro:unless>
+
+    <link name="exfle_link">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="0.001"/>
+            <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+        </inertial>
+    </link>
+
+    <xacro:if value="$(arg wrist_ulra)">
         <!-- Ulnar (outwards) / Radial (inwards)-->
         <joint name="j_wrist_ulra" type="revolute">
-            <limit lower="${j_wrist_ulra_lower_limit}" upper="${j_wrist_ulra_upper_limit}" effort="100" velocity="${j_wrist_ulra_vel_upper_limit}"/>
+            <limit lower="${j_wrist_ulra_lower_limit}" upper="${j_wrist_ulra_upper_limit}" effort="100" velocity="3.14"/>
             <origin xyz="0 0 0.0" rpy="0 0 0"/>
             <parent link="exfle_link"/>
             <child link="palm"/>
@@ -193,10 +216,10 @@
             <axis xyz="0.0 0.0 1.0"/>
         </joint>
     </xacro:if>
-    <xacro:unless value="$(arg wrist_rotation)">
-        <joint name="j_wrist" type="fixed">
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <parent link="wrist_link"/>
+    <xacro:unless value="$(arg wrist_ulra)">
+        <joint name="j_wrist_ulra" type="fixed">
+            <origin xyz="0 0 0.0" rpy="0 0 0"/>
+            <parent link="exfle_link"/>
             <child link="palm"/>
         </joint>
     </xacro:unless>

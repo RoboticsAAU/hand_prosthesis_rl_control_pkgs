@@ -14,8 +14,8 @@
 
     <!-- JOINTS LIMIT PARAMETERS -->
     <!-- Wrist Rotation -->
-    <xacro:property name="j_wrist_rotation_lower_limit" value="${sec_limits['j_wrist_rotation']['min_position']}" scope="parent"/>
-    <xacro:property name="j_wrist_rotation_upper_limit" value="${sec_limits['j_wrist_rotation']['max_position']}" scope="parent"/>
+    <xacro:property name="j_wrist_rot_lower_limit" value="${sec_limits['j_wrist_rot']['min_position']}" scope="parent"/>
+    <xacro:property name="j_wrist_rot_upper_limit" value="${sec_limits['j_wrist_rot']['max_position']}" scope="parent"/>
 
     <!-- Wrist extension/flexion -->
     <xacro:property name="j_wrist_exfle_lower_limit" value="${sec_limits['j_wrist_exfle']['min_position']}" scope="parent"/>
@@ -30,17 +30,17 @@
 
     <!-- JOINTS VELOCITY LIMIT PARAMETERS -->
     <!-- Wrist Rotation -->
-    <xacro:property name="j_wrist_rotation_vel_lower_limit" value="${joint_velocity_limits['j_wrist_rotation'][0]}" scope="parent"/>
-    <xacro:property name="j_wrist_rotation_vel_upper_limit" value="${joint_velocity_limits['j_wrist_rotation'][1]}" scope="parent"/>
+    <!-- <xacro:property name="j_wrist_rot_vel_lower_limit" value="${joint_velocity_limits['j_wrist_rot'][0]}" scope="parent"/> -->
+    <!-- <xacro:property name="j_wrist_rot_vel_upper_limit" value="${joint_velocity_limits['j_wrist_rot'][1]}" scope="parent"/> -->
 
     <!-- Wrist extension/flexion -->
-    <xacro:property name="j_wrist_exfle_vel_lower_limit" value="${joint_velocity_limits['j_wrist_exfle'][0]}" scope="parent"/>
-    <xacro:property name="j_wrist_exfle_vel_upper_limit" value="${joint_velocity_limits['j_wrist_exfle'][1]}" scope="parent"/>
+    <!-- <xacro:property name="j_wrist_exfle_vel_lower_limit" value="${joint_velocity_limits['j_wrist_exfle'][0]}" scope="parent"/> -->
+    <!-- <xacro:property name="j_wrist_exfle_vel_upper_limit" value="${joint_velocity_limits['j_wrist_exfle'][1]}" scope="parent"/> -->
 
 
     <!-- Wrist Ulnar / Radial -->
-    <xacro:property name="j_wrist_ulra_vel_lower_limit" value="${joint_velocity_limits['j_wrist_ulra'][0]}" scope="parent"/>
-    <xacro:property name="j_wrist_ulra_vel_upper_limit" value="${joint_velocity_limits['j_wrist_ulra'][1]}" scope="parent"/>
+    <!-- <xacro:property name="j_wrist_ulra_vel_lower_limit" value="${joint_velocity_limits['j_wrist_ulra'][0]}" scope="parent"/>
+    <xacro:property name="j_wrist_ulra_vel_upper_limit" value="${joint_velocity_limits['j_wrist_ulra'][1]}" scope="parent"/> -->
 
 
  </xacro:macro>

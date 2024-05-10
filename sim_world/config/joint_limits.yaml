@@ -20,7 +20,7 @@ joint_limits:
   j_thumb_opp:
     min_position: -0.628
     max_position: 0.000
-  j_wrist_rotation: # 90 deg sup, 90 pro
+  j_wrist_rot: # 90 deg sup, 90 pro
     min_position: -1.57079633 # Pronation
     max_position: 1.57079633 # Supination
   j_wrist_exfle: # 70 deg flex, 60 deg ext

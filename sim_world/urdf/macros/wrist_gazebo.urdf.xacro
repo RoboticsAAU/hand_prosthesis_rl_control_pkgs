@@ -5,9 +5,12 @@
 
 <!-- Gazebo.xacro v5.1 -->
 
- <xacro:macro name="wrist_gazebo" params="hw_interface_wrist_rotation:=VelocityJointInterface
+ <xacro:macro name="wrist_gazebo" params="hw_interface_wrist_rot:=VelocityJointInterface
                                           hw_interface_wrist_exfle:=VelocityJointInterface
                                           hw_interface_wrist_ulra:=VelocityJointInterface
+                                          wrist_rot:=true
+                                          wrist_exfle:=true
+                                          wrist_ulra:=true
                                           robotNamespace:=/mia_hand
                                           LoadGZPlugin:=true">
 
@@ -23,9 +26,18 @@
 
   <xacro:include filename="$(find sim_world)/urdf/macros/joint_wrist.transmission.xacro" />
 
-  <xacro:joint_wrist_transmission_macro joint_name="j_wrist_rotation"   trans_type="transmission_interface/SimpleTransmission"  hw_interface="${hw_interface_wrist_rotation}"/> <!-- Fake transmission-->
-  <xacro:joint_wrist_transmission_macro joint_name="j_wrist_exfle"  	trans_type="transmission_interface/SimpleTransmission"  hw_interface="${hw_interface_wrist_exfle}"/>
-  <xacro:joint_wrist_transmission_macro joint_name="j_wrist_ulra" 	    trans_type="transmission_interface/SimpleTransmission"  hw_interface="${hw_interface_wrist_ulra}"/>
+  <xacro:if value="${wrist_rot}">
+    <xacro:joint_wrist_transmission_macro joint_name="j_wrist_rot" trans_type="transmission_interface/SimpleTransmission"  hw_interface="${hw_interface_wrist_rot}"/>
+  </xacro:if>
+
+  <xacro:if value="${wrist_exfle}">
+    <xacro:joint_wrist_transmission_macro joint_name="j_wrist_exfle" trans_type="transmission_interface/SimpleTransmission"  hw_interface="${hw_interface_wrist_exfle}"/>
+  </xacro:if>
+
+  <xacro:if value="${wrist_ulra}">
+    <xacro:joint_wrist_transmission_macro joint_name="j_wrist_ulra" trans_type="transmission_interface/SimpleTransmission"  hw_interface="${hw_interface_wrist_ulra}"/>
+  </xacro:if>
+
 
   <!-- ros_control plugin -->
   <xacro:if value="${LoadGZPlugin}">
@@ -120,7 +132,7 @@
 
 
   <!-- Might need these: -->
-  <gazebo reference="j_wrist_rotation">
+  <gazebo reference="j_wrist_rot">
     <implicitSpringDamper>1</implicitSpringDamper>
   </gazebo>
 

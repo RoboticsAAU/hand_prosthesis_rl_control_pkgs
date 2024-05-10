@@ -12,7 +12,9 @@
      <arg name="robotNamespace" default="mia_hand"/> <!-- /mia_hand_camera -->
      <arg name="load_default_mia_model" default="false" />
      <arg name="right_hand" default="true" doc="True to for right hand False otherwise" /> <!-- Params to set right or left Mia hand version  -->
-     <arg name="wrist_rotation" default="true" doc="True to add wrist rotation to the hand" /> <!-- Params to set rotation of the wrist of the Mia hand  -->
+     <arg name="wrist_rot" default="true" doc="True to add wrist rotation to the hand" />
+     <arg name="wrist_exfle" default="true" doc="True to add wrist extension/flexion to the hand" />
+     <arg name="wrist_ulra" default="true" doc="True to add wrist ulnar/radial to the hand" />
      <arg name="joint_limits_config_filename" default="joint_limits.yaml" doc="name of the yaml file to calibrate joints limit of URDF file" />
      <arg name="transmission_config_filename" default="transmission_config.yaml" doc="name of the yaml file to calibrate transmissions of MiaHand" />
      <arg name="finger_controller_type" default="eff" doc="type of controller for fingers. Values: position, velocity, eff, eff_position, (eff_velocity has not been tuned), Remember to change the controller topics in mia_hand_params.yaml"/>
@@ -29,7 +31,7 @@
      <arg name="hw_interface_mrl_fle" default="EffortJointInterface"
           doc="type of hardware interface for mrl flexion. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
      <!-- Wrist interfaces: -->
-     <arg name="hw_interface_wrist_rotation" default="EffortJointInterface"
+     <arg name="hw_interface_wrist_rot" default="EffortJointInterface"
           doc="type of hardware interface for wrist rotation. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
      <arg name="hw_interface_wrist_exfle" default="EffortJointInterface"
           doc="type of hardware interface for wrist extension and flexion. Values: EffortJointInterface, PositionJointInterface VelocityJointInterface"/>
@@ -43,7 +45,7 @@
      <arg name="controller_mrl_fle"   default="$(arg finger_controller_type)"
           doc="type of controller for mrl fingers flexion. Values: position, velocity, eff, eff_position,(eff_velocity has not been tuned)"/>
      <!-- Wrist Controller types -->
-     <arg name="controller_wrist_rotation" default="$(arg wrist_controller_type)"
+     <arg name="controller_wrist_rot" default="$(arg wrist_controller_type)"
           doc="type of controller for wrist rotation. Values: position, velocity, eff, eff_position, (eff_velocity has not been tuned)"/>
      <arg name="controller_wrist_exfle" default="$(arg wrist_controller_type)"
           doc="type of controller for wrist flexion and extension. Values: position,velocity,eff, eff_position, (eff_velocity has not been tuned)"/>
@@ -69,7 +71,9 @@
           <arg name="robotNamespace"   value="$(arg robotNamespace)"/> <!-- /mia_hand_camera -->
           <arg name="load_default_mia_model"   value="$(arg load_default_mia_model)"/>
           <arg name="right_hand"   value="$(arg right_hand)"/>
-          <arg name="wrist_rotation" value="$(arg wrist_rotation)"/>
+          <arg name="wrist_rot" value="$(arg wrist_rot)"/>
+          <arg name="wrist_exfle" value="$(arg wrist_exfle)"/>
+          <arg name="wrist_ulra" value="$(arg wrist_ulra)"/>
           
           <arg name="joint_limits_config_filename" default="joint_limits.yaml" doc="name of the yaml file to calibrate joints limit of URDF file" />
           <arg name="transmission_config_filename" default="transmission_config.yaml" doc="name of the yaml file to calibrate transmissions of MiaHand" />
@@ -86,10 +90,12 @@
                hw_interface_thumb_fle:=$(arg hw_interface_thumb_fle)
                hw_interface_index_fle:=$(arg hw_interface_index_fle)
                hw_interface_mrl_fle:=$(arg hw_interface_mrl_fle)
-               hw_interface_wrist_rotation:=$(arg hw_interface_wrist_rotation)
+               hw_interface_wrist_rot:=$(arg hw_interface_wrist_rot)
                hw_interface_wrist_exfle:=$(arg hw_interface_wrist_exfle)
                hw_interface_wrist_ulra:=$(arg hw_interface_wrist_ulra)
-               wrist_rotation:=$(arg wrist_rotation)"
+               wrist_rot:=$(arg wrist_rot)
+               wrist_exfle:=$(arg wrist_exfle)
+               wrist_ulra:=$(arg wrist_ulra)"
           />
 
           <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
@@ -104,14 +110,29 @@
           <rosparam file="$(find sim_world)/config/wrist_controllers.yaml" command="load"/>
      </group>
 
+     
+
+
+     <!-- Include or exclude based on 'rot' -->
+     <arg name="wrist_rot_controller" value="j_wrist_rot_$(arg controller_wrist_rot)_controller" if="$(arg wrist_rot)" />
+     <arg name="wrist_rot_controller" default="" unless="$(arg wrist_rot)" />
+     
+     <!-- Include or exclude based on 'exfle' -->
+    <arg name="wrist_exfle_controller" value="j_wrist_exfle_$(arg controller_wrist_exfle)_controller" if="$(arg wrist_exfle)" />
+     <arg name="wrist_exfle_controller" default="" unless="$(arg wrist_exfle)" />
+     
+     <!-- Include or exclude based on 'ulra' -->
+     <arg name="wrist_ulra_controller" value="j_wrist_ulra_$(arg controller_wrist_ulra)_controller" if="$(arg wrist_ulra)" />
+     <arg name="wrist_ulra_controller" default="" unless="$(arg wrist_ulra)" />
+
      <!-- load and start the controllers torso_controller -->
      <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
      output="screen" ns="$(arg robotNamespace)" args="j_thumb_fle_$(arg controller_thumb_fle)_controller
                                                        j_index_fle_$(arg controller_index_fle)_controller
                                                        j_mrl_fle_$(arg controller_mrl_fle)_controller
-                                                       j_wrist_rotation_$(arg controller_wrist_rotation)_controller
-                                                       j_wrist_exfle_$(arg controller_wrist_exfle)_controller
-                                                       j_wrist_ulra_$(arg controller_wrist_ulra)_controller
+                                                       $(arg wrist_rot_controller)
+                                                       $(arg wrist_exfle_controller)
+                                                       $(arg wrist_ulra_controller)  
                                                        joint_state_controller"/>  <!-- j_thumb_opp_$(arg controller_index_fle)_controller -->
 
 

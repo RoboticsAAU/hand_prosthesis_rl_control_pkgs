@@ -6,7 +6,9 @@
 
     <!-- Params to set right or left Mia hand version  -->
     <arg name="right_hand" default="true" doc="True to for right hand False otherwise" />
-    <arg name="wrist_rotation" default="true" doc="True to add wrist rotation to the hand" />
+    <arg name="wrist_rot" default="true" doc="True to add wrist rotation to the hand" />
+    <arg name="wrist_exfle" default="true" doc="True to add wrist extension/flexion to the hand" />
+    <arg name="wrist_ulra" default="true" doc="True to add wrist ulnar/radial to the hand" />
     <arg name="load_default_mia_model" default="false" />
     <arg name="joint_limits_config_filename" default="joint_limits.yaml" doc="name of the config yaml file to calibrate joints limit of URDF file" />
     <arg name="transmission_config_filename" default="transmission_config.yaml" doc="name of the config yaml file to calibrate transmissions of MiaHand" />
@@ -19,7 +21,7 @@
     <arg name="hw_interface_index_fle"      default="EffortJointInterface"/>
     <arg name="hw_interface_mrl_fle"        default="EffortJointInterface"/>
     <!-- Wrist -->
-    <arg name="hw_interface_wrist_rotation" default="EffortJointInterface"/>
+    <arg name="hw_interface_wrist_rot" default="EffortJointInterface"/>
     <arg name="hw_interface_wrist_exfle"    default="EffortJointInterface"/>
     <arg name="hw_interface_wrist_ulra"     default="EffortJointInterface"/>
 
@@ -33,12 +35,14 @@
           hw_interface_thumb_fle:=$(arg hw_interface_thumb_fle)
           hw_interface_index_fle:=$(arg hw_interface_index_fle)
           hw_interface_mrl_fle:=$(arg hw_interface_mrl_fle)
-          hw_interface_wrist_rotation:=$(arg hw_interface_wrist_rotation)
+          hw_interface_wrist_rot:=$(arg hw_interface_wrist_rot)
           hw_interface_wrist_exfle:=$(arg hw_interface_wrist_exfle)
           hw_interface_wrist_ulra:=$(arg hw_interface_wrist_ulra)
           robotNamespace:=$(arg robotNamespace)
           joint_limits_config_filename:=$(arg joint_limits_config_filename)
-          wrist_rotation:=$(arg wrist_rotation)" />
+          wrist_rot:=$(arg wrist_rot)
+          wrist_exfle:=$(arg wrist_exfle)
+          wrist_ulra:=$(arg wrist_ulra)"/>
     </group>
 
     <!-- Load thumb opp transmission config file-->

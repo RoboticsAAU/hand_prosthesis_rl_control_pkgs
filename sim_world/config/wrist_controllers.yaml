@@ -16,9 +16,9 @@
 # Effort- Controllers ---------------------------------------
 #---------------------------------------------------------------------
 
-j_wrist_rotation_eff_controller:
+j_wrist_rot_eff_controller:
   type: effort_controllers/JointEffortController
-  joint: j_wrist_rotation
+  joint: j_wrist_rot
   pid: { p: 100.0, i: 0.01, d: 0.1 }
 j_wrist_exfle_eff_controller:
   type: effort_controllers/JointEffortController
@@ -33,9 +33,9 @@ j_wrist_ulra_eff_controller:
 # Effort-Position Controllers ---------------------------------------
 #---------------------------------------------------------------------
 
-j_wrist_rotation_eff_position_controller:
+j_wrist_rot_eff_position_controller:
   type: effort_controllers/JointPositionController
-  joint: j_wrist_rotation
+  joint: j_wrist_rot
   pid:
     d: 0.005
     i: 0.001
@@ -72,9 +72,9 @@ j_wrist_ulra_eff_position_controller:
 # Effort-Velocity Controllers -- NOT TUNED-----------------------------
 #---------------------------------------------------------------------
 
-j_wrist_rotation_eff_velocity_controller:
+j_wrist_rot_eff_velocity_controller:
   type: effort_controllers/JointVelocityController
-  joint: j_wrist_rotation
+  joint: j_wrist_rot
   pid:
     d: 0.005
     i: 0.001
@@ -111,9 +111,9 @@ j_wrist_ulra_eff_velocity_controller:
 # JointPosition Controllers ---------------------------------------
 #---------------------------------------------------------------------
 
-j_wrist_rotation_position_controller:
+j_wrist_rot_position_controller:
   type: position_controllers/JointPositionController
-  joint: j_wrist_rotation
+  joint: j_wrist_rot
 
 j_wrist_exfle_position_controller:
   type: position_controllers/JointPositionController
@@ -127,9 +127,9 @@ j_wrist_ulra_position_controller:
 # JointVelocity Controllers ---------------------------------------
 #---------------------------------------------------------------------
 
-j_wrist_rotation_velocity_controller:
+j_wrist_rot_velocity_controller:
   type: velocity_controllers/JointVelocityController
-  joint: j_wrist_rotation
+  joint: j_wrist_rot
 
 j_wrist_exfle_velocity_controller:
   type: velocity_controllers/JointVelocityController

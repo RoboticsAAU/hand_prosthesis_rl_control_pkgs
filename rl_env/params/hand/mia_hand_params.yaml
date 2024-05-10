@@ -7,7 +7,7 @@ topics:
     thumb_controller_topic: /j_thumb_fle_eff_controller/command
     index_controller_topic: /j_index_fle_eff_controller/command
     mrl_controller_topic: /j_mrl_fle_eff_controller/command
-    wrist_rot_controller_topic: /j_wrist_rotation_eff_controller/command
+    wrist_rot_controller_topic: /j_wrist_rot_eff_controller/command
     wrist_exfle_controller_topic: /j_wrist_exfle_eff_controller/command
     wrist_ulra_controller_topic: /j_wrist_ulra_eff_controller/command
 
