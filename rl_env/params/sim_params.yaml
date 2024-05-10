@@ -6,16 +6,16 @@ move_hand:
   path_planner: "bezier" # "nav_function" or "bezier"
   num_points: 500 # Number of points in trajectory
   traj_buffer_size: 10 # Number of points to extracts for each rl step
-  points_at_obj: 80 # Points to be at the object once reached before terminating episode (in seconds)
+  points_at_obj: 100 # Points to be at the object once reached before terminating episode (in seconds)
 
   # Starting position of the hand constraints. The hand will start in the interior of the sphere defined by the following parameters
   outer_radius: 0.3
 
 objects:
   # The selected object dataset folder from the assets package
-  object_dataset: "shapenet_sdf"
+  object_dataset: "basicnet_sdf"
   # Mode in which objects are selected each episode
   selection_mode: "sequential" # "random" or "sequential"
   # How many objects to train on
-  num_objects: 1
-  inter_object_dist: 2.0
+  num_objects: 2
+  inter_object_dist: 4.0
