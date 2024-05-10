@@ -20,8 +20,8 @@
 ros::Publisher pub;
 
 std::vector<contact_republisher::contact_msg> contacts_buffer;
-size_t buffer_count = 0;
-size_t buffer_size = 10;
+unsigned int buffer_count = 0;
+unsigned int buffer_size = 100;
 
 // Forces callback function
 void forcesCb(ConstContactsPtr &_msg)
@@ -90,13 +90,13 @@ void forcesCb(ConstContactsPtr &_msg)
     {
         buffer_count = 0;
         // Processing the contacts
-        using count = size_t;
-        using index = size_t;
+        using count = unsigned int;
+        using index = unsigned int;
         std::map<std::string, std::pair<index, count>> filtered_contact;
         float max_force = 0.0f;
         ROS_INFO_STREAM("Buffer size: " << contacts_buffer.size());
         // Loop through each contact
-        int i = 0;
+        unsigned int i = 0;
         for (contact_republisher::contact_msg contact : contacts_buffer)
         {
             std::string unique_key = contact.collision_1;
@@ -133,7 +133,7 @@ void forcesCb(ConstContactsPtr &_msg)
         ROS_INFO_STREAM("Filtered contacts: " << filtered_contact.size());
         for (const auto &[key, value] : filtered_contact)
         {
-            if (static_cast<float>(value.second) > static_cast<float>(buffer_size) / 2.0f)
+            if (value.second > static_cast<unsigned int>(std::round(static_cast<float>(buffer_size) * 0.01f)))
                 contacts_list.push_back(contacts_buffer[value.first]);
         }
         contacts_message.contacts = contacts_list;
