@@ -138,7 +138,7 @@ class PointCloudHandler():
             # Update pointcloud
             self._pc[index] = self._pc[index].select_by_index(in_bound_idx)
         else:
-            rospy.logwarn_throttle(2, "Pointcloud is empty after thresholding. Appending a point with zeros")
+            rospy.logdebug_throttle(2, "Pointcloud is empty after thresholding. Appending a point with zeros")
             self._pc[index].points = o3d.utility.Vector3dVector(np.zeros((1, 3)))
             
     

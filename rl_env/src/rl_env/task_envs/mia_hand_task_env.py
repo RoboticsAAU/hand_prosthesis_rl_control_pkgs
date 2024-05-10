@@ -116,19 +116,18 @@ class MiaHandWorldEnv(gym.Env):
         # Print the spaces
         rospy.logdebug("ACTION SPACES TYPE===>"+str(self.action_space))
         rospy.logdebug("OBSERVATION SPACES TYPE===>"+str(self.observation_space))
-        
+              
         # TODO: Define these in setup
         self._end_episode_points = 0.0
         self._cumulated_steps = 0
         self._episode_count = 0
-        self._finger_object_dist = np.zeros(3)
+        self._num_obj_pts = 0
     
     
     def step(self, action):
         rospy.sleep(0.01)
         
         done = self._rl_interface._hand_controller.buffer_empty
-        
         self._rl_interface.step(action)
         self.update()
         obs = self._get_obs()
@@ -157,8 +156,6 @@ class MiaHandWorldEnv(gym.Env):
         super().reset(seed=seed)
         self._episode_count += 1
         
-        rospy.sleep(0.01)
-        
         rospy.logdebug("Resetting MiaHandWorldEnv")
         self._init_env_variables()
         if self._joints is not None and np.any(np.logical_or(self._joints < self._obs_pos_lb - 0.1, self._obs_pos_ub + 0.1 < self._joints)):
@@ -174,6 +171,7 @@ class MiaHandWorldEnv(gym.Env):
         self.update()
         obs = self._get_obs()
         info = {}
+        
         rospy.logdebug("END Resetting MiaHandWorldEnv")
         
         return obs, info
@@ -234,7 +232,7 @@ class MiaHandWorldEnv(gym.Env):
         """
 
         observation = {"state" : np.concatenate((self._joints, self._joints_vel))}
-        
+
         rospy.logdebug("Observations: "+str(observation))
         return observation
 
@@ -248,14 +246,14 @@ class MiaHandWorldEnv(gym.Env):
         reward = 0
         
         # Obtain the combined joint velocity
-        combined_normalised_joint_vel = np.sum(np.abs(observation["state"][self._dof:]) / self._obs_vel_ub)
+        # combined_normalised_joint_vel = np.sum(np.abs(observation["state"][self.observed_dof:]) / self._obs_vel_ub)
+        
+        #TODO: Penalise hitting ground plane?
         
         # Check if at least three fingers are in contact with object
         hand_contacts = self.check_contact(self._contacts)
+        # Note that hand_contact also contains palm contact, so not just fingers
         fingers_in_contact = list(hand_contacts.values()).count(True)
-        
-        
-        #TODO: Penalise hitting ground plane?
         
         # Soft reward for contact (requires at least one finger in contact)
         reward += 0.1 * max(0, fingers_in_contact*(1 - (self._episode_count/(self._rl_config["general"]["num_episodes"]/2))))
@@ -355,6 +353,9 @@ class MiaHandWorldEnv(gym.Env):
                     rgb_lb = np.array([10, 80, 30])/255
                     rgb_ub = np.array([40, 255, 90])/255
                     self._pc_cam_handler.filter_by_color(rgb_lb, rgb_ub)
+                    
+                    # self._num_obj_pts = min(self._pc_cam_handler.points[0].shape[0] - 1, modality_config['num_points'])
+                    # rospy.logwarn_throttle(1,self._num_obj_pts)
                     self._pc_cam_handler.pc[0].paint_uniform_color(np.array([0.4745, 0.8353, 0.9922]))
                     self._pc_cam_handler.update_cardinality(modality_config["num_points"])
 

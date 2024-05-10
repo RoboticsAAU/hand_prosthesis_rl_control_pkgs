@@ -67,6 +67,7 @@ class HandSetup(ABC):
         rospy.loginfo("START ALL SENSORS READY")
         
         for subscriber_info in self._get_subscribers_info():
+            rospy.logdebug("Waiting for subscriber with topic " + subscriber_info['topic'] + " to be ready")
             subscriber_data = None
             while subscriber_data is None and not rospy.is_shutdown():
                 try:
@@ -82,8 +83,9 @@ class HandSetup(ABC):
         
         rate = rospy.Rate(10)  # 10hz
         for publisher in self._get_publishers():
+            rospy.logdebug("Waiting for publisher with topic " + publisher.name + " to be ready")
             while publisher.get_num_connections() == 0 and not rospy.is_shutdown():
-                rospy.logwarn_throttle(2, f"No susbribers to {publisher} yet so we wait and try again")
+                rospy.logwarn_throttle(2, f"No subscribers to {publisher} yet so we wait and try again")
                 try:
                     rate.sleep()
                 except rospy.ROSInterruptException:
