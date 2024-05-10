@@ -26,7 +26,7 @@ class SimulationInterface(WorldInterface):
 
         # Model state publisher and subscriber
         self._pub_state = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=1)
-        self._sub_state = rospy.Subscriber('/gazebo/model_states', ModelStates, self._state_callback, buff_size=1000)
+        self._sub_state = rospy.Subscriber('/gazebo/model_states', ModelStates, self._state_callback, queue_size=1)
 
         # Storing the urdf of the hand
         self._hand_urdf = rospy.get_param("~/robot_description")
