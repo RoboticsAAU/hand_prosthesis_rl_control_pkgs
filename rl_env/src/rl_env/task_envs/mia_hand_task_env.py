@@ -100,9 +100,6 @@ class MiaHandWorldEnv(gym.Env):
         # state bounds
         self._state_lb = np.concatenate((self._obs_pos_lb, self._obs_vel_lb))
         self._state_ub = np.concatenate((self._obs_pos_ub, self._obs_vel_ub))
-
-        # Save number of joints
-        self._dof = len(self._rl_interface._world_interface.hand._joint_velocity_limits)
         
         # Timestamp used to wait at end pose
         self._prev_pose_ts = time()
@@ -171,6 +168,8 @@ class MiaHandWorldEnv(gym.Env):
         self._rl_interface.update_context()
         # Set finger position as average of joint limits
         average_pos = [sum(limits)/2.0 for limits in zip(self._obs_pos_lb, self._obs_pos_ub)]
+        # Before finger position can be set, effort must be set to zero
+        self._rl_interface._world_interface.hand.set_action(np.zeros(self.actuated_dof))
         self._rl_interface._world_interface.hand.set_finger_pos(average_pos)
         self.update()
         obs = self._get_obs()
@@ -275,6 +274,16 @@ class MiaHandWorldEnv(gym.Env):
         
         return reward
 
+    
+    @property
+    def observed_dof(self):
+        return len(self._obs_pos_ub)
+    
+    
+    @property
+    def actuated_dof(self):
+        return len(self._act_vel_ub) 
+    
 
     @cached_property
     def action_space(self):
