@@ -264,9 +264,12 @@ class MiaHandWorldEnv(gym.Env):
         if hand_contacts["thumb_fle"] and fingers_in_contact >= 2:
             # Reward for contact
             reward += 0.5 * fingers_in_contact
-
+        
         # Reward for effort expenditure
-        reward -= 0.05 * combined_normalised_joint_vel * min(1, max(0, 0.01*(self._episode_count - self._rl_config["general"]["num_episodes"]/2)))
+        # reward -= 0.05 * combined_normalised_joint_vel * min(1, max(0, 0.01*(self._episode_count - self._rl_config["general"]["num_episodes"]/2)))
+        
+        # Reward for green points in observation
+        # reward += 0.05 * max(0, (self._num_obj_pts / self._config_cameras['camera']['point_cloud']['num_points']) *(1 - (self._episode_count/(self._rl_config["general"]["num_episodes"]/2))))
         
         rospy.logdebug("reward=" + str(reward))
         self.cumulated_reward += reward
