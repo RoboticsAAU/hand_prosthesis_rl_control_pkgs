@@ -91,9 +91,11 @@ class MiaHandWorldEnv(gym.Env):
         
         # Bounds for joint velocities in action space.
         # Notice that the thumb input control is 1-dimensional that maps to 2DoF (thumb_fle and thumb_opp), and we assume range for thumb_fle corresponds to control range
-        action_space_joints = ["j_index_fle", "j_mrl_fle", "j_thumb_fle", "j_wrist_rotation", "j_wrist_exfle", "j_wrist_ulra"]
-        self._act_vel_lb = np.array([limit[0] for name, limit in self._rl_interface._world_interface.hand._joint_velocity_limits.items() if name in action_space_joints])
-        self._act_vel_ub = np.array([limit[1] for name, limit in self._rl_interface._world_interface.hand._joint_velocity_limits.items() if name in action_space_joints])
+        action_space_joints = ["j_index_fle", "j_mrl_fle", "j_thumb_fle", "j_wrist_rot", "j_wrist_exfle", "j_wrist_ulra"]
+        self._act_vel_lb = np.array([limit[0] for name, limit in self._rl_interface._world_interface.hand._joint_velocity_limits.items() 
+                                     if name in action_space_joints])
+        self._act_vel_ub = np.array([limit[1] for name, limit in self._rl_interface._world_interface.hand._joint_velocity_limits.items() 
+                                     if name in action_space_joints])
         
         # state bounds
         self._state_lb = np.concatenate((self._obs_pos_lb, self._obs_vel_lb))

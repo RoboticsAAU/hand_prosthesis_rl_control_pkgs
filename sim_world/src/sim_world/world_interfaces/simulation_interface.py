@@ -35,7 +35,7 @@ class SimulationInterface(WorldInterface):
         self._gazebo_connection = GazeboConnection(False, "NO_RESET_SIM")
         
         # Defining the list of controllers to connect to
-        self._controller_list = [topic.split("/")[1] for topic in self.hand._topic_config["publications"].values()]
+        self._controller_list = [publisher.name.split("/")[1] for publisher in self.hand._get_publishers()]
         self._controller_list.append("joint_state_controller") # Since this is not specified in the params file
         rospy.loginfo("Controllers list: " + str(self._controller_list))
         self._controllers_connection = ControllersConnection(namespace=self.hand.name, controllers_list=self._controller_list)
