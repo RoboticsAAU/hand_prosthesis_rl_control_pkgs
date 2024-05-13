@@ -256,7 +256,7 @@ class MiaHandWorldEnv(gym.Env):
         fingers_in_contact = list(hand_contacts.values()).count(True)
         
         # Soft reward for contact (requires at least one finger in contact)
-        reward += 0.1 * max(0, fingers_in_contact*(1 - (self._episode_count/(self._rl_config["general"]["num_episodes"]/2))))
+        reward += 0.1 * max(0, (int(hand_contacts["thumb_fle"])*2 + fingers_in_contact)*(1 - (self._episode_count/(self._rl_config["general"]["num_episodes"]/2))))
         
         # Strict reward for contact (requires thumb and at least one other finger)
         if hand_contacts["thumb_fle"] and fingers_in_contact >= 2:
