@@ -5,4 +5,7 @@ tf2_ros
 scipy
 urdfpy
 tensorboard
+tensorflow
 shimmy
+numpy-stl
+torch
