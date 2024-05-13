@@ -159,7 +159,7 @@ include_directories(
 #############
 
 catkin_install_python(PROGRAMS
-                      scripts/test.py
+                      scripts/contact_plot.py
                       scripts/main.py
                       DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
