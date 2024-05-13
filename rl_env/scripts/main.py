@@ -30,30 +30,6 @@ with open(package_path.joinpath("params/hand/mia_hand_params.yaml"), 'r') as fil
 with open(Path(rospack.get_path("sim_world")).joinpath("config/joint_limits.yaml"), 'r') as file:
     joint_limits = yaml.safe_load(file)
 
-
-# Continue learning with this model: If no model should be loaded, set model_to_load to None
-model_to_load = None
-log_to_load = None
-
-checkpoint_dir = package_path.joinpath("logging/checkpoints")
-tensorboard_dir = package_path.joinpath("logging/tb_events")
-
-# Current date as a string in the format "ddmmyyyy"
-env_name= "mia_hand_rl_PPO"
-datetime_string = datetime.now().strftime("%Y%m%d_%H%M%S")
-model_identifier = f"{env_name}_{datetime_string}"
-
-steps_per_episode = sim_config["move_hand"]["num_points"] / sim_config["move_hand"]["traj_buffer_size"]
-
-# Save a checkpoint every 1000 steps
-checkpoint_callback = CheckpointCallback(
-    save_freq = 10*steps_per_episode,
-    name_prefix = model_identifier,
-    save_path = checkpoint_dir,
-    save_replay_buffer = False,
-    save_vecnormalize = False,
-)
-
 def get_3d_policy_kwargs(extractor_name) -> dict:
     feature_extractor_class = PointNetImaginationExtractorGP
     feature_extractor_kwargs = {"pc_key": "camera-point_cloud",
@@ -69,6 +45,34 @@ def get_3d_policy_kwargs(extractor_name) -> dict:
     }
     return policy_kwargs
 
+train = True
+
+# Continue learning with this model: If no model should be loaded, set model_to_load to None
+# model_to_load = None
+# log_to_load = None
+model_to_load = "mia_hand_rl_PPO_20240513_170245_6500_steps.zip"
+log_to_load = "mia_hand_rl_PPO_20240513_170245_0/events.out.tfevents.1715619799.rog-laptop.41667.0"
+
+checkpoint_dir = package_path.joinpath("logging/checkpoints")
+tensorboard_dir = package_path.joinpath("logging/tb_events")
+
+# Current date as a string in the format "ddmmyyyy"
+env_name= "mia_hand_rl_PPO"
+datetime_string = datetime.now().strftime("%Y%m%d_%H%M%S")
+model_identifier = f"{env_name}_{datetime_string}"
+
+steps_per_episode = sim_config["move_hand"]["num_points"] / sim_config["move_hand"]["traj_buffer_size"]
+initial_episode = 6500//steps_per_episode
+
+# Save a checkpoint every 1000 steps
+checkpoint_callback = CheckpointCallback(
+    save_freq = 10*steps_per_episode,
+    name_prefix = model_identifier,
+    save_path = checkpoint_dir,
+    save_replay_buffer = False,
+    save_vecnormalize = False,
+)
+
 
 def main():
     
@@ -82,18 +86,29 @@ def main():
     
     # Instantiate RL env
     rl_env = MiaHandWorldEnv(rl_interface, rl_config)
+    rl_env.set_episode_count(initial_episode)
 
     # setting device on GPU if available, else CPU
     device = th.device('cuda' if th.cuda.is_available() else 'cpu')
     
-        
+    timesteps = rl_config["general"]["num_episodes"]*steps_per_episode
+    
+    reset_num_timesteps = None    
+    
     # Instantiate the PPO model
     if model_to_load is not None:
         model = PPO.load(
             path = checkpoint_dir.joinpath(model_to_load),
-            tensorboard_log = tensorboard_dir.joinpath(log_to_load)
+            tensorboard_log = tensorboard_dir.joinpath(log_to_load),
+            verbose = 1, 
+            device = device,
+            policy_kwargs = get_3d_policy_kwargs(extractor_name="smallpn"), # Can either be "smallpn", "mediumpn" or "largepn". See sb3.common.torch_layers.py 
+            **rl_config["hyper_params"]
             )
         model.set_env(env=rl_env)
+        
+        reset_num_timesteps = False
+        
     else:
         model = PPO(
             policy = "MultiInputPolicy",
@@ -104,15 +119,26 @@ def main():
             policy_kwargs = get_3d_policy_kwargs(extractor_name="smallpn"), # Can either be "smallpn", "mediumpn" or "largepn". See sb3.common.torch_layers.py 
             **rl_config["hyper_params"]
         )
+
+        reset_num_timesteps = True
     
-    # Train the model
-    timesteps = rl_config["general"]["num_episodes"]*steps_per_episode
-    model.learn(
-        total_timesteps = timesteps,
-        tb_log_name = tensorboard_dir.joinpath(model_identifier),
-        reset_num_timesteps = False,
-        callback = checkpoint_callback
-    )
+    if train is True:
+        # Train the model
+        model.learn(
+            total_timesteps = timesteps,
+            tb_log_name = tensorboard_dir.joinpath(model_identifier),
+            reset_num_timesteps = reset_num_timesteps,
+            callback = checkpoint_callback
+        )
+        
+    else:
+        for episode in range(rl_config["general"]["num_episodes"]):
+            obs, info = rl_env.reset()
+            done = False
+            while not done:
+                action, _states = model.predict(obs, deterministic=True)
+                obs, reward, done, _, info = rl_env.step(action)
+                rospy.loginfo(f"Episode: {episode}, Reward: {reward}")
     
 
 if __name__ == "__main__":

@@ -275,6 +275,10 @@ class MiaHandWorldEnv(gym.Env):
         
         return reward
 
+
+    def set_episode_count(self, episode_count : int):
+        self._episode_count = episode_count
+        self._cumulated_steps = episode_count*self._rl_interface._hand_controller._config["num_points"]/self._rl_interface._hand_controller._config["traj_buffer_size"]
     
     @property
     def observed_dof(self):
