@@ -28,7 +28,7 @@ class MoveHandNode():
                 if not self._pose_buffer:
                     self._pose_buffer.append(pose)
                 
-            except Exception as e:
+            except (IndexError, Exception) as e:
                 rospy.logwarn("Failed to set position because: ", e)
             
             self._r.sleep()

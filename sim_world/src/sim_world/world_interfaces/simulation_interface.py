@@ -109,6 +109,7 @@ class SimulationInterface(WorldInterface):
             
     def respawn_hand(self, pose : Union[Pose, np.ndarray]):
         self.delete_urdf_model(self.hand.name)
+        rospy.sleep(0.1)
         self.spawn_urdf_model(
             model_name = self.hand.name,
             model_urdf = self._hand_urdf,
@@ -145,10 +146,11 @@ class SimulationInterface(WorldInterface):
     def delete_urdf_model(self, model_name: str):
         """ Delete the object from the gazebo world. """
         try:
-            self._delete_model(model_name)
+            res = self._delete_model(model_name)
             rospy.loginfo(f"Model {model_name} deleted successfully.")
+            rospy.loginfo(f"MODEL DELETE RESPONSE: {res}")
             rospy.sleep(0.15)
-        except rospy.ServiceException as e:
+        except Exception as e:
             rospy.logerr("Failed to delete object because: ", e)
     
     def delete_object(self, model_name: str):

@@ -118,7 +118,6 @@ class MiaHandWorldEnv(gym.Env):
         rospy.logdebug("OBSERVATION SPACES TYPE===>"+str(self.observation_space))
               
         # TODO: Define these in setup
-        self._end_episode_points = 0.0
         self._cumulated_steps = 0
         self._episode_count = 0
         self._num_obj_pts = 0
@@ -180,12 +179,12 @@ class MiaHandWorldEnv(gym.Env):
     def _reset_hand(self):
         """Resets the hand completely. This is used when the hand becomes unstable due to exceeded joint bounds.
         """
-
+        rospy.sleep(0.2)
         rospy.loginfo("RESET HAND START")
-        self._rl_interface._world_interface._controllers_connection.reset_controllers()
+        reset_result = self._rl_interface._world_interface._controllers_connection.reset_controllers()
         self._rl_interface._world_interface.check_system_ready()
         self._rl_interface._world_interface.respawn_hand(self._rl_interface.default_pose)
-        self._rl_interface._world_interface._controllers_connection.reset_controllers()
+        reset_result = self._rl_interface._world_interface._controllers_connection.reset_controllers()
         self._rl_interface._world_interface.check_system_ready()
         rospy.sleep(0.1)
         rospy.loginfo("RESET HAND END\n")
