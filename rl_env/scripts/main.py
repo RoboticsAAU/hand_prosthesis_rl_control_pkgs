@@ -3,6 +3,8 @@ import rospkg
 import numpy as np
 import yaml
 import torch as th
+import glob
+import os
 from datetime import datetime
 from pathlib import Path
 from stable_baselines3.ppo import PPO
@@ -50,19 +52,36 @@ train = True
 # Continue learning with this model: If no model should be loaded, set model_to_load to None
 # model_to_load = None
 # log_to_load = None
-model_to_load = "mia_hand_rl_PPO_20240513_170245_6500_steps.zip"
-log_to_load = "mia_hand_rl_PPO_20240513_170245_0/events.out.tfevents.1715619799.rog-laptop.41667.0"
+# model_to_load = "mia_hand_rl_PPO_20240513_170245_6500_steps.zip"
+# log_to_load = "mia_hand_rl_PPO_20240513_170245_0/events.out.tfevents.1715619799.rog-laptop.41667.0"
 
 checkpoint_dir = package_path.joinpath("logging/checkpoints")
 tensorboard_dir = package_path.joinpath("logging/tb_events")
 
-# Current date as a string in the format "ddmmyyyy"
 env_name= "mia_hand_rl_PPO"
-datetime_string = datetime.now().strftime("%Y%m%d_%H%M%S")
-model_identifier = f"{env_name}_{datetime_string}"
+
+# Check if folder is empty
+checkpoints = glob.glob(str(checkpoint_dir.joinpath("*.zip")))
+checkpoints.sort(key=lambda x: os.path.getmtime(x))
+
+if len(checkpoints) == 0:
+    model_to_load = None
+    log_to_load = None
+    initial_steps = 0
+    # Current date as a string in the format "ddmmyyyy"
+    datetime_string = datetime.now().strftime("%Y%m%d_%H%M%S")
+    model_identifier = f"{env_name}_{datetime_string}"
+    
+else:
+    model_to_load = Path(checkpoints[-1]).name
+    model_identifier = '_'.join(model_to_load.split("_")[:-2])
+    initial_steps = int(model_to_load.split("_")[-2])
+    log_to_load = glob.glob(str(tensorboard_dir.joinpath(f"{model_identifier}*/*")), recursive=True)[0]
+    log_to_load = '/'.join(log_to_load.split("/")[-2:])
+
 
 steps_per_episode = sim_config["move_hand"]["num_points"] / sim_config["move_hand"]["traj_buffer_size"]
-initial_episode = 6500//steps_per_episode
+initial_episode = initial_steps//steps_per_episode
 
 # Save a checkpoint every 1000 steps
 checkpoint_callback = CheckpointCallback(
@@ -142,10 +161,11 @@ def main():
     
 
 if __name__ == "__main__":
-    rospy.init_node("rl_env", log_level=rospy.INFO)
+    # rospy.init_node("rl_env", log_level=rospy.INFO)
     np.random.seed(sim_config["seed"])
     
     try:
-        main()
+        # main()
+        pass
     except rospy.ROSInterruptException:
         pass
