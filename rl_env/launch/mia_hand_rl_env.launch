@@ -12,6 +12,7 @@
         <arg name="wrist_rot"                   value="true" />
         <arg name="wrist_exfle"                 value="true" />
         <arg name="wrist_ulra"                  value="false" />
+        <arg name="paused"                      value="false" />
     </include>
     
     <!-- Launch gazebo contact republisher -->
