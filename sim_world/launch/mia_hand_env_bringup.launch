@@ -3,7 +3,7 @@
      <!-- Arguments you can pass this launch file, for example paused:=true -->
      <arg name="Rviz_on" default="true" doc="If true, start Rviz and the joint state gui" />
      <arg name="use_joint_gui" default="false" doc="If true, start Rviz and the joint state gui" />
-     <arg name="paused" default="true"/>
+     <arg name="paused" default="false"/>
      <arg name="use_sim_time" default="true"/>
      <arg name="Gazebo_gui" default="true"/>
      <arg name="headless" default="false"/>

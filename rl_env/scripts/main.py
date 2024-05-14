@@ -109,6 +109,7 @@ def main():
     # Instantiate RL env
     rl_env = MiaHandWorldEnv(rl_interface, rl_config)
     rl_env.set_episode_count(initial_episode)
+    # while True:
 
     # setting device on GPU if available, else CPU
     device = th.device('cuda' if th.cuda.is_available() else 'cpu')
