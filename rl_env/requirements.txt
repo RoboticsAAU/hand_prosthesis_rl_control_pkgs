@@ -8,4 +8,5 @@ tensorboard
 tensorflow
 shimmy
 numpy-stl
+colorama
 torch

@@ -5,6 +5,7 @@ import yaml
 import torch as th
 import glob
 import os
+from colorama import Fore, Style
 from datetime import datetime
 from pathlib import Path
 from stable_baselines3.ppo import PPO
@@ -65,6 +66,8 @@ checkpoints = glob.glob(str(checkpoint_dir.joinpath("*.zip")))
 checkpoints.sort(key=lambda x: os.path.getmtime(x))
 
 if len(checkpoints) == 0:
+    print(Fore.CYAN + "No model found. A new will be created")
+    print(Style.RESET_ALL)
     model_to_load = None
     log_to_load = None
     initial_steps = 0
@@ -74,10 +77,10 @@ if len(checkpoints) == 0:
     
 else:
     model_to_load = Path(checkpoints[-1]).name
+    print(Fore.CYAN + "Loading following model: " + str(model_to_load))
+    print(Style.RESET_ALL)
     model_identifier = '_'.join(model_to_load.split("_")[:-2])
     initial_steps = int(model_to_load.split("_")[-2])
-    log_to_load = glob.glob(str(tensorboard_dir.joinpath(f"{model_identifier}*/*")), recursive=True)[0]
-    log_to_load = '/'.join(log_to_load.split("/")[-2:])
 
 
 steps_per_episode = sim_config["move_hand"]["num_points"] / sim_config["move_hand"]["traj_buffer_size"]
@@ -118,7 +121,7 @@ def main():
     if model_to_load is not None:
         model = PPO.load(
             path = checkpoint_dir.joinpath(model_to_load),
-            tensorboard_log = tensorboard_dir.joinpath(log_to_load),
+            tensorboard_log = tensorboard_dir,
             verbose = 1, 
             device = device,
             policy_kwargs = get_3d_policy_kwargs(extractor_name="smallpn"), # Can either be "smallpn", "mediumpn" or "largepn". See sb3.common.torch_layers.py 
@@ -161,11 +164,10 @@ def main():
     
 
 if __name__ == "__main__":
-    # rospy.init_node("rl_env", log_level=rospy.INFO)
+    rospy.init_node("rl_env", log_level=rospy.INFO)
     np.random.seed(sim_config["seed"])
     
     try:
-        # main()
-        pass
+        main()
     except rospy.ROSInterruptException:
         pass
