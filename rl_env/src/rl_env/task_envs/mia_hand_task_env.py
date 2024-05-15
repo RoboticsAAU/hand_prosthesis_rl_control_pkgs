@@ -79,6 +79,12 @@ class MiaHandWorldEnv(gym.Env):
                                       [-1,0,0]], dtype=np.float64)
             }
         }
+        
+        # Hand segment weights used in reward function with order [index, middle, ring, little, thumb, palm] 
+        self._hs_palmar_weights = np.array([2.0, 1.0, 1.0, 1.0, 3.0, 1.0], dtype=np.float64)
+        self._hs_dorsal_weights = np.ones(6, dtype=np.float64)
+        
+        
         self._imagined_groups = {}
         
         # Joint position bounds in observation space
@@ -145,7 +151,7 @@ class MiaHandWorldEnv(gym.Env):
 
         # TODO: Remove following, as it is only for debugging
         contact_check = self.check_contact(self._contacts)
-        if any(contact_check.values()):        
+        if any([val is not None for val in contact_check.values()]):        
             rospy.logwarn("Is palmar: " + str(contact_check))     
         
         return obs, reward, done, False, info
@@ -252,15 +258,25 @@ class MiaHandWorldEnv(gym.Env):
         # Check if at least three fingers are in contact with object
         hand_contacts = self.check_contact(self._contacts)
         # Note that hand_contact also contains palm contact, so not just fingers
-        fingers_in_contact = list(hand_contacts.values()).count(True)
+        hand_contact_values = list(hand_contacts.values()) 
+        palmar_contact_values = np.array(hand_contact_values) == True
+        dorsal_contact_values = np.array(hand_contact_values) == False
         
         # Soft reward for contact (requires at least one finger in contact)
-        reward += 0.1 * max(0, (int(hand_contacts["thumb_fle"])*2 + fingers_in_contact)*(1 - (self._episode_count/(self._rl_config["general"]["num_episodes"]/2))))
+        # reward += 0.1 * max(0, (int(hand_contacts["thumb_fle"])*2 + fingers_in_contact)*(1 - (self._episode_count/(self._rl_config["general"]["num_episodes"]/2))))
+        if self._episode_count < self._rl_config["general"]["soft_const_dur"]:
+            reward += 0.1 * np.dot(self._hs_palmar_weights, palmar_contact_values)  # weight thumb 3 times more than other fingers (3 since it also is included in fingers_in_contact)
+        else:
+            reward += 0.1 * max(0, np.dot(self._hs_palmar_weights, palmar_contact_values) * (1 - ((float(self._episode_count-self._rl_config["general"]["soft_const_dur"]))/self._rl_config["general"]["soft_descend_dur"])))
         
-        # Strict reward for contact (requires thumb and at least one other finger)
-        if hand_contacts["thumb_fle"] and fingers_in_contact >= 2:
+        # Strict reward for palmar contact (requires thumb and at least one other finger)
+        if palmar_contact_values[4] and np.sum(palmar_contact_values) >= 2:
             # Reward for contact
-            reward += 0.5 * fingers_in_contact
+            rospy.logwarn("WE GRASPIN OUT HERE!! :D")
+            reward += 0.5 * np.sum(palmar_contact_values)
+        
+        # Strict reward for dorsal contact
+        reward -= 0.1 * np.dot(self._hs_dorsal_weights, dorsal_contact_values)
         
         # Reward for effort expenditure
         # reward -= 0.05 * combined_normalised_joint_vel * min(1, max(0, 0.01*(self._episode_count - self._rl_config["general"]["num_episodes"]/2)))
@@ -467,13 +483,13 @@ class MiaHandWorldEnv(gym.Env):
     
     def check_contact(self, contacts : contacts_msg) -> Dict[str, bool]:
         """ 
-        Checks whether there is a valid contact between the hand and the object.
+        Checks the contact type of the contact.
         param contacts: The contacts message.
-        return: Dictionary with the contact status for each finger.
+        return: Dictionary with the contact status for each finger. True represents palmar contact, false represents dorsal contact, and none is neither one. 
         """
         
         # Container of contact checks
-        hand_contact = {link_name : False for link_name in self.force_config.keys()}
+        hand_contact = {link_name : None for link_name in self.force_config.keys()}
         
         for contact in contacts.contacts:
             
@@ -504,7 +520,12 @@ class MiaHandWorldEnv(gym.Env):
             
             # Check if the force vector is pointing out of the hand and within the bounds (indicating palmar contact)
             lower_bound, upper_bound = self.force_config[link_name]["range"]
-            hand_contact[link_name] = (lower_bound < y_rot) and (y_rot < upper_bound) 
+            # True if palmar contact
+            if (lower_bound < y_rot) and (y_rot < upper_bound):
+                hand_contact[link_name] = True
+            # True if dorsal contact
+            elif (y_rot < -np.pi - lower_bound) or (y_rot > np.pi - upper_bound):
+                hand_contact[link_name] = False
             
         return hand_contact
         
