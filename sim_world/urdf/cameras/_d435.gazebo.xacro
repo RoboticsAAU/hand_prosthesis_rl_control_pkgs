@@ -36,8 +36,8 @@ This is the Gazebo URDF model for an rgbd camera adapted from the Intel RealSens
             <format>L_INT8</format>
           </image>
           <clip>
-            <near>0.1</near>
-            <far>100</far>
+            <near>0.05</near>
+            <far>1.0</far>
           </clip>
           <noise>
             <type>gaussian</type>
@@ -58,8 +58,8 @@ This is the Gazebo URDF model for an rgbd camera adapted from the Intel RealSens
             <format>L_INT8</format>
           </image>
           <clip>
-            <near>0.1</near>
-            <far>100</far>
+            <near>0.05</near>
+            <far>1.0</far>
           </clip>
           <noise>
             <type>gaussian</type>
@@ -79,8 +79,8 @@ This is the Gazebo URDF model for an rgbd camera adapted from the Intel RealSens
             <height>480</height>
           </image>
           <clip>
-            <near>0.1</near>
-            <far>100</far>
+            <near>0.05</near>
+            <far>1.0</far>
           </clip>
           <noise>
             <type>gaussian</type>
@@ -110,7 +110,7 @@ This is the Gazebo URDF model for an rgbd camera adapted from the Intel RealSens
         <infrared1OpticalframeName>${infrared1_optical_frame}</infrared1OpticalframeName>
         <infrared2OpticalframeName>${infrared2_optical_frame}</infrared2OpticalframeName>
         <rangeMinDepth>0.05</rangeMinDepth>
-        <rangeMaxDepth>10.0</rangeMaxDepth>
+        <rangeMaxDepth>1.0</rangeMaxDepth>
       </plugin>
     </gazebo>
 
@@ -128,7 +128,7 @@ This is the Gazebo URDF model for an rgbd camera adapted from the Intel RealSens
           </image>
           <clip>
             <near>0.05</near>
-            <far>100</far>
+            <far>1.0</far>
           </clip>
           <noise>
             <type>gaussian</type>
