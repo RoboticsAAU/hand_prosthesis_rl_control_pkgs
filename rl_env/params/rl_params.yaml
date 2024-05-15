@@ -38,8 +38,6 @@ visual_sensors:
         optical_frame: "camera_depth_optical_frame"
         ref_frame: "palm"
         num_points: 256
-        min_range: 0.5
-        max_range: 1.5
 
   config_imagined:
     ref_frame: "palm"
