@@ -69,7 +69,7 @@ class PointCloudHandler():
             vis.update_geometry(pc)
             vis.poll_events()
             vis.update_renderer()
-            vis.capture_screen_image(str(index) + "_" + save_image_name, do_render=True)
+            vis.capture_screen_image("/Development/" + str(index) + "_" + save_image_name, do_render=True)
         
         vis.run()
         vis.destroy_window()
