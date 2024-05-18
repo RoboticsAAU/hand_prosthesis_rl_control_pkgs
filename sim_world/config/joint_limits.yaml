@@ -3,7 +3,7 @@
 # Last modified: 28-Mar-2023
 joint_limits:
   j_index_fle:
-    min_position: -1.177
+    min_position: 0.0 # -1.177
     max_position: 1.188
   j_little_fle:
     min_position: -1.177
