@@ -2,8 +2,8 @@ import rospy
 import numpy as np 
 import tf2_ros
 from scipy.spatial.transform import Rotation
-from geometry_msgs.msg import TransformStamped
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import TransformStamped, PoseStamped, Pose
+from typing import Union
 
 class TFHandler():
     def __init__(self):        
@@ -47,26 +47,35 @@ class TFHandler():
         """
         transform = self.get_transform(child_frame_id, parent_frame_id)
         if transform is not None:
-            return self.convert_tf_to_matrix(transform)
+            return self.convert_transform_to_matrix(transform)
         else:
             return None
     
-    def convert_tf_to_matrix(self, transform : TransformStamped) -> np.ndarray:
+    def convert_transform_to_matrix(self, transform : Union[TransformStamped, Pose]) -> np.ndarray:
         """
         Convert a tf transform to a numpy 4x4 transformation matrix.
         :param transform: The tf transform
         :return: The 4x4 transformation matrix
         """
+        if isinstance(transform, Pose):
+            translation = transform.position
+            rotation = transform.orientation
+        elif isinstance(transform, TransformStamped):
+            translation = transform.transform.translation
+            rotation = transform.transform.rotation
+        else:
+            raise ValueError("The transform must be of type Pose or TransformStamped.")
+        
         # Convert the quaternion to a numpy rotation matrix
-        R = Rotation.from_quat([transform.transform.rotation.x,
-                                transform.transform.rotation.y,
-                                transform.transform.rotation.z,
-                                transform.transform.rotation.w]).as_matrix()
+        R = Rotation.from_quat([rotation.x,
+                                rotation.y,
+                                rotation.z,
+                                rotation.w]).as_matrix()
         
         # Save the translation as a numpy array
-        t = np.array([transform.transform.translation.x,
-                      transform.transform.translation.y,
-                      transform.transform.translation.z])
+        t = np.array([translation.x,
+                      translation.y,
+                      translation.z])
         
         # Create the 4x4 transformation matrix
         T = np.concatenate((R, t.reshape(-1,1)), axis=1)

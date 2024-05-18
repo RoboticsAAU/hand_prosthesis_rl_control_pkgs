@@ -262,7 +262,7 @@ class ImaginedPointCloudHandler(PointCloudHandler):
         :param index: The index of the point cloud to visualize
         """
         if index == 0 or index is None:
-            self.update_hand()
+            self.update_imagined()
         return super().visualize(index=index, save_image_name=save_image_name)
 
     def sample_from_meshes(self, mesh_dict : dict, total_sample_points : int = 1000):
@@ -311,7 +311,7 @@ class ImaginedPointCloudHandler(PointCloudHandler):
         # Save the initial transforms
         self._initial_transforms = self._transforms.copy()
     
-    def update_hand(self, num_points : Optional[int] = None):
+    def update_imagined(self, num_points : Optional[int] = None):
         """
         Update the base point cloud of the entire hand.
         """

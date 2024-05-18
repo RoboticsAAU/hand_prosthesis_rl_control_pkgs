@@ -35,7 +35,8 @@ class MiaHandWorldEnv(gym.Env):
         urdf_path = rospack.get_path("sim_world") + "/urdf/hands/mia_hand_default.urdf"
         self._urdf_handler = URDFHandler(urdf_path)
         self._pc_cam_handler = PointCloudHandler()
-        self._pc_imagine_handler = ImaginedPointCloudHandler()
+        self._pc_imagined_hand_handler = ImaginedPointCloudHandler()
+        self._pc_imagined_object_handler = ImaginedPointCloudHandler()
         self._tf_handler = TFHandler()
         self._rl_interface = rl_interface
         
@@ -45,7 +46,8 @@ class MiaHandWorldEnv(gym.Env):
         rospy.Subscriber("/visualise", Bool, vis_cb, queue_size=1)
         
         # Get the configurations for the cameras and the imagined point clouds
-        self._config_imagined = rl_config["visual_sensors"]["config_imagined"]
+        self._config_imagined_hand = rl_config["visual_sensors"]["config_imaginations"]["hand"]
+        self._config_imagined_object = rl_config["visual_sensors"]["config_imaginations"]["object"]
         self._config_cameras = rl_config["visual_sensors"]["config_cameras"]
         
         self._rl_config = rl_config
@@ -69,7 +71,7 @@ class MiaHandWorldEnv(gym.Env):
                 "rotation": np.eye(3)
             },
             "thumb_fle": {
-                "range": tuple(np.deg2rad([-70, 70])),
+                "range": tuple(np.deg2rad([-80, 80])),
                 "rotation": np.eye(3)
             },
             "palm": {
@@ -81,7 +83,7 @@ class MiaHandWorldEnv(gym.Env):
         }
         
         # Hand segment weights used in reward function with order [index, middle, ring, little, thumb, palm] 
-        self._hs_palmar_weights = np.array([2.0, 1.0, 1.0, 1.0, 3.0, 1.0], dtype=np.float64)
+        self._hs_palmar_weights = np.array([2.0, 1.0, 1.0, 1.0, 5.0, 1.0], dtype=np.float64)
         self._hs_dorsal_weights = np.ones(6, dtype=np.float64)
         
         
@@ -117,7 +119,8 @@ class MiaHandWorldEnv(gym.Env):
         self._object_pose = Pose()
         self._contacts = []
                 
-        self.setup_imagination(stl_ignores=["1.001.stl", "UR_flange.stl"])
+        self.setup_imagined_hand(stl_ignores=["1.001.stl", "UR_flange.stl"])
+        self.setup_imagined_object("category_2/obj_2")
         
         # Print the spaces
         rospy.logdebug("ACTION SPACES TYPE===>"+str(self.action_space))
@@ -143,9 +146,9 @@ class MiaHandWorldEnv(gym.Env):
         self._rl_interface._pub_episode_done.publish(done)
 
         if self.visualise:
-            self._pc_imagine_handler._pc.extend([self._pc_cam_handler.pc[0]])
-            self._pc_imagine_handler._transforms.extend([np.eye(4)])
-            self._pc_imagine_handler.visualize(index=0)
+            self._pc_imagined_hand_handler._pc.extend([self._pc_imagined_object_handler.pc[0]])
+            self._pc_imagined_hand_handler._transforms.extend([np.eye(4)])
+            self._pc_imagined_hand_handler.visualize(index=0)
             input("Press Enter to continue...")
             self.visualise = False
 
@@ -168,6 +171,7 @@ class MiaHandWorldEnv(gym.Env):
             rospy.logwarn("Resetting hand model")   
             self._reset_hand()
         self._rl_interface.update_context()
+        self.setup_imagined_object(self._rl_interface._object_handler.curr_obj)
         # Set finger position as average of joint limits
         average_pos = [sum(limits)/2.0 for limits in zip(self._obs_pos_lb, self._obs_pos_ub)]
         # Before finger position can be set, effort must be set to zero
@@ -273,7 +277,7 @@ class MiaHandWorldEnv(gym.Env):
         if palmar_contact_values[4] and np.sum(palmar_contact_values) >= 2:
             # Reward for contact
             rospy.logwarn("WE GRASPIN OUT HERE!! :D")
-            reward += 0.5 * np.sum(palmar_contact_values)
+            reward += 1.2 * np.sum(palmar_contact_values)
         
         # Strict reward for dorsal contact
         reward -= 0.1 * np.dot(self._hs_dorsal_weights, dorsal_contact_values)
@@ -317,30 +321,34 @@ class MiaHandWorldEnv(gym.Env):
         state_space = gym.spaces.Box(self._state_lb, self._state_ub, dtype = np.float32)
         obs_dict = {"state": state_space}
         
-        for cam_name, cam_config in self._config_cameras.items():
-            for modality_name in cam_config.keys():
-                key_name = f"{cam_name}-{modality_name}" 
-                
-                if modality_name == 'rgb':
-                    resolution = cam_config[modality_name]["resolution"]
-                    spec = gym.spaces.Box(low=0, high=1, shape=resolution + (3,))
-                
-                elif modality_name == 'depth':
-                    max_depth = cam_config[modality_name]["max_depth"]
-                    resolution = cam_config[modality_name]["resolution"]
-                    spec = gym.spaces.Box(low=0, high=max_depth, shape=resolution + (1,))
-                
-                elif modality_name == 'point_cloud':
-                    spec = gym.spaces.Box(low=-np.inf, high=np.inf, shape=((cam_config[modality_name]["num_points"],) + (3,)))
+        if self._config_cameras is not None:
+            for cam_name, cam_config in self._config_cameras.items():
+                for modality_name in cam_config.keys():
+                    key_name = f"{cam_name}-{modality_name}" 
                     
-                else:
-                    raise RuntimeError("Modality not supported")              
+                    if modality_name == 'rgb':
+                        resolution = cam_config[modality_name]["resolution"]
+                        spec = gym.spaces.Box(low=0, high=1, shape=resolution + (3,))
+                    
+                    elif modality_name == 'depth':
+                        max_depth = cam_config[modality_name]["max_depth"]
+                        resolution = cam_config[modality_name]["resolution"]
+                        spec = gym.spaces.Box(low=0, high=max_depth, shape=resolution + (1,))
+                    
+                    elif modality_name == 'point_cloud':
+                        spec = gym.spaces.Box(low=-np.inf, high=np.inf, shape=((cam_config[modality_name]["num_points"],) + (3,)))
+                        
+                    else:
+                        raise RuntimeError("Modality not supported")              
+                
+                obs_dict[key_name] = spec
             
-            obs_dict[key_name] = spec
-            
-        if self._config_imagined is not None:
-            obs_dict["imagined"] = gym.spaces.Box(low=-np.inf, high=np.inf, shape=((self._config_imagined["num_points"],) + (3,)))
-            
+        if self._config_imagined_hand is not None:
+            obs_dict["imagined_hand"] = gym.spaces.Box(low=-np.inf, high=np.inf, shape=((self._config_imagined_hand["num_points"],) + (3,)))
+        
+        if self._config_imagined_object is not None:
+            obs_dict["imagined_object"] = gym.spaces.Box(low=-np.inf, high=np.inf, shape=((self._config_imagined_object["num_points"],) + (3,)))
+        
         rospy.logwarn(f"OBSERVATION SPACE: {obs_dict}")
         return gym.spaces.Dict(obs_dict)
     
@@ -355,50 +363,77 @@ class MiaHandWorldEnv(gym.Env):
         # Initialize the observation dictionary
         obs_dict = {}
         # Get the observations from the cameras
-        for cam_name, cam_config in self._config_cameras.items():
-            for modality_name, modality_config in cam_config.items():
-                key_name = f"{cam_name}-{modality_name}"
-                
-                if modality_name == 'rgb':
-                    raise NotImplementedError()
-                
-                elif modality_name == 'depth':
-                    raise NotImplementedError()
-                
-                elif modality_name == 'point_cloud':
-                    # TODO: Decide whether to include table or not
-                    # Remove table and enforce cardinality
-                    self._pc_cam_handler.remove_plane()
-                    rgb_lb = np.array([10, 80, 30])/255
-                    rgb_ub = np.array([40, 255, 90])/255
-                    self._pc_cam_handler.filter_by_color(rgb_lb, rgb_ub)
+        if self._config_cameras is not None:
+            for cam_name, cam_config in self._config_cameras.items():
+                for modality_name, modality_config in cam_config.items():
+                    key_name = f"{cam_name}-{modality_name}"
                     
-                    # self._num_obj_pts = min(self._pc_cam_handler.points[0].shape[0] - 1, modality_config['num_points'])
-                    # rospy.logwarn_throttle(1,self._num_obj_pts)
-                    self._pc_cam_handler.pc[0].paint_uniform_color(np.array([0.4745, 0.8353, 0.9922]))
-                    self._pc_cam_handler.update_cardinality(modality_config["num_points"])
+                    if modality_name == 'rgb':
+                        raise NotImplementedError()
+                    
+                    elif modality_name == 'depth':
+                        raise NotImplementedError()
+                    
+                    elif modality_name == 'point_cloud':
+                        # TODO: Decide whether to include table or not
+                        # Remove table and enforce cardinality
+                        self._pc_cam_handler.remove_plane()
+                        rgb_lb = np.array([10, 80, 30])/255
+                        rgb_ub = np.array([40, 255, 90])/255
+                        self._pc_cam_handler.filter_by_color(rgb_lb, rgb_ub)
+                        
+                        # self._num_obj_pts = min(self._pc_cam_handler.points[0].shape[0] - 1, modality_config['num_points'])
+                        # rospy.logwarn_throttle(1,self._num_obj_pts)
+                        self._pc_cam_handler.pc[0].paint_uniform_color(np.array([0.4745, 0.8353, 0.9922]))
+                        self._pc_cam_handler.update_cardinality(modality_config["num_points"])
 
-                    # Transform point cloud to reference frame
-                    transform = self._tf_handler.get_transform_matrix(modality_config["optical_frame"], modality_config["ref_frame"])
-                    self._pc_cam_handler.pc[0] = self._pc_cam_handler.transform(self._pc_cam_handler.pc[0], transform)
-                    obs_dict[key_name] = self._pc_cam_handler.points[0]
-                    
-                else:
-                    raise RuntimeError("Modality not supported")
+                        # Transform point cloud to reference frame
+                        transform = self._tf_handler.get_transform_matrix(modality_config["optical_frame"], modality_config["ref_frame"])
+                        self._pc_cam_handler.pc[0] = self._pc_cam_handler.transform(self._pc_cam_handler.pc[0], transform)
+                        
+                        obs_dict[key_name] = self._pc_cam_handler.points[0]
+                        
+                    else:
+                        raise RuntimeError("Modality not supported")
         
         # Get the observations from the imagination
-        if self._config_imagined is not None:
-            self.update_imagination()
-            obs_dict["imagined"] = self._pc_imagine_handler.points[0]
+        if self._config_imagined_hand is not None:
+            self.update_imagined_hand()
+            obs_dict["imagined_hand"] = self._pc_imagined_hand_handler.points[0]
+            
+        if self._config_imagined_object is not None:
+            self.update_imagined_object()
+            obs_dict["imagined_object"] = self._pc_imagined_object_handler.points[0]
         
         return obs_dict
+    
+    def setup_imagined_object(self, object_name : str) -> None:
+        # Get an instance of RosPack with the default search paths
+        rospack = rospkg.RosPack()
         
-    def setup_imagination(self, stl_ignores : Optional[List[str]] = None):
+        stl_file = rospack.get_path(self._config_imagined_object["stl_package"]) + "/basicnet_sdf/" + object_name + "/mesh.stl"
+        
+        # Create a dictionary for each mesh file
+        mesh_dict = {
+            Path(stl_file).stem : {
+                'path': stl_file,
+                'scale_factors': np.ones(3)*0.15,
+                'visual_origin': None,
+                'link_origin' : None,
+                'group_index' : 0
+            }
+        }
+        
+        # Get the object point cloud from the object pose
+        self._pc_imagined_object_handler.sample_from_meshes(mesh_dict, self._config_imagined_object["num_points"])
+        self._pc_imagined_object_handler.update_imagined(self._config_imagined_object["num_points"])
+        
+    def setup_imagined_hand(self, stl_ignores : Optional[List[str]] = None):
         # Get an instance of RosPack with the default search paths
         rospack = rospkg.RosPack()
         
         # Get the stl files from the mia description package
-        stl_folder = rospack.get_path(self._config_imagined["stl_package"]) + "/meshes/stl"
+        stl_folder = rospack.get_path(self._config_imagined_hand["stl_package"]) + "/meshes/stl"
         stl_files = [file for file in glob.glob(stl_folder + "/*") if (Path(file).name not in stl_ignores)]
         
         # Extract stl files for the correct hand
@@ -408,7 +443,7 @@ class MiaHandWorldEnv(gym.Env):
         # Define the imagined groups where each group corresponds to a movable joint in the hand (along with base palm)
         free_joints = self._urdf_handler.get_free_joints()
         self._imagined_groups = {free_joint : self._urdf_handler.get_free_joint_group(free_joint) for free_joint in free_joints}
-        self._imagined_groups["j_" + self._config_imagined["ref_frame"]] = self._urdf_handler.get_link_group(self._config_imagined["ref_frame"])
+        self._imagined_groups["j_" + self._config_imagined_hand["ref_frame"]] = self._urdf_handler.get_link_group(self._config_imagined_hand["ref_frame"])
         
         mesh_dict = {}  # Initialize an empty dictionary
         for stl_file in filtered_stl_files:
@@ -417,7 +452,7 @@ class MiaHandWorldEnv(gym.Env):
             
             # Get the link name assoicated with the mesh and obtain the origin (transformation) from the reference
             link_name = self._urdf_handler.get_link_name(Path(stl_file).stem)
-            link_origin = self._urdf_handler.get_link_transform(self._config_imagined["ref_frame"], link_name)
+            link_origin = self._urdf_handler.get_link_transform(self._config_imagined_hand["ref_frame"], link_name)
             
             # Get the group index of the link
             group_index = None
@@ -451,14 +486,14 @@ class MiaHandWorldEnv(gym.Env):
         
         # Sample the point clouds from the meshes using the ImaginedPointCloudHandler
         # It creates a point cloud for each mesh and stores it from index 1 to n
-        self._pc_imagine_handler.sample_from_meshes(mesh_dict, 10*self._config_imagined["num_points"])
+        self._pc_imagined_hand_handler.sample_from_meshes(mesh_dict, 10*self._config_imagined_hand["num_points"])
         
         # Update the hand point cloud, which is the combination of the individual groups transformed to the palm frame
         # We here downsample the point cloud to the desired number of points (for even distribution of points)
-        self._pc_imagine_handler.update_hand(self._config_imagined["num_points"])
+        self._pc_imagined_hand_handler.update_imagined(self._config_imagined_hand["num_points"])
         
     
-    def update_imagination(self):
+    def update_imagined_hand(self):
         # Go through each point cloud group and update the transform
         for index, group_links in enumerate(self._imagined_groups.values()):
             # Set frame and group index
@@ -466,20 +501,35 @@ class MiaHandWorldEnv(gym.Env):
             group_index = index + 1 # +1 because index 0 is entire hand
             
             # Get the transform to the reference frame and convert it to a transformation matrix
-            transform = self._tf_handler.get_transform_matrix(frame, self._config_imagined["ref_frame"])            
+            transform = self._tf_handler.get_transform_matrix(frame, self._config_imagined_hand["ref_frame"])            
             
             # Get the relative transform from the initial transform (describes relative finger movement)
-            rel_transform = np.linalg.inv(self._pc_imagine_handler.initial_transforms[group_index]) @ transform
+            rel_transform = np.linalg.inv(self._pc_imagined_hand_handler.initial_transforms[group_index]) @ transform
             
             # Update the transform of the group
-            self._pc_imagine_handler.transforms[group_index] = self._pc_imagine_handler.initial_transforms[group_index] @ rel_transform
+            self._pc_imagined_hand_handler.transforms[group_index] = self._pc_imagined_hand_handler.initial_transforms[group_index] @ rel_transform
 
             # rospy.logdebug(f"URDF From {frame} to {self._config_imagined['ref_frame']}:\n {self._pc_imagine_handler.transforms[group_index]}")
             # rospy.logdebug(f"TF2 From {frame} to {self._config_imagined['ref_frame']}:\n {transform}")
             # rospy.logdebug(f"Relative transform:\n {rel_transform}")
 
         # Update the overall hand point cloud based on the updated group point clouds
-        self._pc_imagine_handler.update_hand(self._config_imagined["num_points"])   
+        self._pc_imagined_hand_handler.update_imagined(self._config_imagined_hand["num_points"])   
+    
+    def update_imagined_object(self):
+        # Get transform from world frame to object frame
+        world_T_object = self._tf_handler.convert_transform_to_matrix(self._rl_interface.rl_data["obj_data"])
+        rospy.logwarn(f"World_T_Object:\n {world_T_object}")
+        # Get transform from world frame to hand baselink frame
+        world_T_baselink = self._tf_handler.convert_transform_to_matrix(self._rl_interface._world_interface.hand_pose)
+        rospy.logwarn(f"world_T_baselink:\n {world_T_baselink}")
+        # Get transform from palm frame to hand baselink
+        palm_T_baselink = self._tf_handler.get_transform_matrix("base_link", "palm")
+        rospy.logwarn(f"palm_T_baselink:\n {palm_T_baselink}")
+        # Get transform from palm frame to object frame
+        palm_T_object = palm_T_baselink @ np.linalg.inv(world_T_baselink) @ world_T_object
+        rospy.logwarn(f"palm_T_object:\n {palm_T_object} \n\n")
+        self._pc_imagined_object_handler.pc[0] = self._pc_imagined_object_handler.transform(self._pc_imagined_object_handler.pc[0], palm_T_object)
     
     def check_contact(self, contacts : contacts_msg) -> Dict[str, bool]:
         """ 
