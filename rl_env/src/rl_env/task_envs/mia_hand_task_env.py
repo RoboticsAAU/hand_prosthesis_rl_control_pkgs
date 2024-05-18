@@ -118,7 +118,7 @@ class MiaHandWorldEnv(gym.Env):
         self._pc_cam_handler.pc.append(o3d.geometry.PointCloud())
         self._object_pose = Pose()
         self._contacts = []
-                
+        
         self.setup_imagined_hand(stl_ignores=["1.001.stl", "UR_flange.stl"])
         self.setup_imagined_object("category_2/obj_2")
         
@@ -146,9 +146,9 @@ class MiaHandWorldEnv(gym.Env):
         self._rl_interface._pub_episode_done.publish(done)
 
         if self.visualise:
-            self._pc_imagined_hand_handler._pc.extend([self._pc_imagined_object_handler.pc[0]])
-            self._pc_imagined_hand_handler._transforms.extend([np.eye(4)])
-            self._pc_imagined_hand_handler.visualize(index=0)
+            self._pc_imagined_hand_handler._pc.extend([self._pc_imagined_object_handler.pc[1]])
+            self._pc_imagined_hand_handler._transforms.extend([self._pc_imagined_object_handler.transforms[1]])
+            self._pc_imagined_hand_handler.visualize(index=0, save_image_name="transform_debug.png")
             input("Press Enter to continue...")
             self.visualise = False
 
@@ -171,7 +171,7 @@ class MiaHandWorldEnv(gym.Env):
             rospy.logwarn("Resetting hand model")   
             self._reset_hand()
         self._rl_interface.update_context()
-        self.setup_imagined_object(self._rl_interface._object_handler.curr_obj)
+        # self.setup_imagined_object(self._rl_interface._object_handler.curr_obj)
         # Set finger position as average of joint limits
         average_pos = [sum(limits)/2.0 for limits in zip(self._obs_pos_lb, self._obs_pos_ub)]
         # Before finger position can be set, effort must be set to zero
@@ -407,26 +407,6 @@ class MiaHandWorldEnv(gym.Env):
         
         return obs_dict
     
-    def setup_imagined_object(self, object_name : str) -> None:
-        # Get an instance of RosPack with the default search paths
-        rospack = rospkg.RosPack()
-        
-        stl_file = rospack.get_path(self._config_imagined_object["stl_package"]) + "/basicnet_sdf/" + object_name + "/mesh.stl"
-        
-        # Create a dictionary for each mesh file
-        mesh_dict = {
-            Path(stl_file).stem : {
-                'path': stl_file,
-                'scale_factors': np.ones(3)*0.15,
-                'visual_origin': None,
-                'link_origin' : None,
-                'group_index' : 0
-            }
-        }
-        
-        # Get the object point cloud from the object pose
-        self._pc_imagined_object_handler.sample_from_meshes(mesh_dict, self._config_imagined_object["num_points"])
-        self._pc_imagined_object_handler.update_imagined(self._config_imagined_object["num_points"])
         
     def setup_imagined_hand(self, stl_ignores : Optional[List[str]] = None):
         # Get an instance of RosPack with the default search paths
@@ -516,6 +496,27 @@ class MiaHandWorldEnv(gym.Env):
         # Update the overall hand point cloud based on the updated group point clouds
         self._pc_imagined_hand_handler.update_imagined(self._config_imagined_hand["num_points"])   
     
+    def setup_imagined_object(self, object_name : str) -> None:
+        # Get an instance of RosPack with the default search paths
+        rospack = rospkg.RosPack()
+        
+        stl_file = rospack.get_path(self._config_imagined_object["stl_package"]) + "/basicnet_sdf/" + object_name + "/mesh.stl"
+        
+        # Create a dictionary for each mesh file
+        mesh_dict = {
+            Path(stl_file).stem : {
+                'path': stl_file,
+                'scale_factors': np.ones(3)*0.15,
+                'visual_origin': None,
+                'link_origin' : None,
+                'group_index' : 0
+            }
+        }
+        
+        # Get the object point cloud from the object pose
+        self._pc_imagined_object_handler.sample_from_meshes(mesh_dict, self._config_imagined_object["num_points"])
+        self._pc_imagined_object_handler.update_imagined(self._config_imagined_object["num_points"])
+        
     def update_imagined_object(self):
         # Get transform from world frame to object frame
         world_T_object = self._tf_handler.convert_transform_to_matrix(self._rl_interface.rl_data["obj_data"])
@@ -529,7 +530,10 @@ class MiaHandWorldEnv(gym.Env):
         # Get transform from palm frame to object frame
         palm_T_object = palm_T_baselink @ np.linalg.inv(world_T_baselink) @ world_T_object
         rospy.logwarn(f"palm_T_object:\n {palm_T_object} \n\n")
-        self._pc_imagined_object_handler.pc[0] = self._pc_imagined_object_handler.transform(self._pc_imagined_object_handler.pc[0], palm_T_object)
+        
+        self._pc_imagined_object_handler.transforms[1] = palm_T_object
+        self._pc_imagined_object_handler.update_imagined(self._config_imagined_object["num_points"])
+        
     
     def check_contact(self, contacts : contacts_msg) -> Dict[str, bool]:
         """ 
