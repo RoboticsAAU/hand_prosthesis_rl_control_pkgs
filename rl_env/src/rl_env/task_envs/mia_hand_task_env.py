@@ -288,6 +288,12 @@ class MiaHandWorldEnv(gym.Env):
         # Reward for green points in observation
         # reward += 0.05 * max(0, (self._num_obj_pts / self._config_cameras['camera']['point_cloud']['num_points']) *(1 - (self._episode_count/(self._rl_config["general"]["num_episodes"]/2))))
         
+        # Reward for finger to object distance
+        # finger_object_distances = np.array(list(self.get_finger_object_distances().values()))
+        # normalised_finger_object_distances = (np.clip(finger_object_distances, 0.05, 0.18) - 0.05) / (0.18 - 0.05)
+        # reward += 0.01 * np.sum(1 / (0.1 + normalised_finger_object_distances) * self._hs_palmar_weights) # Option 1
+        # reward += 0.05 * np.sum((1 - normalised_finger_object_distances) * self._hs_palmar_weights) # Option 2
+        
         rospy.logdebug("reward=" + str(reward))
         self.cumulated_reward += reward
         rospy.logdebug("Cumulated_reward=" + str(self.cumulated_reward))
@@ -583,4 +589,29 @@ class MiaHandWorldEnv(gym.Env):
             
         return hand_contact
         
+    def get_finger_object_distances(self) -> Dict[str, float]:
+        """
+        Get the distances between the finger tips and the object centre
+        :return: Dictionary with the distances between the fingers and the object
+        """
+        finger_object_distances = {link_name : None for link_name in self.force_config.keys() if link_name != "palm"}
+        
+        for finger_name in finger_object_distances.keys():
+            # Approximate position of finger tip from the joint frame
+            if finger_name == "thumb_fle":
+                finger_t_tip = np.array([0.0, -0.08, 0.0, 1.0], dtype=np.float64).reshape(-1, 1)
+            else:
+                finger_t_tip = np.array([-0.02, -0.08, 0.0, 1.0], dtype=np.float64).reshape(-1, 1)
             
+            # Get the finger transform from the palm to the finger tip
+            world_T_finger = self._tf_handler.get_transform_matrix(finger_name, "world")
+            world_t_tip = world_T_finger @ finger_t_tip
+            
+            finger_tip_pos = world_t_tip[:3,0]
+            object_pos = np.array([self._object_pose.position.x, self._object_pose.position.y, self._object_pose.position.z], dtype=np.float64)
+            
+            # Get the distance between the finger tip and the object
+            finger_object_distances[finger_name] = np.linalg.norm(finger_tip_pos - object_pos)
+        
+        return finger_object_distances
+        
