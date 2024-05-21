@@ -35,7 +35,7 @@ with open(Path(rospack.get_path("sim_world")).joinpath("config/joint_limits.yaml
 
 def get_3d_policy_kwargs(extractor_name) -> dict:
     feature_extractor_class = PointNetImaginationExtractorGP
-    feature_extractor_kwargs = {"pc_key": "imagined_object", # camera-point_cloud
+    feature_extractor_kwargs = {"pc_key": "camera-point_cloud", # camera-point_cloud # imagined_object
                                 "extractor_name": extractor_name,
                                 "imagination_keys": ["imagined_hand"],
                                 "state_key": "state"}
@@ -107,7 +107,7 @@ def main():
     )
     
     # Instantiate RL env
-    rl_env = MiaHandWorldEnv(rl_interface, rl_config)
+    rl_env = MiaHandWorldEnv(model_identifier, rl_interface, rl_config)
     rl_env.set_episode_count(initial_episode)
     # while True:
 
@@ -115,9 +115,7 @@ def main():
     device = th.device('cuda' if th.cuda.is_available() else 'cpu')
     
     timesteps = rl_config["general"]["num_episodes"]*steps_per_episode
-    
-    reset_num_timesteps = None    
-    
+        
     # Instantiate the PPO model
     if model_to_load is not None:
         model = PPO.load(

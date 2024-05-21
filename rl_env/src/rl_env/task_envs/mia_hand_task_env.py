@@ -4,6 +4,7 @@ import rospkg
 import open3d as o3d
 import gymnasium as gym
 import glob
+import pickle
 from time import time, sleep
 from gymnasium.utils import seeding
 from gymnasium.envs.registration import register
@@ -21,7 +22,7 @@ from rl_env.utils.urdf_handler import URDFHandler
 from std_msgs.msg import Bool
 
 class MiaHandWorldEnv(gym.Env):
-    def __init__(self, rl_interface : RLInterface, rl_config : Dict[str, Any]):
+    def __init__(self, env_name : str, rl_interface : RLInterface, rl_config : Dict[str, Any]):
         """
         This Task Env is designed for having the Mia hand in the hand grasping world.
         It will learn how to move around without crashing.
@@ -29,6 +30,8 @@ class MiaHandWorldEnv(gym.Env):
         
         # Here we will add any init functions prior to starting the MyRobotEnv
         super(MiaHandWorldEnv, self).__init__()        
+        
+        self.env_name = env_name
         
         # Initialise handlers
         rospack = rospkg.RosPack()
@@ -48,7 +51,9 @@ class MiaHandWorldEnv(gym.Env):
         # Get the configurations for the cameras and the imagined point clouds
         self._config_imagined_hand = rl_config["visual_sensors"]["config_imaginations"]["hand"]
         self._config_imagined_object = rl_config["visual_sensors"]["config_imaginations"]["object"]
-        self._config_cameras = rl_config["visual_sensors"]["config_cameras"]
+        # self._config_imagined_object = None
+        # self._config_cameras = rl_config["visual_sensors"]["config_cameras"]
+        self._config_cameras = None
         
         self._rl_config = rl_config
         self.force_config = {
@@ -130,11 +135,20 @@ class MiaHandWorldEnv(gym.Env):
         self._cumulated_steps = 0
         self._episode_count = 0
         self._num_obj_pts = 0
+        
+        # Variables used for testing
+        self.test_data = {
+            "episodes_palmar_contacts" : [[]*rl_config["general"]["num_episodes"]],
+            "episodes_dorsal_contacts" : [[]*rl_config["general"]["num_episodes"]],
+            "episodes_valid_grasps" : [[]*rl_config["general"]["num_episodes"]],
+            "episodes_pos_rewards" : [[]*rl_config["general"]["num_episodes"]],
+            "episodes_neg_rewards" : [[]*rl_config["general"]["num_episodes"]],
+        }
     
     
     def step(self, action):
         rospy.sleep(0.01)
-        
+                
         done = self._rl_interface._hand_controller.buffer_empty
         self._rl_interface.step(action)
         self.update()
@@ -146,9 +160,12 @@ class MiaHandWorldEnv(gym.Env):
         self._rl_interface._pub_episode_done.publish(done)
 
         if self.visualise:
+            self._pc_cam_handler.remove_plane()
+            # self._pc_imagined_hand_handler._pc.extend([self._pc_cam_handler.pc[0]])
+            # self._pc_imagined_hand_handler._transforms.extend([np.eye(4)])
             self._pc_imagined_hand_handler._pc.extend([self._pc_imagined_object_handler.pc[1]])
             self._pc_imagined_hand_handler._transforms.extend([self._pc_imagined_object_handler.transforms[1]])
-            self._pc_imagined_hand_handler.visualize(index=0, save_image_name="transform_debug.png")
+            self._pc_imagined_hand_handler.visualize(index=0, save_image_name="cam_overlap.png")
             input("Press Enter to continue...")
             self.visualise = False
 
@@ -252,7 +269,8 @@ class MiaHandWorldEnv(gym.Env):
         :return: reward
         """
         
-        reward = 0
+        neg_reward = 0
+        pos_reward = 0
         
         # Obtain the combined joint velocity
         # combined_normalised_joint_vel = np.sum(np.abs(observation["state"][self.observed_dof:]) / self._obs_vel_ub)
@@ -266,27 +284,51 @@ class MiaHandWorldEnv(gym.Env):
         palmar_contact_values = np.array(hand_contact_values) == True
         dorsal_contact_values = np.array(hand_contact_values) == False
         
+        
         # Soft reward for contact (requires at least one finger in contact)
         # reward += 0.1 * max(0, (int(hand_contacts["thumb_fle"])*2 + fingers_in_contact)*(1 - (self._episode_count/(self._rl_config["general"]["num_episodes"]/2))))
         if self._episode_count < self._rl_config["general"]["soft_const_dur"]:
-            reward += 0.1 * np.dot(self._hs_palmar_weights, palmar_contact_values)  # weight thumb 3 times more than other fingers (3 since it also is included in fingers_in_contact)
+            pos_reward += 0.1 * np.dot(self._hs_palmar_weights, palmar_contact_values)  # weight thumb 3 times more than other fingers (3 since it also is included in fingers_in_contact)
         else:
-            reward += 0.1 * max(0, np.dot(self._hs_palmar_weights, palmar_contact_values) * (1 - ((float(self._episode_count-self._rl_config["general"]["soft_const_dur"]))/self._rl_config["general"]["soft_descend_dur"])))
+            pos_reward += 0.1 * max(0, np.dot(self._hs_palmar_weights, palmar_contact_values) * (1 - ((float(self._episode_count-self._rl_config["general"]["soft_const_dur"]))/self._rl_config["general"]["soft_descend_dur"])))
         
         # Strict reward for palmar contact (requires thumb and at least one other finger)
-        if palmar_contact_values[4] and np.sum(palmar_contact_values) >= 2:
+        valid_grasp = palmar_contact_values[4] and np.sum(palmar_contact_values) >= 2
+        if valid_grasp:
             # Reward for contact
             rospy.logwarn("WE GRASPIN OUT HERE!! :D")
-            reward += 1.2 * np.sum(palmar_contact_values)
+            pos_reward += 1.2 * np.sum(palmar_contact_values)
+            
         
         # Strict reward for dorsal contact
-        reward -= 0.1 * np.dot(self._hs_dorsal_weights, dorsal_contact_values)
+        neg_reward -= 0.1 * np.dot(self._hs_dorsal_weights, dorsal_contact_values)
+        
+        reward = pos_reward + neg_reward 
         
         # Reward for effort expenditure
         # reward -= 0.05 * combined_normalised_joint_vel * min(1, max(0, 0.01*(self._episode_count - self._rl_config["general"]["num_episodes"]/2)))
         
         # Reward for green points in observation
         # reward += 0.05 * max(0, (self._num_obj_pts / self._config_cameras['camera']['point_cloud']['num_points']) *(1 - (self._episode_count/(self._rl_config["general"]["num_episodes"]/2))))
+        
+        temp_test_data = {}
+        
+        # For testing
+        with open(self.env_name, "rb") as file:
+            temp_test_data = pickle.load(file)
+        
+        temp_test_data["episodes_palmar_contacts"][self._episode_count-1].append(palmar_contact_values)
+        temp_test_data["episodes_dorsal_contacts"][self._episode_count-1].append(dorsal_contact_values)
+        temp_test_data["episodes_valid_grasps"][self._episode_count-1].append(valid_grasp)
+        temp_test_data["episodes_pos_rewards"][self._episode_count-1].append(pos_reward)
+        temp_test_data["episodes_neg_rewards"][self._episode_count-1].append(neg_reward)
+        
+        with open(self.env_name, "wb") as file:
+            pickle.dump(temp_test_data, file)
+        
+        if self._episode_count == 100:
+            exit()
+            
         
         rospy.logdebug("reward=" + str(reward))
         self.cumulated_reward += reward
@@ -378,9 +420,9 @@ class MiaHandWorldEnv(gym.Env):
                         # TODO: Decide whether to include table or not
                         # Remove table and enforce cardinality
                         self._pc_cam_handler.remove_plane()
-                        rgb_lb = np.array([10, 80, 30])/255
-                        rgb_ub = np.array([40, 255, 90])/255
-                        self._pc_cam_handler.filter_by_color(rgb_lb, rgb_ub)
+                        # rgb_lb = np.array([10, 80, 30])/255
+                        # rgb_ub = np.array([40, 255, 90])/255
+                        # self._pc_cam_handler.filter_by_color(rgb_lb, rgb_ub)
                         
                         # self._num_obj_pts = min(self._pc_cam_handler.points[0].shape[0] - 1, modality_config['num_points'])
                         # rospy.logwarn_throttle(1,self._num_obj_pts)
@@ -520,16 +562,12 @@ class MiaHandWorldEnv(gym.Env):
     def update_imagined_object(self):
         # Get transform from world frame to object frame
         world_T_object = self._tf_handler.convert_transform_to_matrix(self._rl_interface.rl_data["obj_data"])
-        rospy.logwarn(f"World_T_Object:\n {world_T_object}")
         # Get transform from world frame to hand baselink frame
         world_T_baselink = self._tf_handler.convert_transform_to_matrix(self._rl_interface._world_interface.hand_pose)
-        rospy.logwarn(f"world_T_baselink:\n {world_T_baselink}")
         # Get transform from palm frame to hand baselink
         palm_T_baselink = self._tf_handler.get_transform_matrix("base_link", "palm")
-        rospy.logwarn(f"palm_T_baselink:\n {palm_T_baselink}")
-        # Get transform from palm frame to object frame
+        # Calculate transform from palm frame to object frame
         palm_T_object = palm_T_baselink @ np.linalg.inv(world_T_baselink) @ world_T_object
-        rospy.logwarn(f"palm_T_object:\n {palm_T_object} \n\n")
         
         self._pc_imagined_object_handler.transforms[1] = palm_T_object
         self._pc_imagined_object_handler.update_imagined(self._config_imagined_object["num_points"])

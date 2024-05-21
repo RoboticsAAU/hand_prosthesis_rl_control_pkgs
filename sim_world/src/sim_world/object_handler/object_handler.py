@@ -1,12 +1,14 @@
 import rospy
 import numpy.random as random
 import xml.etree.ElementTree as ET
-from stl import mesh
+import numpy as np
 import glob
+import rospkg
+
+from stl import mesh
 from collections import OrderedDict
 from pathlib import Path
 from typing import Dict, List, Any
-import rospkg
 from tqdm import tqdm
 
 class ObjectHandler():
@@ -43,6 +45,7 @@ class ObjectHandler():
                 cuboid = mesh.Mesh.from_file(path_mesh, remove_empty_areas=True)
                 # TODO: Hardcoded scale. Should be read from the sdf file.
                 cuboid.vectors *= 0.15
+                # cuboid.vectors *= np.array([0.025, 0.05, 0.025])
                 
                 objects[Path(category_folder).name + "/" + Path(object_folder).name] = {
                     "sdf": xml_string,

@@ -8,8 +8,8 @@ general:
   log_interval: 10
   checkpoint_dir: "checkpoints/"
   num_episodes: 2000
-  soft_const_dur: 240 # Number of episode where the soft reward for contact is at maximum
-  soft_descend_dur: 240 # Number of episode (after soft_const_dur) during which reward descends to 0
+  soft_const_dur: 240 # Number of episodes where the soft reward for contact is at maximum
+  soft_descend_dur: 240 # Number of episodes (after soft_const_dur) during which reward descends to 0
   
 # Learning parameters
 hyper_params:

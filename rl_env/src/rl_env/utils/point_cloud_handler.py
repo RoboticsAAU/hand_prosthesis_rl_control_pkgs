@@ -290,7 +290,6 @@ class ImaginedPointCloudHandler(PointCloudHandler):
             # Calculate the number of sample points for each mesh file
             # sample_points = total_sample_points // len(mesh_dict)
             sample_points = int(surface_areas[idx] / np.sum(surface_areas) * total_sample_points)
-            
             # Sample the mesh file
             pc = self.sample_from_mesh(mesh_values["path"], sample_points)
             
