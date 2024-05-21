@@ -6,6 +6,7 @@ while true; do
     pid=$!  # Get the process ID of the roslaunch command
     tail --pid=$pid -f /tmp/roslaunch_output | while read line; do
         # Check if the output contains the specific error messages
+        echo "$line"
         echo "$line" | grep -qE "free\(\): corrupted unsorted chunks|malloc\(\): unsorted double linked list corrupted|Aborted \(core dumped\)"
         if [ $? -eq 0 ]; then
             echo "Error detected. Terminating ROS launch..."
