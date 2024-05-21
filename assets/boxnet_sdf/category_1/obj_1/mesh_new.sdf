@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="cube_20k">
+    <link name="link">
+      <pose>0 0 0 0 0 0</pose>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>model:///assets/boxnet_sdf/category_1/obj_2/mesh.stl</uri>
+            <scale>0.025 0.05 0.025</scale>
+          </mesh>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>model:///assets/boxnet_sdf/category_1/obj_2/mesh.stl</uri>
+            <scale>0.025 0.05 0.025</scale>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+</sdf>

@@ -7,19 +7,19 @@ general:
   log_dir: "logs/"
   log_interval: 10
   checkpoint_dir: "checkpoints/"
-  num_episodes: 640
+  num_episodes: 2000
   soft_const_dur: 240 # Number of episode where the soft reward for contact is at maximum
   soft_descend_dur: 240 # Number of episode (after soft_const_dur) during which reward descends to 0
   
 # Learning parameters
 hyper_params:
-  learning_rate: 3.0e-4
+  learning_rate: 1.0e-4
   n_steps: 800
-  batch_size: 200
+  batch_size: 160
   n_epochs: 4
   gamma: 0.99
   gae_lambda: 0.95
-  clip_range: 0.8
+  clip_range: 0.3
   clip_range_vf: null # IMPORTANT: this clipping depends on the reward scaling.
   normalize_advantage: True
   ent_coef: 0.0
@@ -33,11 +33,11 @@ hyper_params:
 visual_sensors:
   config_cameras:
     # camera:
-      # point_cloud:
-      #   setup: "hand" # "static" or "hand"
-      #   optical_frame: "camera_depth_optical_frame"
-      #   ref_frame: "palm"
-      #   num_points: 256
+    #   point_cloud:
+    #     setup: "hand" # "static" or "hand"
+    #     optical_frame: "camera_depth_optical_frame"
+    #     ref_frame: "palm"
+    #     num_points: 256
 
   config_imaginations:
     hand:

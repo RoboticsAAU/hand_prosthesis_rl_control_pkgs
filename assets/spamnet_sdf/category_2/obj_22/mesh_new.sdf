@@ -27,12 +27,12 @@
             <inertial> 
                 <mass>0.5</mass> 
                 <inertia> 
-                    <ixx>0.00852</ixx> 
-                    <ixy>-0.0</ixy> 
-                    <ixz>-0.0</ixz> 
-                    <iyy>0.00503</iyy> 
-                    <iyz>0.0</iyz> 
-                    <izz>0.00852</izz> 
+                    <ixx>0.00161</ixx> 
+                    <ixy>-2e-05</ixy> 
+                    <ixz>2e-05</ixz> 
+                    <iyy>0.00149</iyy> 
+                    <iyz>-2e-05</iyz> 
+                    <izz>0.00102</izz> 
                 </inertia> 
 
                 <frame name="link_inertia_frame"> 
@@ -54,7 +54,7 @@
 
                 <geometry> 
                     <mesh> 
-                        <uri>model:///assets/basicnet_sdf/category_2/obj_3/mesh.stl</uri> 
+                        <uri>model:///assets/spamnet_sdf/category_2/obj_22/mesh.stl</uri> 
                         <!-- <uri>model://mymodel/meshes/model.stl</uri> --> 
                         <!-- Scaling factor applied to the mesh --> 
                         <scale>0.12 0.12 0.12</scale> 
@@ -112,7 +112,7 @@
 
                 <geometry> 
                     <mesh> 
-                        <uri>model:///assets/basicnet_sdf/category_2/obj_3/mesh.stl</uri> 
+                        <uri>model:///assets/spamnet_sdf/category_2/obj_22/mesh.stl</uri> 
                         <!-- <uri>model://mymodel/meshes/model.stl</uri> --> 
                         <!-- Scaling factor applied to the mesh --> 
                         <scale>0.12 0.12 0.12</scale> 
