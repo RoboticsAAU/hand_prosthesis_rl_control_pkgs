@@ -33,8 +33,6 @@ class MiaHandWorldEnv(gym.Env):
         # Here we will add any init functions prior to starting the MyRobotEnv
         super(MiaHandWorldEnv, self).__init__()        
         
-        self.env_name = env_name
-        
         # Initialise handlers
         rospack = rospkg.RosPack()
         urdf_path = rospack.get_path("sim_world") + "/urdf/hands/mia_hand_default.urdf"
@@ -140,15 +138,16 @@ class MiaHandWorldEnv(gym.Env):
         
         # Variables used for testing
         # self.data_idx = -1
+        tmp_list = [[] for _ in range(rl_config["general"]["num_episodes"])]
         self.test_data = {
-            "episodes_palmar_contacts" : [[]]*rl_config["general"]["num_episodes"],
-            "episodes_dorsal_contacts" : [[]]*rl_config["general"]["num_episodes"],
-            "episodes_valid_grasps" : [[]]*rl_config["general"]["num_episodes"],
-            "episodes_pos_rewards" : [[]]*rl_config["general"]["num_episodes"],
-            "episodes_neg_rewards" : [[]]*rl_config["general"]["num_episodes"],
+            "episodes_palmar_contacts" : tmp_list.copy(),
+            "episodes_dorsal_contacts" : tmp_list.copy(),
+            "episodes_valid_grasps" : tmp_list.copy(),
+            "episodes_pos_rewards" : tmp_list.copy(),
+            "episodes_neg_rewards" : tmp_list.copy(),
         }
         
-        self.data_file = Path(rospack.get_path("rl_env")).joinpath("logging/pickles/" + self.env_name + ".pickle")
+        self.data_file = Path(rospack.get_path("rl_env")).joinpath("logging/pickles/" + env_name + ".pickle")
         if not os.path.isfile(self.data_file):
             print(Fore.GREEN + "Pickle for model does not exist. Creating new.")
             print(Style.RESET_ALL)
@@ -157,10 +156,17 @@ class MiaHandWorldEnv(gym.Env):
                 pickle.dump(self.test_data, file)
         else:
             print(Fore.GREEN + "Pickle for model exists and will be loaded.")
-            user_input = input("Enter the initial episode count: ")
-            assert user_input.isdigit(), "Must be a number"
-            assert int(user_input) > 0, "Must be more than 0"
-            self.data_idx = int(user_input)
+            
+            with open(self.data_file, "rb") as file:
+                data = pickle.load(file)
+                try:
+                    # Get index for the last non-empty element
+                    self.data_idx = next(i for i, sublist in enumerate(data["episodes_palmar_contacts"]) if len(sublist) == 0) - 2
+                except StopIteration:
+                    rospy.logerr("All episodes are non-empty")
+                    exit()
+            
+            print("Using last populated episode: " + str(self.data_idx))
             print(Style.RESET_ALL)
     
     def step(self, action):
@@ -332,24 +338,22 @@ class MiaHandWorldEnv(gym.Env):
         
         # For acquiring test data
         # if self._rl_interface._hand_controller._pose_buffer.shape[1] <= self._rl_interface._hand_controller._config["points_at_obj"]:
-        if False in hand_contacts.values() or True in hand_contacts.values():
-            temp_test_data = {}
-            
-            with open(self.data_file, "rb") as file:
-                temp_test_data = pickle.load(file)
-            
-            temp_test_data["episodes_palmar_contacts"][self.data_idx].append(palmar_contact_values)
-            temp_test_data["episodes_dorsal_contacts"][self.data_idx].append(dorsal_contact_values)
-            temp_test_data["episodes_valid_grasps"][self.data_idx].append(valid_grasp)
-            temp_test_data["episodes_pos_rewards"][self.data_idx].append(pos_reward)
-            temp_test_data["episodes_neg_rewards"][self.data_idx].append(neg_reward)
-            
-            with open(self.data_file, "wb") as file:
-                pickle.dump(temp_test_data, file)
-                rospy.logwarn("Pickled data for episode " + str(self.data_idx))
-            
-            if self.data_idx == 100:
-                exit()
+        temp_test_data = {}
+        
+        with open(self.data_file, "rb") as file:
+            temp_test_data = pickle.load(file)
+        
+        temp_test_data["episodes_palmar_contacts"][self.data_idx].append(palmar_contact_values)
+        temp_test_data["episodes_dorsal_contacts"][self.data_idx].append(dorsal_contact_values)
+        temp_test_data["episodes_valid_grasps"][self.data_idx].append(valid_grasp)
+        temp_test_data["episodes_pos_rewards"][self.data_idx].append(pos_reward)
+        temp_test_data["episodes_neg_rewards"][self.data_idx].append(neg_reward)
+        
+        with open(self.data_file, "wb") as file:
+            pickle.dump(temp_test_data, file)
+        
+        if self.data_idx == 100:
+            exit()
             
         
         rospy.logdebug("reward=" + str(reward))

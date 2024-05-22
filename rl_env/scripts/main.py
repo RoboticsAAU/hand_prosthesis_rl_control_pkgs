@@ -159,7 +159,7 @@ def main():
             while not done:
                 action, _states = model.predict(obs, deterministic=True)
                 obs, reward, done, _, info = rl_env.step(action)
-                rospy.loginfo(f"Episode: {episode}, Reward: {reward}")
+                # rospy.loginfo(f"Episode: {episode}, Reward: {reward}")
     
 
 if __name__ == "__main__":
