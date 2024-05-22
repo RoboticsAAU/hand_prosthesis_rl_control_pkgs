@@ -155,16 +155,23 @@ class MiaHandWorldEnv(gym.Env):
                 pickle.dump(self.test_data, file)
         else:
             print(Fore.GREEN + "Pickle for model exists and will be loaded.")
-            
+            temp_test_data = {}
             with open(self.data_file, "rb") as file:
-                data = pickle.load(file)
+                temp_test_data = pickle.load(file)
                 try:
-                    # Get index for the last non-empty element
-                    self.data_idx = next(i for i, sublist in enumerate(data["episodes_palmar_contacts"]) if len(sublist) == 0) - 2
+                    # Get index for the last non-empty element. Subtract by 1 to get last non-empty, and subtract by 1 more to account for initial reset during train/test.
+                    self.data_idx = next(i for i, sublist in enumerate(temp_test_data["episodes_palmar_contacts"]) if len(sublist) == 0) - 2
                 except StopIteration:
                     rospy.logerr("All episodes are non-empty")
                     exit()
             
+            # Clear data at self.data_idx (since it might contain a non-completed episode)
+            for key in temp_test_data.keys():
+                # +1 because we accounted for initial reset when defining data_idx
+                temp_test_data[key][self.data_idx + 1].clear()
+            with open(self.data_file, "wb") as file:
+                pickle.dump(temp_test_data, file)
+             
             print("Using last populated episode: " + str(self.data_idx))
             print(Style.RESET_ALL)
     
@@ -292,7 +299,9 @@ class MiaHandWorldEnv(gym.Env):
         :return: reward
         """
         
+        # Exit when 100 data samples have been made
         if self.data_idx == 100:
+            rospy.loginfo("Data collection completed. Terminating node.")
             exit()
         
         neg_reward = 0
