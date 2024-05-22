@@ -88,7 +88,7 @@ class MiaHandWorldEnv(gym.Env):
         }
         
         # Hand segment weights used in reward function with order [index, middle, ring, little, thumb, palm] 
-        self._hs_palmar_weights = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0], dtype=np.float64)
+        self._hs_palmar_weights = np.array([2.0, 1.0, 1.0, 1.0, 3.0, 1.0], dtype=np.float64)
         self._hs_dorsal_weights = np.ones(6, dtype=np.float64)
         
         
@@ -336,7 +336,7 @@ class MiaHandWorldEnv(gym.Env):
             
         
         # Strict reward for dorsal contact
-        # neg_reward -= 0.1 * np.dot(self._hs_dorsal_weights, dorsal_contact_values)
+        neg_reward -= 0.1 * np.dot(self._hs_dorsal_weights, dorsal_contact_values)
         
         reward = pos_reward + neg_reward 
         
