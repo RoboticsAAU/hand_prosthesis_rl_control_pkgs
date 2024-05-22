@@ -138,13 +138,12 @@ class MiaHandWorldEnv(gym.Env):
         
         # Variables used for testing
         # self.data_idx = -1
-        tmp_list = [[] for _ in range(rl_config["general"]["num_episodes"])]
         self.test_data = {
-            "episodes_palmar_contacts" : tmp_list.copy(),
-            "episodes_dorsal_contacts" : tmp_list.copy(),
-            "episodes_valid_grasps" : tmp_list.copy(),
-            "episodes_pos_rewards" : tmp_list.copy(),
-            "episodes_neg_rewards" : tmp_list.copy(),
+            "episodes_palmar_contacts" : [[] for _ in range(rl_config["general"]["num_episodes"])],
+            "episodes_dorsal_contacts" : [[] for _ in range(rl_config["general"]["num_episodes"])],
+            "episodes_valid_grasps" : [[] for _ in range(rl_config["general"]["num_episodes"])],
+            "episodes_pos_rewards" : [[] for _ in range(rl_config["general"]["num_episodes"])],
+            "episodes_neg_rewards" : [[] for _ in range(rl_config["general"]["num_episodes"])],
         }
         
         self.data_file = Path(rospack.get_path("rl_env")).joinpath("logging/pickles/" + env_name + ".pickle")
@@ -352,7 +351,7 @@ class MiaHandWorldEnv(gym.Env):
         with open(self.data_file, "wb") as file:
             pickle.dump(temp_test_data, file)
         
-        if self.data_idx == 100:
+        if self.data_idx == 99:
             exit()
             
         
