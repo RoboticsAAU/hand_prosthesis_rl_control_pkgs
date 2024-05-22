@@ -292,6 +292,9 @@ class MiaHandWorldEnv(gym.Env):
         :return: reward
         """
         
+        if self.data_idx == 100:
+            exit()
+        
         neg_reward = 0
         pos_reward = 0
         
@@ -349,11 +352,7 @@ class MiaHandWorldEnv(gym.Env):
         temp_test_data["episodes_neg_rewards"][self.data_idx].append(neg_reward)
         
         with open(self.data_file, "wb") as file:
-            pickle.dump(temp_test_data, file)
-        
-        if self.data_idx == 99:
-            exit()
-            
+            pickle.dump(temp_test_data, file)            
         
         rospy.logdebug("reward=" + str(reward))
         self.cumulated_reward += reward
