@@ -37,7 +37,7 @@ def get_3d_policy_kwargs(extractor_name) -> dict:
     feature_extractor_class = PointNetImaginationExtractorGP
     feature_extractor_kwargs = {"pc_key": "camera-point_cloud", # camera-point_cloud # imagined_object
                                 "extractor_name": extractor_name,
-                                "imagination_keys": ["imagined_hand"],
+                                "imagination_keys": ["imagined"],
                                 "state_key": "state"}
 
     policy_kwargs = {
@@ -48,7 +48,7 @@ def get_3d_policy_kwargs(extractor_name) -> dict:
     }
     return policy_kwargs
 
-train = True
+train = False
 
 # Continue learning with this model: If no model should be loaded, set model_to_load to None
 # model_to_load = None

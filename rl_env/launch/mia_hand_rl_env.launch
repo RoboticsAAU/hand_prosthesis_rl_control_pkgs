@@ -13,6 +13,8 @@
         <arg name="wrist_exfle"                 value="true" />
         <arg name="wrist_ulra"                  value="false" />
         <arg name="paused"                      value="false" />
+        <arg name="Gazebo_gui"                  value="false" />
+        <arg name="headless"                    value="true" />
     </include>
     
     <!-- Launch gazebo contact republisher -->

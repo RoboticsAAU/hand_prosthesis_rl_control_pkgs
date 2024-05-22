@@ -5,14 +5,16 @@ import open3d as o3d
 import gymnasium as gym
 import glob
 import pickle
+import os
 from time import time, sleep
 from gymnasium.utils import seeding
 from gymnasium.envs.registration import register
 from pathlib import Path
 from functools import cached_property
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Union, Optional
 from geometry_msgs.msg import Pose
 from contact_republisher.msg import contacts_msg
+from colorama import Fore, Style
 
 from sim_world.rl_interface.rl_interface import RLInterface
 from rl_env.utils.tf_handler import TFHandler
@@ -50,10 +52,10 @@ class MiaHandWorldEnv(gym.Env):
         
         # Get the configurations for the cameras and the imagined point clouds
         self._config_imagined_hand = rl_config["visual_sensors"]["config_imaginations"]["hand"]
-        self._config_imagined_object = rl_config["visual_sensors"]["config_imaginations"]["object"]
-        # self._config_imagined_object = None
-        # self._config_cameras = rl_config["visual_sensors"]["config_cameras"]
-        self._config_cameras = None
+        # self._config_imagined_object = rl_config["visual_sensors"]["config_imaginations"]["object"]
+        self._config_imagined_object = None
+        self._config_cameras = rl_config["visual_sensors"]["config_cameras"]
+        # self._config_cameras = None
         
         self._rl_config = rl_config
         self.force_config = {
@@ -76,7 +78,7 @@ class MiaHandWorldEnv(gym.Env):
                 "rotation": np.eye(3)
             },
             "thumb_fle": {
-                "range": tuple(np.deg2rad([-80, 80])),
+                "range": tuple(np.deg2rad([-70, 70])),
                 "rotation": np.eye(3)
             },
             "palm": {
@@ -88,7 +90,7 @@ class MiaHandWorldEnv(gym.Env):
         }
         
         # Hand segment weights used in reward function with order [index, middle, ring, little, thumb, palm] 
-        self._hs_palmar_weights = np.array([2.0, 1.0, 1.0, 1.0, 5.0, 1.0], dtype=np.float64)
+        self._hs_palmar_weights = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0], dtype=np.float64)
         self._hs_dorsal_weights = np.ones(6, dtype=np.float64)
         
         
@@ -125,7 +127,7 @@ class MiaHandWorldEnv(gym.Env):
         self._contacts = []
         
         self.setup_imagined_hand(stl_ignores=["1.001.stl", "UR_flange.stl"])
-        self.setup_imagined_object("category_2/obj_2")
+        # self.setup_imagined_object("category_2/obj_2")
         
         # Print the spaces
         rospy.logdebug("ACTION SPACES TYPE===>"+str(self.action_space))
@@ -137,14 +139,29 @@ class MiaHandWorldEnv(gym.Env):
         self._num_obj_pts = 0
         
         # Variables used for testing
+        # self.data_idx = -1
         self.test_data = {
-            "episodes_palmar_contacts" : [[]*rl_config["general"]["num_episodes"]],
-            "episodes_dorsal_contacts" : [[]*rl_config["general"]["num_episodes"]],
-            "episodes_valid_grasps" : [[]*rl_config["general"]["num_episodes"]],
-            "episodes_pos_rewards" : [[]*rl_config["general"]["num_episodes"]],
-            "episodes_neg_rewards" : [[]*rl_config["general"]["num_episodes"]],
+            "episodes_palmar_contacts" : [[]]*rl_config["general"]["num_episodes"],
+            "episodes_dorsal_contacts" : [[]]*rl_config["general"]["num_episodes"],
+            "episodes_valid_grasps" : [[]]*rl_config["general"]["num_episodes"],
+            "episodes_pos_rewards" : [[]]*rl_config["general"]["num_episodes"],
+            "episodes_neg_rewards" : [[]]*rl_config["general"]["num_episodes"],
         }
-    
+        
+        self.data_file = Path(rospack.get_path("rl_env")).joinpath("logging/pickles/" + self.env_name + ".pickle")
+        if not os.path.isfile(self.data_file):
+            print(Fore.GREEN + "Pickle for model does not exist. Creating new.")
+            print(Style.RESET_ALL)
+            self.data_idx = -1
+            with open(self.data_file, "wb") as file:
+                pickle.dump(self.test_data, file)
+        else:
+            print(Fore.GREEN + "Pickle for model exists and will be loaded.")
+            user_input = input("Enter the initial episode count: ")
+            assert user_input.isdigit(), "Must be a number"
+            assert int(user_input) > 0, "Must be more than 0"
+            self.data_idx = int(user_input)
+            print(Style.RESET_ALL)
     
     def step(self, action):
         rospy.sleep(0.01)
@@ -180,6 +197,7 @@ class MiaHandWorldEnv(gym.Env):
     def reset(self, seed=None):
         super().reset(seed=seed)
         self._episode_count += 1
+        self.data_idx += 1
         
         rospy.logdebug("Resetting MiaHandWorldEnv")
         self._init_env_variables()
@@ -297,11 +315,11 @@ class MiaHandWorldEnv(gym.Env):
         if valid_grasp:
             # Reward for contact
             rospy.logwarn("WE GRASPIN OUT HERE!! :D")
-            pos_reward += 1.2 * np.sum(palmar_contact_values)
+            pos_reward += 0.5 * np.sum(palmar_contact_values)
             
         
         # Strict reward for dorsal contact
-        neg_reward -= 0.1 * np.dot(self._hs_dorsal_weights, dorsal_contact_values)
+        # neg_reward -= 0.1 * np.dot(self._hs_dorsal_weights, dorsal_contact_values)
         
         reward = pos_reward + neg_reward 
         
@@ -311,23 +329,27 @@ class MiaHandWorldEnv(gym.Env):
         # Reward for green points in observation
         # reward += 0.05 * max(0, (self._num_obj_pts / self._config_cameras['camera']['point_cloud']['num_points']) *(1 - (self._episode_count/(self._rl_config["general"]["num_episodes"]/2))))
         
-        temp_test_data = {}
         
-        # For testing
-        with open(self.env_name, "rb") as file:
-            temp_test_data = pickle.load(file)
-        
-        temp_test_data["episodes_palmar_contacts"][self._episode_count-1].append(palmar_contact_values)
-        temp_test_data["episodes_dorsal_contacts"][self._episode_count-1].append(dorsal_contact_values)
-        temp_test_data["episodes_valid_grasps"][self._episode_count-1].append(valid_grasp)
-        temp_test_data["episodes_pos_rewards"][self._episode_count-1].append(pos_reward)
-        temp_test_data["episodes_neg_rewards"][self._episode_count-1].append(neg_reward)
-        
-        with open(self.env_name, "wb") as file:
-            pickle.dump(temp_test_data, file)
-        
-        if self._episode_count == 100:
-            exit()
+        # For acquiring test data
+        # if self._rl_interface._hand_controller._pose_buffer.shape[1] <= self._rl_interface._hand_controller._config["points_at_obj"]:
+        if False in hand_contacts.values() or True in hand_contacts.values():
+            temp_test_data = {}
+            
+            with open(self.data_file, "rb") as file:
+                temp_test_data = pickle.load(file)
+            
+            temp_test_data["episodes_palmar_contacts"][self.data_idx].append(palmar_contact_values)
+            temp_test_data["episodes_dorsal_contacts"][self.data_idx].append(dorsal_contact_values)
+            temp_test_data["episodes_valid_grasps"][self.data_idx].append(valid_grasp)
+            temp_test_data["episodes_pos_rewards"][self.data_idx].append(pos_reward)
+            temp_test_data["episodes_neg_rewards"][self.data_idx].append(neg_reward)
+            
+            with open(self.data_file, "wb") as file:
+                pickle.dump(temp_test_data, file)
+                rospy.logwarn("Pickled data for episode " + str(self.data_idx))
+            
+            if self.data_idx == 100:
+                exit()
             
         
         rospy.logdebug("reward=" + str(reward))
@@ -386,7 +408,7 @@ class MiaHandWorldEnv(gym.Env):
                 obs_dict[key_name] = spec
             
         if self._config_imagined_hand is not None:
-            obs_dict["imagined_hand"] = gym.spaces.Box(low=-np.inf, high=np.inf, shape=((self._config_imagined_hand["num_points"],) + (3,)))
+            obs_dict["imagined"] = gym.spaces.Box(low=-np.inf, high=np.inf, shape=((self._config_imagined_hand["num_points"],) + (3,)))
         
         if self._config_imagined_object is not None:
             obs_dict["imagined_object"] = gym.spaces.Box(low=-np.inf, high=np.inf, shape=((self._config_imagined_object["num_points"],) + (3,)))
@@ -441,7 +463,7 @@ class MiaHandWorldEnv(gym.Env):
         # Get the observations from the imagination
         if self._config_imagined_hand is not None:
             self.update_imagined_hand()
-            obs_dict["imagined_hand"] = self._pc_imagined_hand_handler.points[0]
+            obs_dict["imagined"] = self._pc_imagined_hand_handler.points[0]
             
         if self._config_imagined_object is not None:
             self.update_imagined_object()
@@ -573,7 +595,7 @@ class MiaHandWorldEnv(gym.Env):
         self._pc_imagined_object_handler.update_imagined(self._config_imagined_object["num_points"])
         
     
-    def check_contact(self, contacts : contacts_msg) -> Dict[str, bool]:
+    def check_contact(self, contacts : contacts_msg) -> Dict[str, Union[bool,None]]:
         """ 
         Checks the contact type of the contact.
         param contacts: The contacts message.

@@ -54,7 +54,7 @@ class HandController:
         # Obtain the start and goal pose
         #TODO: z-offset should be a parameter in yaml
         start_pose = self._sample_start_pose(obj_center, 0.2)
-        goal_pose = self._sample_goal_pose(obj_center, start_pose, obj_mesh, 0.11)
+        goal_pose = self._sample_goal_pose(obj_center, start_pose, obj_mesh, 0.12)
         
         # Plan trajectory with the given path planner and parameters
         if self._config["path_planner"] == "bezier":
