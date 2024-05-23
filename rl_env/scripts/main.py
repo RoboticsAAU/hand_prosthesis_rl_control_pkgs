@@ -35,9 +35,9 @@ with open(Path(rospack.get_path("sim_world")).joinpath("config/joint_limits.yaml
 
 def get_3d_policy_kwargs(extractor_name) -> dict:
     feature_extractor_class = PointNetImaginationExtractorGP
-    feature_extractor_kwargs = {"pc_key": "camera-point_cloud", # camera-point_cloud # imagined_object
+    feature_extractor_kwargs = {"pc_key": "imagined_object", # camera-point_cloud # imagined_object
                                 "extractor_name": extractor_name,
-                                "imagination_keys": ["imagined"],
+                                "imagination_keys": ["imagined_hand"],
                                 "state_key": "state"}
 
     policy_kwargs = {

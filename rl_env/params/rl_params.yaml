@@ -32,11 +32,11 @@ hyper_params:
 visual_sensors:
   config_cameras:
     camera:
-      point_cloud:
-        setup: "hand" # "static" or "hand"
-        optical_frame: "camera_depth_optical_frame"
-        ref_frame: "palm"
-        num_points: 256
+      # point_cloud:
+      #   setup: "hand" # "static" or "hand"
+      #   optical_frame: "camera_depth_optical_frame"
+      #   ref_frame: "palm"
+      #   num_points: 256
 
   config_imaginations:
     hand:
@@ -44,8 +44,7 @@ visual_sensors:
       num_points: 256
       stl_package: "mia_hand_description" # Package where the STL files are located. Assumes they are under the folder /meshes/stl of this package
 
-
-    # object:
-    #   ref_frame: "palm"
-    #   num_points: 256
-    #   stl_package: "assets" # Package where the STL files are located. Assumes they are under the folder /meshes/stl of this package
+    object:
+      ref_frame: "palm"
+      num_points: 256
+      stl_package: "assets" # Package where the STL files are located. Assumes they are under the folder /meshes/stl of this package

@@ -54,7 +54,7 @@ class HandController:
         # Obtain the start and goal pose
         #TODO: z-offset should be a parameter in yaml
         start_pose = self._sample_start_pose(obj_center, 0.2)
-        goal_pose = self._sample_goal_pose(obj_center, start_pose, obj_mesh, 0.12)
+        goal_pose = self._sample_goal_pose(obj_center, start_pose, obj_mesh, 0.11)
         
         # Plan trajectory with the given path planner and parameters
         if self._config["path_planner"] == "bezier":
@@ -249,18 +249,7 @@ class HandController:
                     color='b', linestyle='-', linewidth=1, label='Line from Object Center to Start Position')
 
             # Plot all the surface normals
-            # for normal, triangle in zip(triangle_normals, triangles):
-            #     ax.quiver(triangle[0,0], triangle[0,1], triangle[0,2],
-            #         normal[0], normal[1], normal[2],
-            #         length=0.05, color='c', normalize=True, label='Surface Normal')
-
-            # Set axes limits
-            lim = 0.2
-            ax.set_xlim([-lim + obj_center[0], lim + obj_center[0]])  # Set appropriate values for xmin and xmax
-            ax.set_ylim([-lim + obj_center[1], lim + obj_center[1]])  # Set appropriate values for ymin and ymax
-            ax.set_zlim([-lim + obj_center[2], lim + obj_center[2]])  # Set appropriate values for zmin and zmax
-            
-            # Set labels and show plot
+            # for normal, tr-1.177 # -show plot
             ax.set_xlabel('X')
             ax.set_ylabel('Y')
             ax.set_zlabel('Z')

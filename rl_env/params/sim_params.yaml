@@ -9,11 +9,11 @@ move_hand:
   points_at_obj: 100 # Points to be at the object once reached before terminating episode (in seconds)
 
   # Starting position of the hand constraints. The hand will start in the interior of the sphere defined by the following parameters
-  outer_radius: 0.3
+  outer_radius: 0.4
 
 objects:
   # The selected object dataset folder from the assets package
-  object_dataset: "basicnet_sdf"
+  object_dataset: "spamnet_sdf"
   # Mode in which objects are selected each episode
   selection_mode: "sequential" # "random" or "sequential"
   # How many objects to train on

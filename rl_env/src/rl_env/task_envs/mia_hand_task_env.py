@@ -50,10 +50,10 @@ class MiaHandWorldEnv(gym.Env):
         
         # Get the configurations for the cameras and the imagined point clouds
         self._config_imagined_hand = rl_config["visual_sensors"]["config_imaginations"]["hand"]
-        # self._config_imagined_object = rl_config["visual_sensors"]["config_imaginations"]["object"]
-        self._config_imagined_object = None
-        self._config_cameras = rl_config["visual_sensors"]["config_cameras"]
-        # self._config_cameras = None
+        self._config_imagined_object = rl_config["visual_sensors"]["config_imaginations"]["object"]
+        # self._config_imagined_object = None
+        # self._config_cameras = rl_config["visual_sensors"]["config_cameras"]
+        self._config_cameras = None
         
         self._rl_config = rl_config
         self.force_config = {
@@ -88,7 +88,7 @@ class MiaHandWorldEnv(gym.Env):
         }
         
         # Hand segment weights used in reward function with order [index, middle, ring, little, thumb, palm] 
-        self._hs_palmar_weights = np.array([2.0, 1.0, 1.0, 1.0, 3.0, 1.0], dtype=np.float64)
+        self._hs_palmar_weights = np.array([3.0, 1.0, 1.0, 1.0, 4.0, 1.0], dtype=np.float64)
         self._hs_dorsal_weights = np.ones(6, dtype=np.float64)
         
         
@@ -125,7 +125,7 @@ class MiaHandWorldEnv(gym.Env):
         self._contacts = []
         
         self.setup_imagined_hand(stl_ignores=["1.001.stl", "UR_flange.stl"])
-        # self.setup_imagined_object("category_2/obj_2")
+        self.setup_imagined_object("category_2/obj_2")
         
         # Print the spaces
         rospy.logdebug("ACTION SPACES TYPE===>"+str(self.action_space))
@@ -332,7 +332,7 @@ class MiaHandWorldEnv(gym.Env):
         if valid_grasp:
             # Reward for contact
             rospy.logwarn("WE GRASPIN OUT HERE!! :D")
-            pos_reward += 0.5 * np.sum(palmar_contact_values)
+            pos_reward += 1.2 * np.sum(palmar_contact_values)
             
         
         # Strict reward for dorsal contact
@@ -419,7 +419,7 @@ class MiaHandWorldEnv(gym.Env):
                 obs_dict[key_name] = spec
             
         if self._config_imagined_hand is not None:
-            obs_dict["imagined"] = gym.spaces.Box(low=-np.inf, high=np.inf, shape=((self._config_imagined_hand["num_points"],) + (3,)))
+            obs_dict["imagined_hand"] = gym.spaces.Box(low=-np.inf, high=np.inf, shape=((self._config_imagined_hand["num_points"],) + (3,)))
         
         if self._config_imagined_object is not None:
             obs_dict["imagined_object"] = gym.spaces.Box(low=-np.inf, high=np.inf, shape=((self._config_imagined_object["num_points"],) + (3,)))
@@ -474,7 +474,7 @@ class MiaHandWorldEnv(gym.Env):
         # Get the observations from the imagination
         if self._config_imagined_hand is not None:
             self.update_imagined_hand()
-            obs_dict["imagined"] = self._pc_imagined_hand_handler.points[0]
+            obs_dict["imagined_hand"] = self._pc_imagined_hand_handler.points[0]
             
         if self._config_imagined_object is not None:
             self.update_imagined_object()
