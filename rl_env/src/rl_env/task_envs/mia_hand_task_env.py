@@ -594,12 +594,14 @@ class MiaHandWorldEnv(gym.Env):
         Get the distances between the finger tips and the object centre
         :return: Dictionary with the distances between the fingers and the object
         """
-        finger_object_distances = {link_name : None for link_name in self.force_config.keys() if link_name != "palm"}
+        finger_object_distances = {link_name : None for link_name in self.force_config.keys()}
         
         for finger_name in finger_object_distances.keys():
             # Approximate position of finger tip from the joint frame
             if finger_name == "thumb_fle":
                 finger_t_tip = np.array([0.0, -0.08, 0.0, 1.0], dtype=np.float64).reshape(-1, 1)
+            elif finger_name == "palm":
+                finger_t_tip = np.array([0.0, 0.0, 0.0, 0.0], dtype=np.float64).reshape(-1, 1)
             else:
                 finger_t_tip = np.array([-0.02, -0.08, 0.0, 1.0], dtype=np.float64).reshape(-1, 1)
             
